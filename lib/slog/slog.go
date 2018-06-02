@@ -101,16 +101,14 @@ func Debug(message interface{}) {
 }
 
 func Warn(message interface{}, filename string) {
-	go Save(message, filename, "warn: ")
-	time.Sleep(2 * time.Millisecond)
+	Save(message, filename, "warn: ")
+
 }
 
 func Info(message interface{}, filename string) {
-	go Save(message, filename, "Info: ")
-	time.Sleep(2 * time.Millisecond)
+	Save(message, filename, "Info: ")
 }
 
 func Error(message interface{}, filename string) {
-	go Save(message, filename, "Error: ")
-	time.Sleep(2 * time.Millisecond)
+	Save(message, filename, "Error: ")
 }
