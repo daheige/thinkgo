@@ -1,4 +1,4 @@
-package lib
+package common
 
 // 每日滚动的LOG实现
 // 日志生成时间默认采用PRC时间,如需要更改,请调用SetLogTimeZone
