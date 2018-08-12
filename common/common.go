@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 )
 
 // zero size, empty struct
@@ -28,12 +30,13 @@ func Init(writer io.Writer) {
 // check panic when exit
 func CheckPanic() {
 	if err := recover(); err != nil {
-		fmt.Fprintf(os.Stderr, "\n%v %v\n", NumberNow(), err)
+		loc, _ := time.LoadLocation(logTimeZone)
+		fmt.Fprintf(os.Stderr, "\n%s %v\n", FormatTime19(time.Now().In(loc)), err)
 
 		for skip := 1; ; skip++ {
 			if pc, file, line, ok := runtime.Caller(skip); ok {
 				fn := runtime.FuncForPC(pc).Name()
-				fmt.Fprintln(os.Stderr, NumberNow(), fn, Fileline(file, line))
+				fmt.Fprintln(os.Stderr, FormatTime19(time.Now().In(loc)), fn, Fileline(file, line))
 			} else {
 				break
 			}
@@ -64,6 +67,7 @@ func NewUUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
 }
 
+//获取文件的名称不带后缀
 func Filebase(file string) string {
 	beg, end := len(file)-1, len(file)
 	for ; beg >= 0; beg-- {
@@ -77,6 +81,7 @@ func Filebase(file string) string {
 	return file[beg:end]
 }
 
+//获取文件名:行数
 func Fileline(file string, line int) string {
 	beg, end := len(file)-1, len(file)
 	for ; beg >= 0; beg-- {
@@ -87,5 +92,13 @@ func Fileline(file string, line int) string {
 			end = beg
 		}
 	}
+
 	return fmt.Sprint(file[beg:end], ":", line)
+}
+
+//运行shell脚本
+func RunShell(exeStr string) (string, error) {
+	cmd := exec.Command("/bin/bash", "-c", exeStr)
+	bytes, err := cmd.CombinedOutput()
+	return string(bytes), err
 }

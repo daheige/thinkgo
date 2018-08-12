@@ -81,7 +81,7 @@ func newfile(now time.Time) {
 
 	logDay = now.Day()
 	logProc := filepath.Base(os.Args[0])
-	filename := filepath.Join(logDir, fmt.Sprintf("%s.%s.log", logProc, now.Format("2006-01-02")))
+	filename := filepath.Join(logDir, fmt.Sprintf("%s.%s.log", logProc, now.Format(tmFmtTime)))
 
 	newlog, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {

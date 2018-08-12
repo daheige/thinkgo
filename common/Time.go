@@ -20,6 +20,7 @@ func FormatTime(t time.Time) string {
 }
 
 // format a time.Time to string as 2006-01-02 15:04:05
+// 将time.time转换为日期格式
 func FormatTime19(t time.Time) string {
 	return t.Format(tmFmtMissMS)
 }
