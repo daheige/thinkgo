@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/daheige/thinkgo/common"
+	"thinkgo/common"
 )
 
 /*demo

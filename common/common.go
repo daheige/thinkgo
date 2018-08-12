@@ -33,7 +33,7 @@ func CheckPanic() {
 		for skip := 1; ; skip++ {
 			if pc, file, line, ok := runtime.Caller(skip); ok {
 				fn := runtime.FuncForPC(pc).Name()
-				fmt.Fprintln(os.Stderr, NumberNow(), fn, fileline(file, line))
+				fmt.Fprintln(os.Stderr, NumberNow(), fn, Fileline(file, line))
 			} else {
 				break
 			}
@@ -62,4 +62,30 @@ func NewUUID() string {
 	u[8] = (u[8] | 0x40) & 0x7F
 	u[6] = (u[6] & 0xF) | (4 << 4)
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
+}
+
+func Filebase(file string) string {
+	beg, end := len(file)-1, len(file)
+	for ; beg >= 0; beg-- {
+		if os.IsPathSeparator(file[beg]) {
+			beg++
+			break
+		} else if file[beg] == '.' {
+			end = beg
+		}
+	}
+	return file[beg:end]
+}
+
+func Fileline(file string, line int) string {
+	beg, end := len(file)-1, len(file)
+	for ; beg >= 0; beg-- {
+		if os.IsPathSeparator(file[beg]) {
+			beg++
+			break
+		} else if file[beg] == '.' {
+			end = beg
+		}
+	}
+	return fmt.Sprint(file[beg:end], ":", line)
 }
