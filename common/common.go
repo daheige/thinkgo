@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"os/exec"
@@ -101,4 +102,17 @@ func RunShell(exeStr string) (string, error) {
 	cmd := exec.Command("/bin/bash", "-c", exeStr)
 	bytes, err := cmd.CombinedOutput()
 	return string(bytes), err
+}
+
+//防止xss攻击
+func Xss(str string) string {
+	if len(str) == 0 {
+		return ""
+	}
+
+	return html.EscapeString(str)
+}
+
+func XssUnescape(str string) string {
+	return html.UnescapeString(str)
 }
