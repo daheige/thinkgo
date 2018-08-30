@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -115,4 +116,10 @@ func Xss(str string) string {
 
 func XssUnescape(str string) string {
 	return html.UnescapeString(str)
+}
+
+//对浮点数进行四舍五入操作比如 12.125保留2位小数==>12.13
+func Round(f float64, n int) float64 {
+	n10 := math.Pow10(n)
+	return math.Trunc((f+0.5/n10)*n10) / n10
 }
