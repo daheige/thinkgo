@@ -1,17 +1,19 @@
 package common
 
 import (
-	"crypto/rand"
 	"flag"
 	"fmt"
 	"html"
 	"io"
 	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
+	"thinkgo/crypto"
 	"time"
 )
 
@@ -63,10 +65,18 @@ func QuitSignal() <-chan os.Signal {
 // create a uuid string
 func NewUUID() string {
 	u := [16]byte{}
-	rand.Read(u[:])
+	_, err := rand.Read(u[:])
+	if err != nil {
+		ns := time.Now().UnixNano()
+		rand.Seed(ns)
+		rnd := rand.Int63n(9999)
+		rndStr := strconv.FormatInt(ns+rnd, 10)
+		return crypto.Md5(rndStr)
+	}
+
 	u[8] = (u[8] | 0x40) & 0x7F
 	u[6] = (u[6] & 0xF) | (4 << 4)
-	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
+	return crypto.Md5(fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:]))
 }
 
 //获取文件的名称不带后缀
