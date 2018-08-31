@@ -65,12 +65,11 @@ func QuitSignal() <-chan os.Signal {
 // create a uuid string
 func NewUUID() string {
 	u := [16]byte{}
+	ns := time.Now().UnixNano()
+	rand.Seed(ns)
 	_, err := rand.Read(u[:])
 	if err != nil {
-		ns := time.Now().UnixNano()
-		rand.Seed(ns)
-		rnd := rand.Int63n(9999)
-		rndStr := strconv.FormatInt(ns+rnd, 10)
+		rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(RandInt64(1000, 9999), 10)
 		return crypto.Md5(rndStr)
 	}
 
@@ -132,4 +131,15 @@ func XssUnescape(str string) string {
 func Round(f float64, n int) float64 {
 	n10 := math.Pow10(n)
 	return math.Trunc((f+0.5/n10)*n10) / n10
+}
+
+//生成m-n之间的随机数
+func RandInt64(min, max int64) int64 {
+	if min >= max || min == 0 || max == 0 {
+		return max
+	}
+
+	//随机种子
+	rand.Seed(time.Now().UnixNano())
+	return rand.Int63n(max-min) + min
 }
