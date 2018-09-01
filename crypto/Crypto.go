@@ -29,19 +29,19 @@ func Sha1(s string) string {
 	return hex.EncodeToString(r[:])
 }
 
-func Sha1File(fName string) string {
+func Sha1File(fName string) (string, error) {
 	f, e := os.Open(fName)
 	if e != nil {
-		return ""
+		return "", e
 	}
 
 	h := sha1.New()
 	_, e = io.Copy(h, f)
 	if e != nil {
-		return ""
+		return "", e
 	}
 
-	return hex.EncodeToString(h.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 //hmac256算法
@@ -88,8 +88,9 @@ func EncryptEcb(src, key string) (string, error) {
 	//对明文数据进行补码
 	data = PKCS5Padding(data, bs)
 	if len(data)%bs != 0 {
-		panic("Need a multiple of the blocksize")
+		return "", errors.New("Need a multiple of the blocksize")
 	}
+
 	out := make([]byte, len(data))
 	dst := out
 	for len(data) > 0 {
