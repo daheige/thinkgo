@@ -62,20 +62,23 @@ func QuitSignal() <-chan os.Signal {
 	return signals
 }
 
-// create a uuid string
+//通过随机数的方式生成uuid
+//如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
+//返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
 func NewUUID() string {
 	u := [16]byte{}
 	ns := time.Now().UnixNano()
 	rand.Seed(ns)
-	_, err := rand.Read(u[:])
+	_, err := rand.Read(u[0:])
 	if err != nil {
 		rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(RandInt64(1000, 9999), 10)
-		return crypto.Md5(rndStr)
+		s := crypto.Md5(rndStr)
+		return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
 	}
 
 	u[8] = (u[8] | 0x40) & 0x7F
 	u[6] = (u[6] & 0xF) | (4 << 4)
-	return crypto.Md5(fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:]))
+	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
 }
 
 //获取文件的名称不带后缀
@@ -142,4 +145,51 @@ func RandInt64(min, max int64) int64 {
 	//随机种子
 	rand.Seed(time.Now().UnixNano())
 	return rand.Int63n(max-min) + min
+}
+
+// 根据kind生成不同风格的指定区间随机字符串
+// 纯数字kind=0,小写字母kind=1
+// 大写字母kind=2,数字+大小写字母kind=3
+func Krand(size int, kind int) string {
+	ikind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
+	is_all := kind > 2 || kind < 0
+	rand.Seed(time.Now().UnixNano()) //随机种子
+	for i := 0; i < size; i++ {
+		if is_all { // random ikind
+			ikind = rand.Intn(3)
+		}
+
+		scope, base := kinds[ikind][0], kinds[ikind][1]
+		result[i] = uint8(base + rand.Intn(scope))
+	}
+
+	return string(result)
+}
+
+// int-->string
+func IntToStr(n int) string {
+	return strconv.Itoa(n)
+}
+
+// string-->int
+func StrToInt(s string) int {
+	if i, err := strconv.Atoi(s); err != nil {
+		return 0
+	} else {
+		return i
+	}
+}
+
+// int64-->string
+func Int64ToStr(i64 int64) string {
+	return strconv.FormatInt(i64, 10)
+}
+
+// string--> int64
+func StrToInt64(s string) int64 {
+	if i64, err := strconv.ParseInt(s, 10, 64); err != nil {
+		return 0
+	} else {
+		return i64
+	}
 }
