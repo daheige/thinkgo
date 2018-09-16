@@ -1,17 +1,32 @@
 package common
 
 import (
+	"log"
 	"testing"
 )
 
+/**
+$ go test -v -test.run TestUuid
+--- PASS: TestUuid (24.51s)
+PASS
+ok      thinkgo/common  24.517s
+*/
 func TestUuid(t *testing.T) {
-	t.Log(NewUUID())
+	for i := 0; i < 1000000; i++ {
+		log.Println("current newuuid", NewUUID())
+	}
+}
+
+func TestRndUuid(t *testing.T) {
+	for i := 0; i < 1000000; i++ {
+		log.Println("current rnd uuid", RndUuid())
+	}
 }
 
 /**
-=== RUN   TestUuid
---- PASS: TestUuid (0.00s)
-    uuid_test.go:8: f1e022cd73f9e9e5de480275edcaa133
+$ go test -v -test.run TestRndUuid
+--- PASS: TestRndUuid (25.18s)
 PASS
-ok      thinkgo/common  0.005s
+ok      thinkgo/common  25.184s
+
 */

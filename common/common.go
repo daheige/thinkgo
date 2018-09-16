@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"html"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -38,14 +40,33 @@ func CheckPanic() {
 		fmt.Fprintf(os.Stderr, "\n%s %v\n", FormatTime19(time.Now().In(loc)), err)
 
 		for skip := 1; ; skip++ {
-			if pc, file, line, ok := runtime.Caller(skip); ok {
-				fn := runtime.FuncForPC(pc).Name()
-				fmt.Fprintln(os.Stderr, FormatTime19(time.Now().In(loc)), fn, Fileline(file, line))
-			} else {
+			pc, file, line, ok := runtime.Caller(skip)
+			if !ok {
 				break
 			}
+
+			fn := runtime.FuncForPC(pc).Name()
+			fmt.Fprintln(os.Stderr, FormatTime19(time.Now().In(loc)), fn, Fileline(file, line))
 		}
 	}
+}
+
+//捕获指定stack信息,一般在处理panic/recover中处理
+func CatchStack(skip int) []byte {
+	buf := &bytes.Buffer{}
+	if err := recover(); err != nil {
+		for i := 1; i <= skip; i++ {
+			pc, file, line, ok := runtime.Caller(i)
+			if !ok {
+				break
+			}
+
+			fn := runtime.FuncForPC(pc).Name()
+			fmt.Fprintf(buf, "error Stack file %s:%d call func:%s\n", filepath.Base(file), line, fn)
+		}
+	}
+
+	return buf.Bytes()
 }
 
 // reload signal
@@ -64,6 +85,7 @@ func QuitSignal() <-chan os.Signal {
 
 //通过随机数的方式生成uuid
 //如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
+//该方式生成的uuid有可能存在重复值
 //返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
 func NewUUID() string {
 	u := [16]byte{}
@@ -79,6 +101,18 @@ func NewUUID() string {
 	u[8] = (u[8] | 0x40) & 0x7F
 	u[6] = (u[6] & 0xF) | (4 << 4)
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
+}
+
+//基于时间ns和随机数实现唯一的uuid
+//在单台机器上是不会出现重复的uuid
+//如果要在分布式的架构上生成不重复的uuid
+// 只需要在rndStr的前面加一些自定义的字符串
+//返回格式:eba1e8cd-0460-4910-49c6-44bdf3cf024d
+func RndUuid() string {
+	ns := time.Now().UnixNano()
+	rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(RandInt64(1000, 9999), 10)
+	s := crypto.Md5(rndStr)
+	return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
 }
 
 //获取文件的名称不带后缀
