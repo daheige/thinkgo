@@ -1,3 +1,4 @@
+//gin 控制器AjaxReturn方法实现
 package http
 
 import (
