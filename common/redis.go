@@ -38,8 +38,11 @@ func (this *RedisConf) SetRedisPool(name string) {
 }
 
 //创建redis pool连接池
+// If Wait is true and the pool is at the MaxActive limit, then Get() waits
+// for a connection to be returned to the pool before returning.
 func NewRedisPool(conf *RedisConf) *redis.Pool {
 	return &redis.Pool{
+		Wait:        true, //等待redis connection放入pool池子中
 		MaxIdle:     conf.MaxIdle,
 		IdleTimeout: time.Duration(conf.IdleTimeout) * time.Second,
 		Dial: func() (redis.Conn, error) {
