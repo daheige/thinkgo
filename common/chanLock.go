@@ -23,7 +23,19 @@ func (l *ChanLock) Unlock() {
 	<-l.ch
 }
 
-func (l *ChanLock) TryLock(timeout time.Duration) bool {
+//乐观锁实现
+func (l *ChanLock) TryLock() bool {
+	select {
+	case l.ch <- struct{}{}:
+		return true
+	default:
+	}
+
+	return false
+}
+
+//指定时间内的乐观锁
+func (l *ChanLock) TryLockTimeout(timeout time.Duration) bool {
 	t := time.After(timeout)
 	select {
 	case l.ch <- struct{}{}:

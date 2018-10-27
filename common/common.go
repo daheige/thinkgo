@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+var localTimeZone = "PRC" //time zone default prc
+
 // zero size, empty struct
 type EmptyStruct struct{}
 
@@ -36,10 +38,12 @@ func Init(writer io.Writer) {
 // check panic when exit
 func CheckPanic() {
 	if err := recover(); err != nil {
-		loc, _ := time.LoadLocation(logTimeZone)
+		loc, _ := time.LoadLocation(localTimeZone)
 		fmt.Fprintf(os.Stderr, "\n%s %v\n", FormatTime19(time.Now().In(loc)), err)
 
-		for skip := 1; ; skip++ {
+		// skip为0时，打印当前调用文件及行数。
+		// 为1时，打印上级调用的文件及行数，依次类推
+		for skip := 0; ; skip++ {
 			pc, file, line, ok := runtime.Caller(skip)
 			if !ok {
 				break
@@ -55,7 +59,7 @@ func CheckPanic() {
 func CatchStack(skip int) []byte {
 	buf := &bytes.Buffer{}
 	if err := recover(); err != nil {
-		for i := 1; i <= skip; i++ {
+		for i := 0; i <= skip; i++ {
 			pc, file, line, ok := runtime.Caller(i)
 			if !ok {
 				break
