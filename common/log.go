@@ -88,7 +88,7 @@ func newfile(now time.Time) {
 	filename := filepath.Join(logDir, fmt.Sprintf("%s.%s.log", filepath.Base(os.Args[0]), now.Format(logtmFmtTime)))
 
 	//创建文件
-	fp, err := os.OpenFile(filename, os.O_CREATE, 0666)
+	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, now.Format(logtmFmtMissMS), "open log file", filename, err, "use STDOUT")
 	} else {
@@ -104,11 +104,11 @@ func checkLogExist() {
 		return
 	}
 
-	if logLock.TryLock() {
-		defer logLock.Unlock()
-	} else {
+	if !logLock.TryLock() {
 		return
 	}
+
+	defer logLock.Unlock()
 
 	loc, _ := time.LoadLocation(logTimeZone)
 	now := time.Now().In(loc)
@@ -141,6 +141,13 @@ func writeLog(levelName string, message interface{}) {
 	}
 
 	buf.WriteString("\n")
+
+	if logFile == "" {
+		now := time.Now().In(logtmLoc)
+		fmt.Fprintln(os.Stdout, now.Format(logtmFmtMissMS), "open log file", "use stdout")
+		os.Stdout.WriteString(buf.String())
+		return
+	}
 
 	//开始写日志，这里需要对文件句柄进行加锁
 	logLock.Lock()
