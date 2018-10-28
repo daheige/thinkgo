@@ -154,34 +154,34 @@ func writeLog(levelName string, message interface{}) {
 	fp.WriteString(buf.String())
 }
 
-func Debug(V interface{}) {
+func DebugLog(V interface{}) {
 	writeLog("debug", V)
 }
 
-func Info(V interface{}) {
+func InfoLog(V interface{}) {
 	writeLog("info", V)
 }
 
-func Notice(V interface{}) {
+func NoticeLog(V interface{}) {
 	writeLog("notice", V)
 }
 
-func Warn(V interface{}) {
+func WarnLog(V interface{}) {
 	writeLog("warn", V)
 }
 
-func Error(V interface{}) {
+func ErrorLog(V interface{}) {
 	writeLog("error", V)
 }
 
-func Crit(V interface{}) {
+func CritLog(V interface{}) {
 	writeLog("crit", V)
 }
 
-func Alter(V interface{}) {
+func AlterLog(V interface{}) {
 	writeLog("alter", V)
 }
 
-func Emerg(V interface{}) {
+func EmergLog(V interface{}) {
 	writeLog("emerg", V)
 }
