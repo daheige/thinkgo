@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -25,28 +26,34 @@ func CopyFile(distName, srcName string) (w int64, err error) {
 	return io.Copy(dist, src)
 }
 
-func StoreGobData(data interface{}, fileName string) {
+func StoreGobData(data interface{}, fileName string) error {
 	buf := new(bytes.Buffer) //创建写入缓冲区
 	//创建gob编码器
 	encoder := gob.NewEncoder(buf)
 	err := encoder.Encode(data) //将data数据编码到缓冲区
 	if err != nil {
-		panic(err)
+		log.Println("encode gob data error: ", err.Error())
+		return err
 	}
 
 	//将缓冲区中已编码的数据写入文件中
 	err = ioutil.WriteFile(fileName, buf.Bytes(), 0644)
 	if err != nil {
-		panic(err)
+		log.Println("write gob data error: ", err.Error())
+		return err
 	}
+
+	return nil
 }
 
 //将gob写入的内容，载入到data中
 func LoadGobData(data interface{}, fileName string) {
 	raw, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		panic(err)
+		log.Println("read gob data error: ", err.Error())
+		return
 	}
+
 	//根据这些原始数据，创建缓冲区
 	buf := bytes.NewBuffer(raw)
 	//将数据解码到缓冲区 (为缓冲区创建解码器)
@@ -54,6 +61,7 @@ func LoadGobData(data interface{}, fileName string) {
 	//解码数据到data中
 	err = dec.Decode(data)
 	if err != nil {
-		panic(err)
+		log.Println("get gob data error: ", err.Error())
+		return
 	}
 }

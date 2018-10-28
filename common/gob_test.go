@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"log"
 	"testing"
 )
 
@@ -11,14 +12,18 @@ type Post struct {
 	Job  string
 }
 
-func Test_gob_store_load(t *testing.T) {
+func TestGobStoreLoad(t *testing.T) {
 	fmt.Println("gob文件读写")
 	post := Post{
 		Id:   1,
-		Name: "heige",
-		Job:  "goer",
+		Name: "heige313",
+		Job:  "goer php",
 	}
-	StoreGobData(post, "post_gob.md")
+	err := StoreGobData(post, "post_gob.md")
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	//从文件中载入gob写入的文件内容到post
 	var postData Post
