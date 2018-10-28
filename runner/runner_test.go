@@ -8,8 +8,8 @@ import (
 
 func TestRunner(t *testing.T) {
 	log.Println("======开始执行任务=======")
-	timeout := 3 * time.Second //任务超时为3s
-	r := NewRunner(timeout)    //创建一个runner
+	timeout := 10 * time.Second //任务超时为3s
+	r := New(timeout)           //创建一个runner
 	for i := 0; i < 1000; i++ {
 		r.Add(createTask(i))
 	}

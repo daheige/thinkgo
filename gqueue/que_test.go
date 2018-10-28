@@ -6,9 +6,11 @@ import (
 )
 
 func TestQue(t *testing.T) {
-	q := New(10, 100)
 
-	for i := 0; i < 1001; i++ {
+	taskCnt := 1000
+	q := New(10, taskCnt)
+
+	for i := 0; i < taskCnt; i++ {
 		index := i
 
 		q.Add(task(index))
@@ -36,3 +38,11 @@ func task(i int) func() interface{} {
 		return i
 	}
 }
+
+/**
+ * $ go test -v -test.run TestQue
+ * 2018/10/28 15:06:00 all task has finished
+--- PASS: TestQue (0.02s)
+PASS
+ok  	thinkgo/gqueue	0.020s
+*/

@@ -10,24 +10,28 @@ import (
 )
 
 type Queue struct {
-	number            int                     //并发执行的任务个数(分成多少个goroutine来执行任务)
-	Total             int                     //任务总数
+	goroutineNumber   int                     //并发执行任务所需要的goroutine个数
+	taskTotal         int                     //执行任务的总数
 	tasks             chan func() interface{} //任务放置在缓冲通道中
 	task_callback     func(res interface{})   //每个任务执行后的回调函数
 	finished_callback func()                  //所有任务执行完毕后的回调
-	wg                sync.WaitGroup
+	wg                sync.WaitGroup          //保证goroutine同步执行的信号计数器
 }
 
 //创建一个任务队列实例
 func New(number, total int) *Queue {
+	if total < 1 {
+		panic("task total number must gt 1")
+	}
+
 	if number > total {
 		number = total
 	}
 
 	return &Queue{
-		number: number,
-		Total:  total,
-		tasks:  make(chan func() interface{}, total), //缓冲通道个数是total,类型是func() interface{}
+		goroutineNumber: number,
+		taskTotal:       total,
+		tasks:           make(chan func() interface{}, total), //缓冲通道个数是total,类型是func() interface{}
 	}
 }
 
@@ -36,10 +40,10 @@ func (this *Queue) Start() {
 	defer close(this.tasks) //任务执行完毕后,关闭通道
 
 	//设置计数信号个数
-	this.wg.Add(this.Total)
+	this.wg.Add(this.taskTotal)
 
-	//通过number个goroutine来执行task
-	for i := 0; i < this.number; i++ {
+	//通过goroutineNumber个goroutine来执行task
+	for i := 0; i < this.goroutineNumber; i++ {
 		runtime.Gosched() //让出cpu给其他goroutine
 		go this.work()    //对每个任务开启独立goroutine执行
 	}
@@ -75,7 +79,7 @@ func (this *Queue) work() {
 
 //添加任务
 func (this *Queue) Add(task func() interface{}) {
-	if len(this.tasks) <= this.Total-1 { //防止缓冲通道个数超出边界个数total
+	if len(this.tasks) <= this.taskTotal-1 { //防止缓冲通道个数超出边界个数total
 		this.tasks <- task
 	}
 }

@@ -28,10 +28,19 @@ var ErrInterrupt = errors.New("received interrupt signal")
 type Runner struct {
 	tasks      []func()         //需要执行的任务func,依次执行的任务
 	complete   chan error       //报告处理任务已完成
-	timeout    <-chan time.Time //任务多久可以执行完毕，只能接受通道中的值
+	timeout    <-chan time.Time //所有任务多久可以执行完毕，只能接受通道中的值
 	interrupt  chan os.Signal   //可以控制强制终止的信号
 	hasDone    []int            //已经执行完成的task key编号
 	lastTaskId int              //最后一次完成的任务id
+}
+
+//定义一个工厂函数创建runner
+func New(t time.Duration) *Runner {
+	return &Runner{
+		complete:  make(chan error),
+		timeout:   time.After(t),           //time.After返回time.Time类型的通道
+		interrupt: make(chan os.Signal, 1), //声明一个中断信号
+	}
 }
 
 //将需要执行的任务添加到runner中
@@ -100,14 +109,5 @@ func (r *Runner) isInterrupt() bool {
 		return true
 	default:
 		return false //默认继续运行任务
-	}
-}
-
-//定义一个工厂函数创建runner
-func NewRunner(t time.Duration) *Runner {
-	return &Runner{
-		complete:  make(chan error),
-		timeout:   time.After(t),           //time.After返回time.Time类型的通道
-		interrupt: make(chan os.Signal, 1), //声明一个中断信号
 	}
 }
