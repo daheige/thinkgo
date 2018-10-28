@@ -134,7 +134,12 @@ func writeLog(levelName string, message interface{}) {
 		buf.WriteString(fmt.Sprintf("%s %s %s line:[%d]:", now.Format(logtmFmtMissMS), levelName, filepath.Base(file), line))
 	}
 
-	buf.WriteString(fmt.Sprintf("%v", message))
+	if v, ok := message.(string); ok {
+		buf.WriteString(v)
+	} else {
+		buf.WriteString(fmt.Sprintf("%v", message))
+	}
+
 	buf.WriteString("\n")
 
 	//开始写日志，这里需要对文件句柄进行加锁
@@ -154,34 +159,34 @@ func writeLog(levelName string, message interface{}) {
 	fp.WriteString(buf.String())
 }
 
-func DebugLog(V interface{}) {
-	writeLog("debug", V)
+func DebugLog(v interface{}) {
+	writeLog("debug", v)
 }
 
-func InfoLog(V interface{}) {
-	writeLog("info", V)
+func InfoLog(v interface{}) {
+	writeLog("info", v)
 }
 
-func NoticeLog(V interface{}) {
-	writeLog("notice", V)
+func NoticeLog(v interface{}) {
+	writeLog("notice", v)
 }
 
-func WarnLog(V interface{}) {
-	writeLog("warn", V)
+func WarnLog(v interface{}) {
+	writeLog("warn", v)
 }
 
-func ErrorLog(V interface{}) {
-	writeLog("error", V)
+func ErrorLog(v interface{}) {
+	writeLog("error", v)
 }
 
-func CritLog(V interface{}) {
-	writeLog("crit", V)
+func CritLog(v interface{}) {
+	writeLog("crit", v)
 }
 
-func AlterLog(V interface{}) {
-	writeLog("alter", V)
+func AlterLog(v interface{}) {
+	writeLog("alter", v)
 }
 
-func EmergLog(V interface{}) {
-	writeLog("emerg", V)
+func EmergLog(v interface{}) {
+	writeLog("emerg", v)
 }
