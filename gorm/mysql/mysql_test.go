@@ -35,6 +35,7 @@ func TestGorm(t *testing.T) {
 		Database:     "test",
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
+		ParseTime:    true,
 	}
 
 	//设置db engine name

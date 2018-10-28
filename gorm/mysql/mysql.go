@@ -97,6 +97,10 @@ func (conf *DbConf) initDb() error {
 		conf.Collation = "utf8mb4_unicode_ci"
 	}
 
+	if conf.Loc == "" {
+		conf.Loc = "Local"
+	}
+
 	//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
 	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
 		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
