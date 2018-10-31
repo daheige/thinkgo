@@ -1,0 +1,13 @@
+#配置文件
+AppEnv: "local"
+AppName: hg-mux
+
+#redis配置
+RedisCommon:
+  Host: 127.0.0.1
+  Port: 6379
+  Password:
+  Database: 0
+  MaxIdle: 3
+  MaxActive: 10
+  IdleTimeout: 120
