@@ -2,7 +2,9 @@ package common
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 )
@@ -10,14 +12,25 @@ import (
 func TestLog(t *testing.T) {
 	t.Log("测试ilog库")
 	SetLogDir("/web/wwwlogs/ilog")
-	InfoLog("111222")
-	DebugLog("this is debug: 111222")
-	ErrorLog("error msg: 111222")
-	NoticeLog("notice msg: 111222")
-	WarnLog("warning: 111222")
-	CritLog("crit msg: 111222")
-	AlterLog("alter: 111222")
-	EmergLog("emerg msg: 111222")
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			InfoLog("111222")
+			DebugLog("this is debug: 111222")
+			ErrorLog("error msg: 111222")
+			NoticeLog("notice msg: 111222")
+			WarnLog("warning: 111222")
+			CritLog("crit msg: 111222")
+			AlterLog("alter: 111222")
+			EmergLog("emerg msg: 111222")
+		}()
+	}
+
+	wg.Wait()
+	log.Println("write log success")
 
 	loc, _ := time.LoadLocation(logTimeZone)
 	now := time.Now().In(loc)

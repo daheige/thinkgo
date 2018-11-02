@@ -7,7 +7,7 @@
 package common
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,7 +45,8 @@ var (
 	logTicker       = time.NewTicker(time.Second) //time一次性触发器
 	logDay          = 0                           //当前日期
 	logTime         = true                        //默认显示时间和行号，参考 SetLogTime 方法
-	logTimeZone     = "PRC"                       //time zone default prc
+	logTimeZone     = "Local"                     //time zone default Local/Shanghai
+	logtmFmtWithMS  = "2006-01-02 15:04:05.999"
 	logtmFmtMissMS  = "2006-01-02 15:04:05"
 	logtmFmtTime    = "2006-01-02"
 	defaultLogLevel = INFO //默认为INFO级别
@@ -88,9 +89,9 @@ func newfile(now time.Time) {
 	filename := filepath.Join(logDir, fmt.Sprintf("%s.%s.log", filepath.Base(os.Args[0]), now.Format(logtmFmtTime)))
 
 	//创建文件
-	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
+	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, now.Format(logtmFmtMissMS), "open log file", filename, err, "use STDOUT")
+		fmt.Println(now.Format(logtmFmtMissMS), "open log file", filename, err, "use STDOUT")
 	} else {
 		fp.Close()
 		logFile = filename
@@ -126,26 +127,25 @@ func writeLog(levelName string, message interface{}) {
 	//检测日志文件是否存在
 	checkLogExist()
 
-	//先写入buf
-	var buf bytes.Buffer
+	//对日志内容转换为bytes
+	var strBytes []byte
 	if logTime {
 		_, file, line, _ := runtime.Caller(2)
 		now := time.Now().In(logtmLoc)
-		buf.WriteString(fmt.Sprintf("%s %s %s line:[%d]:", now.Format(logtmFmtMissMS), levelName, filepath.Base(file), line))
-	}
-
-	if v, ok := message.(string); ok {
-		buf.WriteString(v)
+		strBytes = []byte(fmt.Sprintf("%s %s %s line:[%d]: %v", now.Format(logtmFmtWithMS), levelName, filepath.Base(file), line, message))
 	} else {
-		buf.WriteString(fmt.Sprintf("%v", message))
+		if v, ok := message.(string); ok {
+			strBytes = []byte(v)
+		} else {
+			strBytes = []byte(fmt.Sprintf("%v", message))
+		}
 	}
 
-	buf.WriteString("\n")
-
+	//追加换行符
+	strBytes = append(strBytes, []byte("\n")...)
 	if logFile == "" {
 		now := time.Now().In(logtmLoc)
-		fmt.Fprintln(os.Stdout, now.Format(logtmFmtMissMS), "open log file", "use stdout")
-		os.Stdout.WriteString(buf.String())
+		fmt.Println(now.Format(logtmFmtMissMS), "open log file", "use stdout")
 		return
 	}
 
@@ -153,17 +153,28 @@ func writeLog(levelName string, message interface{}) {
 	logLock.Lock()
 	defer logLock.Unlock()
 
-	//将内容写入文件中
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		now := time.Now().In(logtmLoc)
-		fmt.Fprintln(os.Stdout, now.Format(logtmFmtMissMS), "open log file", logFile, err, "use stdout")
-		os.Stdout.WriteString(buf.String())
+		fmt.Println(now.Format(logtmFmtMissMS), "open log file", logFile, err, "use stdout")
 		return
 	}
 
 	defer fp.Close()
-	fp.WriteString(buf.String())
+
+	//将内容写入bufio中
+	buf := bufio.NewWriterSize(fp, len(strBytes))
+	if _, err := buf.Write(strBytes); err != nil {
+		fmt.Println("write message to buf error: ", err)
+		return
+	}
+
+	//将缓冲区中的内容写入文件中
+	err = buf.Flush()
+	if err != nil {
+		fmt.Println("write message to file error: ", err)
+		return
+	}
 }
 
 func DebugLog(v interface{}) {
