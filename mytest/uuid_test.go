@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"thinkgo/common"
 	"time"
+
+	"github.com/daheige/thinkgo/common"
 )
 
 func TestUuid(t *testing.T) {

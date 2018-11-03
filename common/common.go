@@ -15,8 +15,9 @@ import (
 	"runtime"
 	"strconv"
 	"syscall"
-	"thinkgo/crypto"
 	"time"
+
+	"github.com/daheige/thinkgo/crypto"
 )
 
 var localTimeZone = "PRC" //time zone default prc

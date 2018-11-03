@@ -3,7 +3,8 @@ package mytest
 import (
 	"encoding/json"
 	"testing"
-	myjson "thinkgo/jsoniter"
+
+	myjson "github.com/daheige/thinkgo/jsoniter"
 )
 
 //测试github.com/json-iterator/go
