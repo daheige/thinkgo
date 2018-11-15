@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	myjson "github.com/daheige/thinkgo/jsoniter"
+	myjson "thinkgo/jsoniter"
 )
 
 //测试github.com/json-iterator/go

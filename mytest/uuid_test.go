@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/daheige/thinkgo/common"
+	"thinkgo/common"
 )
 
 func TestUuid(t *testing.T) {

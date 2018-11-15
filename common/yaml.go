@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/go-yaml/yaml"
 )
 
 //配置文件结构体

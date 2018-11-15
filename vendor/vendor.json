@@ -39,10 +39,16 @@
 			"revisionTime": "2018-01-25T05:47:45Z"
 		},
 		{
-			"checksumSHA1": "CbzNfOvaT1G3G9WILmsyjYfYTO0=",
+			"checksumSHA1": "eaIwEkI9aDcRAUqq2nlt7BHLd7Q=",
+			"path": "github.com/go-yaml/yaml",
+			"revision": "51d6538a90f86fe93ac480b35f37b2be17fef232",
+			"revisionTime": "2018-11-15T11:05:04Z"
+		},
+		{
+			"checksumSHA1": "GaJLoEuMGnP5ofXvuweAI4wx06U=",
 			"path": "github.com/golang/protobuf/proto",
-			"revision": "b27b920f9e71b439b873b17bf99f56467623814a",
-			"revisionTime": "2018-08-21T05:17:52Z"
+			"revision": "1918e1ff6ffd2be7bed0553df8650672c3bfe80d",
+			"revisionTime": "2018-10-30T15:47:21Z"
 		},
 		{
 			"checksumSHA1": "w3QCCIYHgZzIXQ+xTl7oLfFrXHs=",
@@ -123,5 +129,5 @@
 			"revisionTime": "2018-03-28T19:50:20Z"
 		}
 	],
-	"rootPath": "github.com/daheige/thinkgo"
+	"rootPath": "thinkgo"
 }
