@@ -18,8 +18,11 @@
     ├── WatchDog    监控狗,用以监控容易失控的循环或超时
     └── work        利用无缓冲chan创建goroutine池来控制一组task的执行
 # 使用说明
-    cd $GOPATH
-    git clone https://github.com/daheige/thinkgo.git
-    切换到对应的目录进行 go install编译包
+    1. 下载thinkgo包
+        cd $GOPATH
+        git clone https://github.com/daheige/thinkgo.git
+    2. 安装govendor go第三方包管理工具
+        go get -u github.com/kardianos/govendor
+    3. 切换到对应的目录进行 go install编译包
 # License
     MIT
