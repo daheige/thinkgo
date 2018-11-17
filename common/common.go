@@ -250,3 +250,17 @@ func StrToInt64(s string) int64 {
 func StrJoin(sep string, str ...string) string {
 	return strings.Join(str, sep)
 }
+
+//通过buf缓冲区的方式连接字符串
+func StrJoinByBuf(str ...string) string {
+	if len(str) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	for _, s := range str {
+		buf.WriteString(s)
+	}
+
+	return buf.String()
+}
