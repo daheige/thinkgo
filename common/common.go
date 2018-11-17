@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -243,4 +244,9 @@ func StrToInt64(s string) int64 {
 	} else {
 		return i64
 	}
+}
+
+//多个字符串按照指定的分隔符进行拼接
+func StrJoin(sep string, str ...string) string {
+	return strings.Join(str, sep)
 }
