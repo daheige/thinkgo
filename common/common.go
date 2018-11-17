@@ -129,7 +129,7 @@ func RndUuid() string {
 
 func RndUuidMd5() string {
 	ns := time.Now().UnixNano()
-	rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(RandInt64(1000, 9999), 10)
+	rndStr := StrJoin("", strconv.FormatInt(ns, 10), strconv.FormatInt(RandInt64(1000, 9999), 10))
 	return crypto.Md5(rndStr)
 }
 
