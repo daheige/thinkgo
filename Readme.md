@@ -1,6 +1,6 @@
 # Thinkgo
     Common library and components for go web and restful api.
-# govendor管理第三包
+# govendor manage go package
     采用govendor机制引入第三包
 # About package
     .
@@ -17,7 +17,7 @@
     ├── runner      runner按照顺序，执行任务操作，可作为cron作业或定时任务  
     ├── WatchDog    监控狗,用以监控容易失控的循环或超时
     └── work        利用无缓冲chan创建goroutine池来控制一组task的执行
-# 使用说明
+# use help
     1. 下载thinkgo包
         cd $GOPATH
         git clone https://github.com/daheige/thinkgo.git
