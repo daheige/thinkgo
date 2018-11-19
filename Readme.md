@@ -18,11 +18,15 @@
     ├── WatchDog    监控狗,用以监控容易失控的循环或超时
     └── work        利用无缓冲chan创建goroutine池来控制一组task的执行
 # Use help
-    1. 下载thinkgo包
-        cd $GOPATH
-        git clone https://github.com/daheige/thinkgo.git
-    2. 安装govendor go第三方包管理工具
-        go get -u github.com/kardianos/govendor
-    3. 切换到对应的目录进行 go install编译包
+    如果是采用govendor管理包请按照如下方式进行：
+        1. 下载thinkgo包
+            cd $GOPATH
+            git clone https://github.com/daheige/thinkgo.git
+        2. 安装govendor go第三方包管理工具
+            go get -u github.com/kardianos/govendor
+        3. 切换到对应的目录进行 go install编译包
+    如果采用go mod (golang1.11版本+)
+        1. 请直接执行go mod tidy # 下载依赖包和去掉多余的包
+        2. go mod vendor #将包移动到vendor下
 # License
     MIT

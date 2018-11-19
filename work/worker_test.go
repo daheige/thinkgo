@@ -71,7 +71,7 @@ func TestWork(t *testing.T) {
 $ time go test -v -test.run TestWork
 --- PASS: TestWork (0.03s)
 PASS
-ok  	thinkgo/work	0.028s
+ok  	github.com/daheige/thinkgo/work	0.028s
 
 real	0m0.340s
 user	0m0.395s
@@ -83,7 +83,7 @@ sys	0m0.082s
 $ go test -v -test.run TestPool
 --- PASS: TestPool2 (0.20s)
 PASS
-ok      thinkgo/work    0.379s
+ok      github.com/daheige/thinkgo/work    0.379s
 */
 func TestPool(t *testing.T) {
 	p := New(10) //使用10个goroutine 来创建工作池
@@ -118,7 +118,7 @@ func TestPool(t *testing.T) {
 $ go test -v -test.run TestPool2
 --- PASS: TestPool2 (0.17s)
 PASS
-ok      thinkgo/work    1.808s
+ok      github.com/daheige/thinkgo/work    1.808s
 */
 //无缓冲通道的同步执行任务
 func TestPool2(t *testing.T) {

@@ -70,5 +70,5 @@ $ go test -v
     md5_test.go:41: ebc加密后: 036B626594702270
     md5_test.go:42: ebc解密: 123456
 PASS
-ok      thinkgo/crypto  0.002s
+ok      github.com/daheige/thinkgo/crypto  0.002s
 */

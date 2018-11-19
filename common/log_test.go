@@ -49,7 +49,7 @@ Log.go
 --- PASS: TestLog (0.00s)
 	log_test.go:11: 测试ilog库
 PASS
-ok  	thinkgo/common	0.007s
+ok  	github.com/daheige/thinkgo/common	0.007s
  * 日志格式：
 2018-10-27 22:34:39 info log_test.go line:[13]:111222
 2018-10-27 22:34:39 debug log_test.go line:[14]:this is debug: 111222

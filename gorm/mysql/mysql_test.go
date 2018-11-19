@@ -83,6 +83,6 @@ func testFind(wg *sync.WaitGroup) {
  * 2018/10/27 12:31:48 test success
 --- PASS: TestGorm (1.38s)
 PASS
-ok      thinkgo/gorm/mysql  1.392s
+ok      github.com/daheige/thinkgo/gorm/mysql  1.392s
 
 */

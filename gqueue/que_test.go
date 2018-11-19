@@ -44,5 +44,5 @@ func task(i int) func() interface{} {
  * 2018/10/28 15:06:00 all task has finished
 --- PASS: TestQue (0.02s)
 PASS
-ok  	thinkgo/gqueue	0.020s
+ok  	github.com/daheige/thinkgo/gqueue	0.020s
 */

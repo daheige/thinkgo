@@ -43,5 +43,5 @@ func createTask(id int) func() {
 2018/09/16 21:38:45 最后执行的task id:  76
 --- PASS: TestRunner (3.00s)
 PASS
-ok  	thinkgo/runner	3.003s
+ok  	github.com/daheige/thinkgo/runner	3.003s
 */

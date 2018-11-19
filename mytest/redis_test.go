@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"thinkgo/common"
+	"github.com/daheige/thinkgo/common"
 
 	"github.com/gomodule/redigo/redis"
 )
