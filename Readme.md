@@ -20,12 +20,12 @@
 # Use help
     如果是采用govendor管理包请按照如下方式进行：
         1. 下载thinkgo包
-            cd $GOPATH
+            cd $GOPATH/src
             git clone https://github.com/daheige/thinkgo.git
         2. 安装govendor go第三方包管理工具
             go get -u github.com/kardianos/govendor
         3. 切换到对应的目录进行 go install编译包
-    如果采用go mod (golang1.11版本+)
+    如果采用go mod (golang1.11版本+) 不需要将该包放在$GOPATH/src，只需要在使用的项目中引入就可以。
         1. 请直接执行go mod tidy # 下载依赖包和去掉多余的包
         2. go mod vendor #将包移动到vendor下
 # License
