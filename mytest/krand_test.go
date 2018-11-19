@@ -3,7 +3,7 @@ package mytest
 import (
 	"testing"
 
-	"thinkgo/common"
+	"github.com/daheige/thinkgo/common"
 )
 
 /**

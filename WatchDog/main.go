@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"thinkgo/common"
+	"github.com/daheige/thinkgo/common"
 )
 
 type WatchDog struct {
