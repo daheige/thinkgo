@@ -30,7 +30,7 @@ const (
 var LogLevelMap = map[string]int{
 	EMERGENCY: 600,
 	ALERT:     550,
-	CRIT:      550,
+	CRIT:      500,
 	ERR:       400,
 	WARN:      300,
 	NOTICE:    250,

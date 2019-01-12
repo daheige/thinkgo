@@ -13,7 +13,7 @@ const (
 	DefaultExpiration time.Duration = 0
 )
 
-//
+//item define
 type Item struct {
 	Object     interface{}
 	Expiration int64
@@ -33,7 +33,7 @@ type Cache struct {
 	*cache
 }
 
-//
+//cache struct
 type cache struct {
 	defaultExpiration time.Duration
 	items             map[string]Item
@@ -43,7 +43,6 @@ type cache struct {
 }
 
 //cache function
-
 // Add an item to the cache, replacing any existing item.
 func (c *cache) Set(k string, x interface{}, d time.Duration) {
 	var e int64
