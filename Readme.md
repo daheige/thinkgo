@@ -1,5 +1,5 @@
 # Thinkgo
-    Common library and components for go web and restful api.
+    Public libraries and components for glang development.
 # Package manage
     golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
     golang1.11+版本，可采用go mod机制管理包
