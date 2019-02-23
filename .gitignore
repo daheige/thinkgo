@@ -1,4 +1,3 @@
 common/*.md
 *.log
 common/**/*.log
-vendor/github.com/*

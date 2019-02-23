@@ -1,17 +1,20 @@
 # Thinkgo
     Common library and components for go web and restful api.
 # Package manage
-    采用govendor机制引入第三包
+    golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
+    golang1.11+版本，可采用go mod机制管理包
+
 # About package
     .
     ├── bitSet      bitSet位图实现，将int数放到内存中进行curd操作
-    ├── cache       go实现cache的存储
+    ├── cache       基于key/val内存缓存设计，支持过期时间设置
     ├── common      公共函数库,包含Time,Lock,Log,redis操作,uuid生成,yaml读取等
     ├── crypto      md5,sha1,sha1File,cbc256,ecb,aes加解密函数等
     ├── GoPool      批量执行task pool池
-    ├── gorm        gorm/mysql封装
+    ├── mysql       gorm/mysql封装
     ├── gqueue      通过指定goroutine个数,实现task queue执行器
     ├── http        gin restful定义success,error函数等
+    ├── inMemcache  通过接口的形式实现内存cache实现kv存储
     ├── jsoniter    json优化库使用     
     ├── rbmq        rbmq连接封装
     ├── runner      runner按照顺序，执行任务操作，可作为cron作业或定时任务  

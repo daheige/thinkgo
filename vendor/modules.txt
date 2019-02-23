@@ -30,6 +30,9 @@ github.com/modern-go/reflect2
 github.com/streadway/amqp
 # github.com/ugorji/go/codec v0.0.0-20181119085900-ce1d12656603
 github.com/ugorji/go/codec
+# golang.org/x/xerrors v0.0.0-20190212162355-a5947ffaace3
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
 # gopkg.in/go-playground/validator.v8 v8.18.2
 gopkg.in/go-playground/validator.v8
 # gopkg.in/yaml.v2 v2.2.1
