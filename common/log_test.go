@@ -14,10 +14,13 @@ func TestLog(t *testing.T) {
 	SetLogDir("/web/wwwlogs/ilog")
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100000; i++ {
-		wg.Add(1)
+	var nums int = 3 * 1e5 //30w日志写入磁盘
+	wg.Add(nums)           //一次性计数器设置，保证独立携程都成处理完毕
+
+	for i := 0; i < nums; i++ {
 		go func() {
 			defer wg.Done()
+
 			InfoLog("111222")
 			DebugLog("this is debug: 111222")
 			ErrorLog("error msg: 111222")
@@ -42,21 +45,30 @@ func TestLog(t *testing.T) {
 }
 
 /**
+ * 测试写入240w日志
  * go test -v -test.run=TestLog
-=== RUN   TestLog
-2018-10-28
-Log.go
---- PASS: TestLog (0.00s)
-	log_test.go:11: 测试ilog库
-PASS
-ok  	github.com/daheige/thinkgo/common	0.007s
- * 日志格式：
-2018-10-27 22:34:39 info log_test.go line:[13]:111222
-2018-10-27 22:34:39 debug log_test.go line:[14]:this is debug: 111222
-2018-10-27 22:34:39 error log_test.go line:[15]:error msg: 111222
-2018-10-27 22:34:39 notice log_test.go line:[16]:notice msg: 111222
-2018-10-27 22:34:39 warn log_test.go line:[17]:warning: 111222
-2018-10-27 22:34:39 crit log_test.go line:[18]:crit msg: 111222
-2018-10-27 22:34:39 alter log_test.go line:[19]:alter: 111222
-2018-10-27 22:34:39 emerg log_test.go line:[20]:emerg msg: 111222
+//将log.go 加锁方式改成 NewMutexLock 测试报告
+	$ go test -v -run=TestLog
+	=== RUN   TestLog
+	2019/02/26 23:23:18 write log success
+	2019-02-26
+	Log.go
+	--- PASS: TestLog (81.66s)
+	    log_test.go:13: 测试ilog库
+	PASS
+	ok  	github.com/daheige/thinkgo/common	81.738s
+
+//将log.go 加锁方式改成 NewChanLock 测试报告
+	=== RUN   TestLog
+	2019/02/26 23:31:00 write log success
+	2019-02-26
+	Log.go
+	--- PASS: TestLog (82.13s)
+	    log_test.go:13: 测试ilog库
+	PASS
+	ok  	github.com/daheige/thinkgo/common	82.215s
+
+在golang底层，channel的实现是通过互斥锁和数组的方式实现的
+而且还有一些其他字段的同步，因此sync实现的乐观锁的效率比用chan实现互斥锁更快
+在大量的读写或者大量的i/o操作下，sync互斥锁实现的乐观锁，效率相对来说高一点
 */

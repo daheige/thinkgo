@@ -39,9 +39,10 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logDir          = ""                          //日志文件存放目录
-	logFile         = ""                          //日志文件
-	logLock         = NewChanLock()               //采用管道枷锁方式
+	logDir  = ""             //日志文件存放目录
+	logFile = ""             //日志文件
+	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
+	// logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
 	logTicker       = time.NewTicker(time.Second) //time一次性触发器
 	logDay          = 0                           //当前日期
 	logTime         = true                        //默认显示时间和行号，参考 SetLogTime 方法
