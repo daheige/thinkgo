@@ -27,6 +27,7 @@ func Test_chanLock(t *testing.T) {
 			defer wg.Done()
 			lock.Lock()
 			defer lock.Unlock()
+
 			v := count
 			log.Println("current count: ", v)
 			v++

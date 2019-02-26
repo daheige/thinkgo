@@ -165,14 +165,16 @@ func writeLog(levelName string, message interface{}) {
 	//将内容写入bufio中
 	buf := bufio.NewWriterSize(fp, len(strBytes))
 	if _, err := buf.Write(strBytes); err != nil {
-		fmt.Println("write message to buf error: ", err)
+		fmt.Println("write log to buf error: ", err)
+		fmt.Println("current log: ", string(strBytes))
 		return
 	}
 
 	//将缓冲区中的内容写入文件中
 	err = buf.Flush()
 	if err != nil {
-		fmt.Println("write message to file error: ", err)
+		fmt.Println("flush log to file error: ", err)
+		fmt.Println("current log: ", string(strBytes))
 		return
 	}
 }

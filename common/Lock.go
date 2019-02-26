@@ -42,6 +42,7 @@ func (this *Lock) Lock() {
 		if atomic.CompareAndSwapInt32(&this.flag, unlock, locked) {
 			return
 		}
+
 		<-this.unlockChan
 	}
 }
@@ -53,6 +54,7 @@ func (this *Lock) SpinLock(count int) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
