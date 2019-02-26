@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -202,7 +201,7 @@ func (c *ConfigEngine) GetFloat64(name string, defaultValue float64) float64 {
 // name是yaml定义的结构体名称
 func (c *ConfigEngine) GetStruct(name string, s interface{}) interface{} {
 	d := c.Get(name)
-	log.Printf("%T", d)
+	// log.Printf("%T", d)
 	switch d.(type) {
 	case string:
 		SetField(s, name, d)
@@ -223,9 +222,10 @@ func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
 		}
 
 		//打印k,v
-		log.Println("k = ", k)
+		/*log.Println("k = ", k)
 		log.Printf("k type = %T\n", k)
-		log.Println("v = ", v)
+		log.Println("v = ", v)*/
+
 		if val, ok := k.(string); ok {
 			err := SetField(obj, val, v)
 			if err != nil {
