@@ -202,6 +202,7 @@ func (c *ConfigEngine) GetFloat64(name string, defaultValue float64) float64 {
 func (c *ConfigEngine) GetStruct(name string, s interface{}) interface{} {
 	d := c.Get(name)
 	// log.Printf("%T", d)
+
 	switch d.(type) {
 	case string:
 		SetField(s, name, d)
