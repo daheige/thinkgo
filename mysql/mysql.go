@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
@@ -38,6 +39,12 @@ type DbConf struct {
 	Loc          string   //时区字符串 Local,PRC
 	engineName   string   //当前数据库连接句柄标识
 	dbObj        *gorm.DB //当前数据库连接句柄
+	SqlCmd       bool     //sql语句是否输出到终端,true输出到终端
+	UsePool      bool     //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+
+	//默认采用gorm log输出sql语句到终端
+	//当 defaultLogType=true,就采用自定义的stdout输出sql日志
+	defaultLogType bool
 }
 
 //给当前数据库指定engineName
@@ -45,8 +52,9 @@ func (conf *DbConf) SetEngineName(name string) {
 	conf.engineName = name
 }
 
-//给当前数据库指定一个engine name,并建立连接池
-func (conf *DbConf) SetDbPool() error {
+//创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
+//为兼容之前的版本，这里新增SetDb创建db对象
+func (conf *DbConf) SetDbObj() error {
 	if conf.engineName == "" {
 		panic("name must be not null")
 	}
@@ -58,6 +66,18 @@ func (conf *DbConf) SetDbPool() error {
 
 	engineMap[conf.engineName] = conf.dbObj
 	return nil
+}
+
+//设置日志自定义os.Stdout输出格式
+func (conf *DbConf) setLogType(flag bool) {
+	conf.defaultLogType = flag
+}
+
+//设置db pool连接池
+func (conf *DbConf) SetDbPool() error {
+	conf.UsePool = true
+
+	return conf.SetDbObj()
 }
 
 //关闭当前数据库连接
@@ -75,11 +95,12 @@ func (conf *DbConf) Close() error {
 	return errors.New("current db engine not exist")
 }
 
+//返回当前db对象
 func (conf *DbConf) Db() *gorm.DB {
 	return conf.dbObj
 }
 
-//建立db连接对象，并非真正连接db,只有在用的时候才会建立db连接
+//建立db对象，并非真正连接db,只有在用的时候才会建立db连接
 func (conf *DbConf) initDb() error {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
@@ -109,9 +130,19 @@ func (conf *DbConf) initDb() error {
 		return errors.New("set gorm.DB failed")
 	}
 
+	//将sql打印到终端
+	if conf.SqlCmd {
+		db.LogMode(true)
+		if conf.defaultLogType { //采用os.Stdout输出日志格式
+			db.SetLogger(log.New(os.Stdout, "\r\n", log.LstdFlags))
+		}
+	}
+
 	//设置连接池
-	db.DB().SetMaxIdleConns(conf.MaxIdleConns)
-	db.DB().SetMaxOpenConns(conf.MaxOpenConns)
+	if conf.UsePool {
+		db.DB().SetMaxIdleConns(conf.MaxIdleConns)
+		db.DB().SetMaxOpenConns(conf.MaxOpenConns)
+	}
 
 	conf.dbObj = db
 	return nil
