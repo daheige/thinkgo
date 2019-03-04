@@ -36,7 +36,10 @@ func TestGorm(t *testing.T) {
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
 		ParseTime:    true,
+		SqlCmd:       true,
 	}
+
+	dbconf.setLogType(true)
 
 	//设置db engine name
 	dbconf.SetEngineName("default")
@@ -61,12 +64,13 @@ func TestGorm(t *testing.T) {
 }
 
 func testFind(wg *sync.WaitGroup) {
-	for i := 0; i < 10000; i++ {
+	db, err := GetDbObj("default")
+	defer db.Close() //当我们在这里进行关了db close相当于断开连接
+
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			db, err := GetDbObj("default")
-			// defer db.Close() //当我们在这里进行关了db close相当于断开连接
 
 			if err != nil {
 				log.Println("get db error: ", err.Error())
