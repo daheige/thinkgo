@@ -1,3 +1,5 @@
 common/*.md
 *.log
 common/**/*.log
+.idea/
+vendor/*
