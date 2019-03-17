@@ -4,7 +4,7 @@
  * 写日志文件的时候，采用chan实现的乐观锁方式对文件句柄进行加锁
  * 等级参考php Monolog/logger.php
  */
-package common
+package Logger
 
 import (
 	"bufio"
@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+	"github.com/daheige/thinkgo/common"
 )
 
 /* 日志级别 从上到下，由高到低 */
@@ -41,8 +42,8 @@ var LogLevelMap = map[string]int{
 var (
 	logDir  = ""             //日志文件存放目录
 	logFile = ""             //日志文件
-	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	// logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
+	logLock = common.NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
+	// logLock         = common.NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
 	logTicker       = time.NewTicker(time.Second) //time一次性触发器
 	logDay          = 0                           //当前日期
 	logTime         = true                        //默认显示时间和行号，参考 SetLogTime 方法
@@ -71,7 +72,7 @@ func SetLogDir(dir string) {
 	now := time.Now().In(logtmLoc)
 
 	//建立日志文件
-	newfile(now)
+	newFile(now)
 }
 
 //设置是否显示时间和行号
@@ -81,7 +82,7 @@ func SetLogTime(logtime bool) {
 }
 
 //创建日志文件
-func newfile(now time.Time) {
+func newFile(now time.Time) {
 	if len(logDir) == 0 {
 		return
 	}
@@ -116,7 +117,7 @@ func checkLogExist() {
 	now := time.Now().In(loc)
 	//判断当天的日志文件是否存在，不存在就创建
 	if logDay != now.Day() {
-		newfile(now)
+		newFile(now)
 	}
 }
 

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/daheige/thinkgo/common"
+	"github.com/daheige/thinkgo/redisCache"
 
 	"github.com/gomodule/redigo/redis"
 )
 
 func TestRedisPool(t *testing.T) {
-	conf := &common.RedisConf{
+	conf := &redisCache.RedisConf{
 		Host: "127.0.0.1",
 		Port: 6379,
 	}
@@ -18,7 +18,7 @@ func TestRedisPool(t *testing.T) {
 	//建立连接
 	conf.SetRedisPool("default")
 
-	client := common.GetRedisClient("default")
+	client := redisCache.GetRedisClient("default")
 	defer client.Close()
 
 	ok, err := client.Do("set", "myname", "daheige")
