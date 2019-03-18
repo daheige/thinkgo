@@ -1,4 +1,4 @@
-package GoPool
+package goPool
 
 import (
 	"fmt"
@@ -61,7 +61,7 @@ worker number: 0
 --- PASS: Test_goroutine_pool (17.18s)
 	gopool_test.go:53: success
 PASS
-ok  	github.com/daheige/thinkgo/GoPool	17.186s
+ok  	github.com/daheige/thinkgo/goPool	17.186s
 
 real	0m17.554s
 user	0m5.174s
