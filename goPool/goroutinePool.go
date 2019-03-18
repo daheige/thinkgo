@@ -1,6 +1,6 @@
 //通用协程池任务执行器实现
 //协程池，用以使用固定数量的 goroutine 顺序处理大量事件的场景
-package GoPool
+package goPool
 
 import (
 	"sync"
