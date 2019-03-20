@@ -76,8 +76,18 @@ func (conf *DbConf) setLogType(flag bool) {
 //设置db pool连接池
 func (conf *DbConf) SetDbPool() error {
 	conf.UsePool = true
-
 	return conf.SetDbObj()
+}
+
+//短连接设置
+func (conf *DbConf) ShortConnect() error {
+	conf.UsePool = false
+	err := conf.initDb()
+	if err != nil {
+		return errors.New("set dbEngine failed")
+	}
+
+	return nil
 }
 
 //关闭当前数据库连接
