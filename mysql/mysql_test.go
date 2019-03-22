@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -98,29 +97,22 @@ func TestShortConnect(t *testing.T) {
 			User:         "root",
 			Password:     "1234",
 			Database:     "test",
-			MaxIdleConns: 10,
-			MaxOpenConns: 100,
 			ParseTime:    true,
 			SqlCmd:       true,
-			Charset:      "utf8mb4",
-			Collation:    "utf8mb4_unicode_ci",
-			Loc:          "Local",
 		}
 
 		//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
-			conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
-			conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
+		err := conf.ShortConnect()
 		if err != nil {
 			return nil, errors.New("set gorm.DB failed")
 		}
 
-		return db, nil
+		return conf.Db(),nil
 	}
 
 	//这里我设置了db max_connections最大连接为1000
 	var wg sync.WaitGroup
-	var maxConnections = 1024
+	var maxConnections = 1000
 	// var maxConnections = 2000
 	for i := 0; i < maxConnections; i++ {
 		wg.Add(1)
@@ -150,10 +142,10 @@ func TestShortConnect(t *testing.T) {
 --- PASS: TestGorm (1.35s)
 ok  	github.com/daheige/thinkgo/mysql	1.365s
 采用短连接方式测试
-	go test -v -test.run TestShortConnect
---- PASS: TestShortConnect (1.22s)
+$ go test -v -test.run TestShortConnect
+--- PASS: TestShortConnect (1.23s)
 PASS
-ok  	github.com/daheige/thinkgo/mysql	1.231s
+ok  	github.com/daheige/thinkgo/mysql	1.242s
 
 当我们把maxConnections 调到2000后
 $ go test -v -test.run TestShortConnect

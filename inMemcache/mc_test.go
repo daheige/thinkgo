@@ -51,5 +51,5 @@ $ go test -v
 2019/02/23 17:55:14 12fff
 --- PASS: TestMemCache (0.00s)
 PASS
-ok  	github.com/daheige/thinkgo/inMemcache	0.002s
+ok  	github.com/daheige/thinkgo/inMemcache	0.003s
 */

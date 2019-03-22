@@ -3,3 +3,4 @@ common/*.md
 common/**/*.log
 .idea/
 vendor/*
+logs

@@ -1,9 +1,9 @@
 package inMemcache
 
 import (
+	"errors"
+	"fmt"
 	"sync"
-
-	"golang.org/x/xerrors"
 )
 
 //内存缓存
@@ -35,7 +35,7 @@ func (c *inMemcache) Get(key string) ([]byte, error) {
 		return v, nil
 	}
 
-	return nil, xerrors.Errorf("current key %s not exist", key)
+	return nil, errors.New(fmt.Sprintf("current key %s not exist", key))
 }
 
 func (c *inMemcache) Delete(key string) error {
@@ -48,7 +48,7 @@ func (c *inMemcache) Delete(key string) error {
 		return nil
 	}
 
-	return xerrors.Errorf("current key %s not exist", key)
+	return errors.New(fmt.Sprintf("current key %s not exist", key))
 }
 
 func (c *inMemcache) GetStat() Stat {
