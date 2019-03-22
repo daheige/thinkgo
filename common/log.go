@@ -7,7 +7,6 @@
 package common
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -39,10 +38,10 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logDir  = ""                    //日志文件存放目录
-	logFile = ""                    //日志文件
+	logDir  = ""             //日志文件存放目录
+	logFile = ""             //日志文件
 	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	// logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
+	//logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
 	logTicker       = time.NewTicker(time.Second) //time一次性触发器
 	logDay          = 0                           //当前日期
 	logTime         = true                        //默认显示时间和行号，参考 SetLogTime 方法
@@ -163,21 +162,12 @@ func writeLog(levelName string, message interface{}) {
 
 	defer fp.Close()
 
-	//将内容写入bufio中
-	buf := bufio.NewWriterSize(fp, len(strBytes))
-	if _, err := buf.Write(strBytes); err != nil {
+	if _, err := fp.Write(strBytes); err != nil {
 		fmt.Println("write log to buf error: ", err)
 		fmt.Println("current log: ", string(strBytes))
 		return
 	}
 
-	//将缓冲区中的内容写入文件中
-	err = buf.Flush()
-	if err != nil {
-		fmt.Println("flush log to file error: ", err)
-		fmt.Println("current log: ", string(strBytes))
-		return
-	}
 }
 
 func DebugLog(v interface{}) {

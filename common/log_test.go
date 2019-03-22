@@ -48,25 +48,17 @@ func TestLog(t *testing.T) {
  * 测试写入240w日志
  * go test -v -test.run=TestLog
 //将log.go 加锁方式改成 NewMutexLock 测试报告
-	$ go test -v -run=TestLog
-	=== RUN   TestLog
-	2019/02/26 23:23:18 write log success
-	2019-02-26
-	Log.go
-	--- PASS: TestLog (81.66s)
-	    log_test.go:13: 测试ilog库
-	PASS
-	ok  	github.com/daheige/thinkgo/Logger 	81.738s
+--- PASS: TestLog (65.81s)
+    log_test.go:13: 测试ilog库
+PASS
+ok      github.com/daheige/thinkgo/common       66.017s
 
 //将log.go 加锁方式改成 NewChanLock 测试报告
 	=== RUN   TestLog
-	2019/02/26 23:31:00 write log success
-	2019-02-26
-	Log.go
-	--- PASS: TestLog (82.13s)
-	    log_test.go:13: 测试ilog库
-	PASS
-	ok      github.com/daheige/thinkgo/Logger       82.130s
+--- PASS: TestLog (69.58s)
+    log_test.go:13: 测试ilog库
+PASS
+ok      github.com/daheige/thinkgo/common       69.695s
 在golang底层，channel的实现是通过互斥锁和数组的方式实现的
 而且还有一些其他字段的同步，因此sync实现的乐观锁的效率比用chan实现互斥锁更快
 在大量的读写或者大量的i/o操作下，sync互斥锁实现的乐观锁，效率相对来说高一点

@@ -144,7 +144,7 @@ func (conf *DbConf) initDb() error {
 	if conf.SqlCmd {
 		db.LogMode(true)
 		if conf.defaultLogType { //采用os.Stdout输出日志格式
-			db.SetLogger(log.New(os.Stdout, "\r\n", log.LstdFlags))
+			db.SetLogger(log.New(os.Stdout, "\n", log.LstdFlags))
 		}
 	}
 
