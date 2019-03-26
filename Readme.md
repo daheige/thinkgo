@@ -15,6 +15,7 @@
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
     ├── jsoniter        json优化库使用
     ├── mysql           gorm/mysql封装
+    ├── dao             xorm/mysql封装,支持读写分离连接对象设置
     ├── mytest          单元测试用例
     ├── rbmq            rbmq连接封装
     ├── redisCache      redisgo操作库封装

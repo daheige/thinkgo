@@ -45,10 +45,11 @@ func TestGorm(t *testing.T) {
 	dbconf.setLogType(true)
 
 	//设置db engine name
-	dbconf.SetEngineName("default")
 	dbconf.SetDbPool()   //建立db连接池
-	defer dbconf.Close() //关闭当前连接
-	// defer CloseAllDb() //关闭所有的连接句柄
+	dbconf.SetEngineName("default")
+
+	//defer dbconf.Close() //关闭当前连接
+	defer CloseAllDb() //关闭所有的连接句柄
 
 	db, err := GetDbObj("default")
 	if err != nil {
@@ -67,15 +68,12 @@ func TestGorm(t *testing.T) {
 }
 
 func testFind(wg *sync.WaitGroup) {
-	db, err := GetDbObj("default")
-	defer db.Close() //当我们在这里进行关了db close相当于断开连接
-
 	for i := 0; i < 10000; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			// db, err := GetDbObj("default")
+			db, err := GetDbObj("default")
 
 			if err != nil {
 				log.Println("get db error: ", err.Error())
