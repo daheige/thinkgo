@@ -49,22 +49,27 @@ type DbConf struct {
 
 //给当前数据库指定engineName
 func (conf *DbConf) SetEngineName(name string) {
+	if name == "" {
+		panic(fmt.Sprintf("current %s engine name is empty!", name))
+	}
+
+	if conf.dbObj == nil {
+		panic(fmt.Sprintf("current %s db engine not initDb", name))
+	}
+
 	conf.engineName = name
+	engineMap[conf.engineName] = conf.dbObj
 }
 
 //创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
 //为兼容之前的版本，这里新增SetDb创建db对象
 func (conf *DbConf) SetDbObj() error {
-	if conf.engineName == "" {
-		panic("name must be not null")
-	}
-
 	err := conf.initDb()
 	if err != nil {
 		return errors.New("set dbEngine failed")
 	}
 
-	engineMap[conf.engineName] = conf.dbObj
+
 	return nil
 }
 
