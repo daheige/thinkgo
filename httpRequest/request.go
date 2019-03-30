@@ -92,22 +92,19 @@ func (a *ApiRequest) Do() *Result {
 		resp, err := req.Post(a.Url)
 		return a.GetData(resp, err)
 	case "put":
-		if len(a.Body) == 0 {
-			res.Err = errors.New("put data is empty")
-			return res
+		if len(a.Body) > 0 {
+			req.Data = a.ParseData(a.Body)
 		}
 
-		req.Data = a.ParseData(a.Body)
 		resp, err := req.Put(a.Url)
 		res = a.GetData(resp, err)
 	case "patch":
-		if len(a.Body) == 0 {
-			res.Err = errors.New("put data is empty")
-			return res
+		if len(a.Body) > 0 {
+			req.Data = a.ParseData(a.Body)
 		}
 
 		req.Data = a.ParseData(a.Body)
-		resp, err := req.Put(a.Url)
+		resp, err := req.Patch(a.Url)
 		return a.GetData(resp, err)
 	case "delete":
 		if len(a.Params) > 0 {
@@ -117,6 +114,10 @@ func (a *ApiRequest) Do() *Result {
 		resp, err := req.Delete(a.Url)
 		return a.GetData(resp, err)
 	case "head":
+		if len(a.Params) > 0 {
+			req.Params = a.ParseData(a.Params)
+		}
+
 		resp, err := req.Head(a.Url)
 		res = a.GetData(resp, err)
 	case "file":
@@ -150,18 +151,26 @@ func (a *ApiRequest) SetFileName(fileName string) {
 	a.FileName = fileName
 }
 
-func (a *ApiRequest) ParseData(d map[string]interface{}) (data map[string]string) {
-	if len(d) > 0 {
-		for k, v := range a.Body {
+func (a *ApiRequest) ParseData(d map[string]interface{}) map[string]string {
+	if d == nil {
+		return nil
+	}
+
+	dLen := len(d)
+	if dLen > 0 {
+		data := make(map[string]string, dLen)
+		for k, v := range d {
 			if val, ok := v.(string); ok {
 				data[k] = val
 			}
 
 			data[k] = fmt.Sprintf("%v", v)
 		}
+
+		return data
 	}
 
-	return
+	return nil
 }
 
 //处理请求的结果

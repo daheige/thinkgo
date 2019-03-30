@@ -12,6 +12,7 @@
     ├── crypto          md5,sha1,sha1File,cbc256,ecb,aes加解密函数等
     ├── goPool          批量执行task pool池
     ├── gQueue          通过指定goroutine个数,实现task queue执行器
+    ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
     ├── jsoniter        json优化库使用
     ├── mysql           gorm/mysql封装
