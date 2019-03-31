@@ -26,6 +26,12 @@
     └── yamlConf        yaml配置文件读取
 
 # Use help
+    设置golang proxy
+    vim ~/.bashrc添加如下内容：
+    export GOPROXY=https://goproxy.io
+    让bashrc生效
+    source ~/.bashrc
+    
     如果是采用govendor管理包请按照如下方式进行：
         1. 下载thinkgo包
             cd $GOPATH/src
