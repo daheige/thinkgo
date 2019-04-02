@@ -1,28 +1,34 @@
+/**
+自定义错误类型，一般用在api/微服务等业务逻辑中，处理错误
+支持是否输出堆栈信息，可以把stack信息记录到日志文件中，方便定位问题
+*/
 package xerrors
 
 import (
-	"bytes"
-	"fmt"
 	"runtime"
 )
 
 type ErrorString struct {
-	s    string
-	code int
+	s     string
+	Code  int
+	frame []byte //错误堆栈信息
 }
 
-func New(text string) *ErrorString {
-	return &ErrorString{
-		s: text,
+func New(text string, code int, isStack bool) error {
+	return MakeError(text, code, isStack)
+}
+
+func MakeError(text string, code int, isStack bool) *ErrorString {
+	err := &ErrorString{
+		s:    text,
+		Code: code,
 	}
-}
 
-func (e *ErrorString) SetCode(code int) {
-	e.code = code
-}
+	if isStack {
+		err.frame = stack()
+	}
 
-func (e *ErrorString) ErrCode() int {
-	return e.code
+	return err
 }
 
 //实现了error interface{} Error方法
@@ -31,39 +37,12 @@ func (e *ErrorString) Error() string {
 }
 
 //打印完整的错误堆栈信息
-func (e *ErrorString) Stack() string {
-	return string(fullStack())
-}
-
-//捕获指定stack信息,一般在处理panic/recover中处理
-//返回完整的堆栈信息和函数调用信息
-func fullStack() []byte {
-	buf := &bytes.Buffer{}
-
-	//完整的堆栈信息
-	stack := stack()
-	buf.WriteString("full stack:\n")
-	buf.WriteString(string(stack))
-
-	//完整的函数调用信息
-	buf.WriteString("full fn call info:\n")
-
-	// skip为0时，打印当前调用文件及行数。
-	// 为1时，打印上级调用的文件及行数，依次类推
-	for i := 1; ; i++ {
-		pc, file, line, ok := runtime.Caller(i)
-		if !ok {
-			break
-		}
-
-		fn := runtime.FuncForPC(pc).Name()
-		buf.WriteString(fmt.Sprintf("error Stack file: %s:%d call func:%s\n", file, line, fn))
-	}
-
-	return buf.Bytes()
+func (e *ErrorString) Stack() []byte {
+	return e.frame
 }
 
 //获取完整的堆栈信息
+//捕获指定stack信息,一般在处理panic/recover中处理
 // Stack returns a formatted stack trace of the goroutine that calls it.
 // It calls runtime.Stack with a large enough buffer to capture the entire trace.
 func stack() []byte {

@@ -6,22 +6,21 @@ import (
 )
 
 func TestError(t *testing.T) {
-	e := New("this is a error")
-	// e.Code = 123
+	e := New("this is a error", 0, true)
+	log.Println("error: ", e.Error())
 
-	log.Println(e.Error())
-	var err error
-	err = e
+	//类型断言
+	err := e.(*ErrorString)
+	err.Code = 123
 	log.Println(err.Error())
-	// log.Println(e.Stack())
+	log.Println("error code: ", err.Code)
+	log.Println("full stack: ", string(err.Stack()))
 	log.Printf("str: %+v", e) //会调用Error()
 }
 
 /**
  * $ go test -v
 === RUN   TestError
-2019/04/01 23:42:10 this is a error
-2019/04/01 23:42:10 this is a error
 2019/04/01 23:42:10 str: this is a error
 --- PASS: TestError (0.00s)
 PASS
