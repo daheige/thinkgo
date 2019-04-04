@@ -45,7 +45,7 @@ func TestGorm(t *testing.T) {
 	dbconf.setLogType(true)
 
 	//设置db engine name
-	dbconf.SetDbPool()   //建立db连接池
+	dbconf.SetDbPool() //建立db连接池
 	dbconf.SetEngineName("default")
 
 	//defer dbconf.Close() //关闭当前连接
@@ -90,13 +90,13 @@ func testFind(wg *sync.WaitGroup) {
 func TestShortConnect(t *testing.T) {
 	getDb := func() (*gorm.DB, error) {
 		conf := &DbConf{
-			Ip:           "127.0.0.1",
-			Port:         3306,
-			User:         "root",
-			Password:     "1234",
-			Database:     "test",
-			ParseTime:    true,
-			SqlCmd:       true,
+			Ip:        "127.0.0.1",
+			Port:      3306,
+			User:      "root",
+			Password:  "1234",
+			Database:  "test",
+			ParseTime: true,
+			SqlCmd:    true,
 		}
 
 		//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
@@ -105,7 +105,7 @@ func TestShortConnect(t *testing.T) {
 			return nil, errors.New("set gorm.DB failed")
 		}
 
-		return conf.Db(),nil
+		return conf.Db(), nil
 	}
 
 	//这里我设置了db max_connections最大连接为1000
@@ -118,12 +118,12 @@ func TestShortConnect(t *testing.T) {
 			defer wg.Done()
 
 			db, err := getDb()
-			defer db.Close()
-
 			if err != nil {
 				log.Println("get db error: ", err.Error())
 				return
 			}
+
+			defer db.Close()
 
 			user := &myUser{}
 			db.Where("name = ?", "hello").First(user)
@@ -141,9 +141,10 @@ func TestShortConnect(t *testing.T) {
 ok  	github.com/daheige/thinkgo/mysql	1.365s
 采用短连接方式测试
 $ go test -v -test.run TestShortConnect
---- PASS: TestShortConnect (1.23s)
+2019/04/04 21:39:47 test success
+--- PASS: TestShortConnect (16.44s)
 PASS
-ok  	github.com/daheige/thinkgo/mysql	1.242s
+ok      github.com/daheige/thinkgo/mysql        16.449s
 
 当我们把maxConnections 调到2000后
 $ go test -v -test.run TestShortConnect

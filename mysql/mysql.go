@@ -4,7 +4,13 @@
 * xorm设计思想：在xorm里面，可以同时存在多个Orm引擎
 * 一个Orm引擎称为Engine，一个Engine一般只对应一个数据库
 * 因此,可以将gorm的每个数据库连接句柄，可以作为一个Engine来进行处理
- */
+* 容易踩坑的地方：
+	对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
+	但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
+	对于短连接的话，建议用完就调用db.Close()方法释放db连接资源
+	对于长连接服务，一般建议在main/init中关闭连接就可以
+	具体可以看gorm/main.go源码85行
+*/
 package mysql
 
 import (
@@ -69,7 +75,6 @@ func (conf *DbConf) SetDbObj() error {
 		return errors.New("set dbEngine failed")
 	}
 
-
 	return nil
 }
 
@@ -84,7 +89,7 @@ func (conf *DbConf) SetDbPool() error {
 	return conf.SetDbObj()
 }
 
-//短连接设置
+//建立短连接，用完需要调用Close()进行关闭连接，释放资源，否则就会出现too many connection
 func (conf *DbConf) ShortConnect() error {
 	conf.UsePool = false
 	err := conf.initDb()
@@ -115,7 +120,7 @@ func (conf *DbConf) Db() *gorm.DB {
 	return conf.dbObj
 }
 
-//建立db对象，并非真正连接db,只有在用的时候才会建立db连接
+//建立db连接句柄
 func (conf *DbConf) initDb() error {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
@@ -137,7 +142,9 @@ func (conf *DbConf) initDb() error {
 		conf.Loc = "Local"
 	}
 
-	//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
+	//对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
+	//但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
+	//具体可以看gorm/main.go源码85行
 	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
 		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
 		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))

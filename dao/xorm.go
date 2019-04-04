@@ -27,7 +27,7 @@ type DbConf struct {
 	MaxOpenConns int    //最大open connection个数
 	ParseTime    bool
 	Loc          string       //时区字符串 Local,PRC
-	engineName   string   //当前数据库连接句柄标识
+	engineName   string       //当前数据库连接句柄标识
 	dbObj        *xorm.Engine //当前数据库连接句柄
 	SqlCmd       bool         //sql语句是否输出到终端,true输出到终端
 	UsePool      bool         //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
@@ -139,7 +139,6 @@ func (conf *DbConf) Close() error {
 
 	return errors.New("current db engine not exist")
 }
-
 
 //======================读写分离设置==================
 //读写分离，masterEngine,slaveEngine可以多个
