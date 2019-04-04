@@ -103,16 +103,21 @@ func (conf *DbConf) ShortConnect() error {
 //关闭当前数据库连接
 // 一般建议，将当前db engine close函数放在main/init关闭连接就可以
 func (conf *DbConf) Close() error {
-	if db, ok := engineMap[conf.engineName]; ok {
-		if err := db.Close(); err != nil {
-			log.Println("close db error: ", err.Error())
-			return err
-		}
-
+	if conf.dbObj == nil {
 		return nil
 	}
 
-	return errors.New("current db engine not exist")
+	if err := conf.Db().Close(); err != nil {
+		log.Println("close db error: ", err.Error())
+		return err
+	}
+
+	//如果设置了engineName就需要把连接句柄对象从map中删除
+	if _, ok := engineMap[conf.engineName]; ok {
+		delete(engineMap, conf.engineName)
+	}
+
+	return nil
 }
 
 //返回当前db对象

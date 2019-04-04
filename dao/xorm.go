@@ -128,16 +128,20 @@ func (conf *DbConf) ShortConnect() error {
 }
 
 func (conf *DbConf) Close() error {
-	if db, ok := engineMap[conf.engineName]; ok {
-		if err := db.Close(); err != nil {
-			log.Println("close db error: ", err.Error())
-			return err
-		}
-
-		return nil
+	if conf.dbObj == nil {
+		return errors.New("current db engine not initDb")
 	}
 
-	return errors.New("current db engine not exist")
+	if err := conf.dbObj.Close(); err != nil {
+		log.Println("close db error: ", err.Error())
+		return err
+	}
+
+	if _, ok := engineMap[conf.engineName]; ok {
+		delete(engineMap, conf.engineName)
+	}
+
+	return nil
 }
 
 //======================读写分离设置==================
