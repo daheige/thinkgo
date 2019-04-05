@@ -96,7 +96,8 @@ func (conf *DbConf) initDb() error {
 func (conf *DbConf) SetEngine() error {
 	err := conf.initDb()
 	if err != nil {
-		return errors.New("set db engine failed")
+		log.Println("set db engine error: ", err)
+		return err
 	}
 
 	return nil
@@ -121,7 +122,8 @@ func (conf *DbConf) ShortConnect() error {
 	conf.UsePool = false
 	err := conf.initDb()
 	if err != nil {
-		return errors.New("set dbEngine failed")
+		log.Println("set db engine error: ", err)
+		return err
 	}
 
 	return nil
