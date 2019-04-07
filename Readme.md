@@ -29,6 +29,7 @@
     设置golang proxy
     vim ~/.bashrc添加如下内容：
     export GOPROXY=https://goproxy.io
+    或者使用 export GOPROXY=https://athens.azurefd.net
     让bashrc生效
     source ~/.bashrc
     
