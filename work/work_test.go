@@ -2,7 +2,11 @@ package work
 
 import (
 	"fmt"
-	"runtime/debug"
+	"log"
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -11,31 +15,42 @@ type Score struct {
 	Num int
 }
 
-//实现了job Do接口
-func (s *Score) Do() {
+func (s *Score) Do() error {
 	fmt.Println("num:", s.Num)
 	time.Sleep(1 * 1 * time.Second)
+	return nil
 }
 
-func TestJobQueue(t *testing.T) {
-	num := 100 * 100 * 2
-	debug.SetMaxThreads(num) //设置最大线程数2w
+func TestWork(t *testing.T) {
+	num := 10000 //指定goroutine个数
+	// debug.SetMaxThreads(num + 1000) //设置最大线程数
+	// 注册工作池，传入任务参数1 worker并发个数
+	p := NewWorkerPool(num)
+	p.Run() //运行作业池
 
-	p := New(num)
-	//模拟大量的job任务
-	taskNums := 100 * 100 * 100
+	//注册任务到jobQueue中
+	datanum := 100 * 100 * 2
 	go func() {
-		for i := 1; i <= taskNums; i++ {
+		for i := 1; i <= datanum; i++ {
 			sc := &Score{Num: i}
-			p.Add(sc)
+			p.JobQueue <- sc
 		}
 	}()
 
-	p.Wait()
-}
+	for {
+		fmt.Println("runtime.NumGoroutine() :", runtime.NumGoroutine()) //10004
+		time.Sleep(1 * time.Second)
+	}
 
-/**
---- PASS: TestJobQueue (0.24s)
-PASS
-ok      github.com/daheige/thinkgo/work 0.734s
-*/
+	ch := make(chan os.Signal, 1)
+	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+	// recivie signal to exit main goroutine
+	//window signal
+	// signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, os.Interrupt, syscall.SIGHUP)
+
+	// Block until we receive our signal.
+	sig:= <-ch
+	log.Println("signal: ",sig.String())
+	log.Println("workerPool will exit...")
+}
