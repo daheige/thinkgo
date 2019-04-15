@@ -1,105 +1,78 @@
-//workerPool实现百万级的并发
-//go程序开发过程中,通过简单的调用go func 函数来开启协程,容易导致程序死锁
-//并且会无限制的开启groutine,groutine数量激增的情况下并发性能会明显下降
-// 所以需要考虑使用工作池来控制协程数量,以达到高并发的效果.
+/*
+利用无缓冲chan创建goroutine池来控制一组task的执行
+	1. work 包的目的是展示如何使用无缓冲的通道来创建一个 goroutine 池,这些 goroutine 执行
+	并控制一组工作,让其并发执行。在这种情况下,使用无缓冲的通道要比随意指定一个缓冲区大
+	小的有缓冲的通道好,因为这个情况下既不需要一个工作队列,也不需要一组 goroutine 配合执行。
+	无缓冲的通道保证两个 goroutine 之间的数据交换。
+
+	2. 这种使用无缓冲的通道的方法允许使用者知道什么时候 goroutine 池正在执行工作,
+	而且如果池里的所有goroutine 都忙,无法接受新的工作的时候,也能及时通过通道来通知调用者。
+	使用无缓冲的通道不会有工作在队列里丢失或者卡住,所有工作都会被处理。
+*/
 package work
 
 import (
 	"log"
+	"runtime"
+	"sync"
 )
 
-//定义任务接口,只要接口类型实现了Do()方法就实现了job接口
-// 一个数据接口，所有的数据都要实现该接口，才能被传递进来
-//实现Job接口的一个数据实例，需要实现一个Do()方法，对数据的处理就在这个Do()方法中
-type Job interface {
-	Do() error //如果Do方法没有错误返回，可以返回nil
+//worker必须满足Tash方法
+type Worker interface {
+	Task()
 }
 
-//Job通道：
-/*这里有两个Job通道：
-	1、WorkerPool的Job channel，用于调用者把具体的数据写入到这里，WorkerPool读取。
-	2、Worker的Job channel，当WorkerPool读取到Job，并拿到可用的Worker的时候，
-      会将Job实例写入该Worker的Job channel，用来直接执行Do()方法。
-*/
-
-//-----------worker---------
-//每一个被初始化的worker都会在后期单独占用一个协程
-//初始化的时候会先把自己的JobQueue传递到Worker通道中，
-//然后阻塞读取自己的JobQueue，读到一个Job就执行Job对象的Do()方法。
-type Worker struct {
-	JobQueue chan Job
+//Pool提供一个goroutine池,可以完成任何已提交的Woker任务
+type Pool struct {
+	work chan Worker
+	wg   sync.WaitGroup
 }
 
-// NewWorker初始化Worker
-func NewWorker() Worker {
-	return Worker{JobQueue: make(chan Job)}
-}
-
-//运行作业池中的任务
-func (w Worker) Run(wq chan chan Job) {
-	go func() {
-		defer catchRecover()
-
-		for {
-			wq <- w.JobQueue //注册任务到wokerQueue中
-			select {
-			case job := <-w.JobQueue: //从通道中获取任务，执行任务
-				if err := job.Do();err != nil{
-					log.Println("exec task error: ",err.Error())
-				}
-			}
-		}
-	}()
-}
-
-//-------------------工作池(WorkerPool)------------
-//初始化时会按照传入的num，启动num个后台协程，然后循环读取Job通道里面的数据，
-//读到一个数据时，再获取一个可用的Worker，并将Job对象传递到该Worker的chan通道
-/*工作池原理：
-	1. 整个过程中 每个Worker都会被运行在一个协程中，在整个WorkerPool中就会有num可空闲的Worker
-	2. 当来一条数据的时候，就会在工作池中去一个空闲的Worker去执行该Job，当工作池中没有可用的worker时
-	就会阻塞等待一个空闲的worker。
- */
-type WorkerPool struct {
-	workerLen   int //WorkerPool中同时存在Worker的个数
-	JobQueue    chan Job //WorkerPool的Job通道
-	WorkerQueue chan chan Job
-}
-
-func NewWorkerPool(workerLen int) *WorkerPool {
-	return &WorkerPool{
-		workerLen:   workerLen, //作业个数
-		JobQueue:    make(chan Job), //队列
-		WorkerQueue: make(chan chan Job, workerLen),//作业队列,有缓冲取通道，大小为workerLen
-	}
-}
-
-func (wp *WorkerPool) Run() {
-	log.Println("init worker")
-
-	//初始化worker
-	for i := 0; i < wp.workerLen; i++ {
-		worker := NewWorker()
-		worker.Run(wp.WorkerQueue)
+//创建一个工作池
+func New(gNum int) *Pool {
+	p := &Pool{
+		work: make(chan Worker), //无缓冲通道
 	}
 
-	// 循环获取可用的worker,往空闲的worker中写入job
-	go func() {
-		defer catchRecover()
+	p.wg.Add(gNum) //最大goroutine个数
+	for i := 0; i < gNum; i++ {
+		runtime.Gosched() //让出控制权给其他的goroutine,在逻辑上形成并发,只有出让cpu时，另外一个协程才会运行
 
-		for {
-			select {
-			case job := <-wp.JobQueue:
-				worker := <-wp.WorkerQueue
-				worker <- job //把job丢入workerQueue中
+		//开启独立的goroutine来执行任务
+		go func(p *Pool) {
+			defer catchRecover()
+
+			defer p.wg.Done() //执行完毕后计数信号量减去1
+
+			for w := range p.work { //for...range会一直阻塞,知道从work通道中收到一个Worker接口值
+				w.Task() //执行任务
 			}
-		}
-	}()
+		}(p)
+	}
+
+	return p
+}
+
+//生产者:采用无缓冲通道提交任务到工作池
+//当任务提交后，消费者就会立即执行任务，p.wg计数器数量减去1
+//w是一个接口值,必须是具体实现类型的一个实例指针
+func (p *Pool) Add(w Worker) {
+	p.work <- w
+}
+
+// Shutdown 等待所有的goroutine执行完毕,它关闭了 work 通道
+// 这会导致所有池里的 goroutine 停止工作
+// 并调用 WaitGroup 的 Done 方法使得计数器减去1;
+// 然后调用pg.wg 的 Wait 方法,这会让 Shutdown 方法等待所有 goroutine 终止
+func (p *Pool) Shutdown() {
+	close(p.work) //关闭通道会让所有池里的goroutine全部停止
+	p.wg.Wait()   //等待所有的goroutine执行完毕
+	log.Println("all goroutine task finish")
 }
 
 //捕获异常或者panic处理
-func catchRecover(){
+func catchRecover() {
 	if err := recover(); err != nil {
-		log.Println("exec worker error: ",err)
+		log.Println("exec worker error: ", err)
 	}
 }
