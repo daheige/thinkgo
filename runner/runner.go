@@ -15,9 +15,9 @@ package runner
 
 import (
 	"errors"
-	"log"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -26,31 +26,38 @@ var ErrInterrupt = errors.New("received interrupt signal")
 
 //声明一个runner
 type Runner struct {
-	tasks      []func()         //需要执行的任务func,依次执行的任务
+	tasks      []func() error   //需要执行的任务func,依次执行的任务
 	complete   chan error       //报告处理任务已完成
 	timeout    <-chan time.Time //所有任务多久可以执行完毕，只能接受通道中的值
 	interrupt  chan os.Signal   //可以控制强制终止的信号
-	hasDone    []int            //已经执行完成的task key编号
+	allErrors  map[int]error    //发生错误的task index对应的错误
 	lastTaskId int              //最后一次完成的任务id
 }
 
 //定义一个工厂函数创建runner
 func New(t time.Duration) *Runner {
 	return &Runner{
-		complete:  make(chan error),
+		complete:  make(chan error, 1),     //有缓冲通道，存放所有任务运行后的结果状态
 		timeout:   time.After(t),           //time.After返回time.Time类型的通道
 		interrupt: make(chan os.Signal, 1), //声明一个中断信号
 	}
 }
 
+func NewWithoutTime() *Runner {
+	return &Runner{
+		complete:  make(chan error, 1),
+		interrupt: make(chan os.Signal, 1), //声明一个中断信号
+	}
+}
+
 //将需要执行的任务添加到runner中
-func (r *Runner) Add(tasks ...func()) {
+func (r *Runner) Add(tasks ...func() error) {
 	r.tasks = append(r.tasks, tasks...) //r.tasks是一个函数切片类型
 }
 
 //获取已经完成的任务ids
-func (r *Runner) GetDoneTaskIds() []int {
-	return r.hasDone
+func (r *Runner) ErrorTaskIds() map[int]error {
+	return r.allErrors
 }
 
 //获取最后一次完成任务id
@@ -68,10 +75,12 @@ func (r *Runner) Run() error {
 			return ErrInterrupt
 		}
 
-		log.Println("current run task id: ", key)
-		task() //运行任务
+		// log.Println("current run task id: ", key)
+		e := task() //运行任务
+		if e != nil {
+			r.allErrors[key] = e
+		}
 
-		r.hasDone = append(r.hasDone, key)
 		r.lastTaskId = key
 	}
 
@@ -80,8 +89,8 @@ func (r *Runner) Run() error {
 
 //开始执行所有的任务
 func (r *Runner) Start() error {
-	//希望接受哪些系统信号
-	signal.Notify(r.interrupt, os.Interrupt) //接受runner中断或者程序中断信号
+	//接受runner中断或者程序中断信号
+	signal.Notify(r.interrupt, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 	//让任务在协程中运行，当运行接受后，将运行结果给complete
 	go func() {
 		r.complete <- r.Run() //运行返回错误或者nil顺利完成
