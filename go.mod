@@ -19,6 +19,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mozillazg/request v0.8.0
 	github.com/streadway/amqp v0.0.0-20190312223743-14f78b41ce6d
+	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
