@@ -104,7 +104,6 @@ func InitLogger() {
 
 //sugar语法糖，支持简单的msg信息打印
 //支持Debug,Info,Error,Panic,Warn,Fatal等方法
-//支持Debug,Info,Error,Panic,Warn,Fatal等
 func LogSugar() *zap.SugaredLogger {
 	if core == nil {
 		initCore()
