@@ -14,8 +14,8 @@ func TestLog(t *testing.T) {
 	SetLogDir("/web/wwwlogs/ilog")
 
 	var wg sync.WaitGroup
-	var nums int = 3 * 1e5 //30w日志写入磁盘
-	wg.Add(nums)           //一次性计数器设置，保证独立携程都成处理完毕
+	var nums int = 30 * 10000 //30w日志写入磁盘
+	wg.Add(nums)              //一次性计数器设置，保证独立携程都成处理完毕
 
 	for i := 0; i < nums; i++ {
 		go func() {

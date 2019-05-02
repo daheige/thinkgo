@@ -42,15 +42,18 @@ var (
 	logFile = ""             //日志文件
 	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
 	//logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
-	logTicker       = time.NewTicker(time.Second) //time一次性触发器
-	logDay          = 0                           //当前日期
-	logTime         = true                        //默认显示时间和行号，参考 SetLogTime 方法
-	logTimeZone     = "Local"                     //time zone default Local/Shanghai
-	logtmFmtWithMS  = "2006-01-02 15:04:05.999"
-	logtmFmtMissMS  = "2006-01-02 15:04:05"
-	logtmFmtTime    = "2006-01-02"
-	defaultLogLevel = INFO //默认为INFO级别
-	logtmLoc        = &time.Location{}
+	logTicker             = time.NewTicker(time.Second) //time一次性触发器
+	logDay                = 0                           //当前日期
+	logTime               = true                        //默认显示时间和行号，参考 SetLogTime 方法
+	logTimeZone           = "Local"                     //time zone default Local/Shanghai
+	logtmFmtWithMS        = "2006-01-02 15:04:05.999"
+	logtmFmtMissMS        = "2006-01-02 15:04:05"
+	logtmFmtTime          = "2006-01-02"
+	defaultLogLevel       = INFO //默认为INFO级别
+	logtmLoc              = &time.Location{}
+	megabyte        int64 = 1024 * 1024 //1MB = 1024 * 1024byte
+	defaultMaxSize  int64 = 512         //默认单个日志文件大小
+	currentTime           = time.Now    //当前时间函数
 )
 
 //设置日志记录时区
@@ -67,7 +70,7 @@ func SetLogDir(dir string) {
 	}
 
 	logtmLoc, _ = time.LoadLocation(logTimeZone)
-	now := time.Now().In(logtmLoc)
+	now := currentTime().In(logtmLoc)
 
 	//建立日志文件
 	newFile(now)
@@ -112,10 +115,49 @@ func checkLogExist() {
 	defer logLock.Unlock()
 
 	loc, _ := time.LoadLocation(logTimeZone)
-	now := time.Now().In(loc)
+	now := currentTime().In(loc)
 	//判断当天的日志文件是否存在，不存在就创建
 	if logDay != now.Day() {
 		newFile(now)
+	}
+
+}
+
+// backupName creates a new filename from the given name, inserting a timestamp
+// between the filename and the extension
+// 创建备份文件名称
+func backupName(name string) string {
+	dir := filepath.Dir(name)
+	filename := filepath.Base(name)
+	ext := filepath.Ext(filename)
+	prefix := filename[:len(filename)-len(ext)]
+
+	timestamp := currentTime().Format(logtmFmtWithMS)
+	return filepath.Join(dir, fmt.Sprintf("%s-%s%s", prefix, timestamp, ext))
+}
+
+func backLog() {
+	//检测文件大小是否超过指定大小
+	if logFile != "" {
+		fileInfo, err := os.Stat(logFile)
+		if err != nil {
+			fmt.Println("get file stat error: ", err)
+			return
+		}
+
+		if fileInfo.Size() >= defaultMaxSize*megabyte {
+			newName := backupName(logFile)
+			if err := os.Rename(logFile, newName); err != nil {
+				fmt.Printf("can't rename log file: %s", err)
+				return
+			}
+
+			// this is a no-op anywhere but linux
+			if err := Chown(logFile, fileInfo); err != nil {
+				fmt.Printf("can't chown log file: %s", err)
+				return
+			}
+		}
 	}
 }
 
@@ -131,7 +173,7 @@ func writeLog(levelName string, message interface{}) {
 	var strBytes []byte
 	if logTime {
 		_, file, line, _ := runtime.Caller(2)
-		now := time.Now().In(logtmLoc)
+		now := currentTime().In(logtmLoc)
 		strBytes = []byte(fmt.Sprintf("%s %s %s line:[%d]: %v", now.Format(logtmFmtWithMS), levelName, filepath.Base(file), line, message))
 	} else {
 		if v, ok := message.(string); ok {
@@ -144,7 +186,7 @@ func writeLog(levelName string, message interface{}) {
 	//追加换行符
 	strBytes = append(strBytes, []byte("\n")...)
 	if logFile == "" {
-		now := time.Now().In(logtmLoc)
+		now := currentTime().In(logtmLoc)
 		fmt.Println(now.Format(logtmFmtMissMS), "open log file", "use stdout")
 		return
 	}
@@ -153,9 +195,12 @@ func writeLog(levelName string, message interface{}) {
 	logLock.Lock()
 	defer logLock.Unlock()
 
+	//当日志大小超过了指定大小，备份日志
+	backLog()
+
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		now := time.Now().In(logtmLoc)
+		now := currentTime().In(logtmLoc)
 		fmt.Println(now.Format(logtmFmtMissMS), "open log file", logFile, err, "use stdout")
 		return
 	}
