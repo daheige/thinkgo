@@ -1,8 +1,9 @@
 /**
  * 每天流动式日志实现
  * 操作日志记录到文件，支持info,error,debug,notice,alert等
- * 写日志文件的时候，采用chan实现的乐观锁方式对文件句柄进行加锁
+ * 写日志文件的时候，采用乐观锁方式对文件句柄进行加锁
  * 等级参考php Monolog/logger.php
+ * 日志切割机制参考lumberjack包实现
  */
 package common
 
@@ -52,7 +53,7 @@ var (
 	defaultLogLevel       = INFO //默认为INFO级别
 	logtmLoc              = &time.Location{}
 	megabyte        int64 = 1024 * 1024 //1MB = 1024 * 1024byte
-	defaultMaxSize  int64 = 512         //默认单个日志文件大小
+	defaultMaxSize  int64 = 512         //默认单个日志文件大小,单位为mb
 	currentTime           = time.Now    //当前时间函数
 )
 
@@ -74,6 +75,10 @@ func SetLogDir(dir string) {
 
 	//建立日志文件
 	newFile(now)
+}
+
+func LogSize(n int64){
+	defaultMaxSize = n
 }
 
 //设置是否显示时间和行号
