@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"os"
+
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -23,12 +25,11 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge     = 7         //默认日志保留天数
-	logMaxSize    = 512       //默认日志大小，单位为Mb
-	logCompress   = false     //默认日志不压缩
-	logLevel      = "debug"   //最低日志级别
-	logMaxBackups = 2         // 最多保留2个备份
-	logFileName   = "zap.log" //默认日志文件名称
+	logMaxAge   = 7       //默认日志保留天数
+	logMaxSize  = 512     //默认日志大小，单位为Mb
+	logCompress = false   //默认日志不压缩
+	logLevel    = "debug" //最低日志级别
+	logFileName = ""
 )
 
 func MaxAge(n int) {
@@ -47,10 +48,6 @@ func LogLevel(lvl string) {
 	logLevel = lvl
 }
 
-func MaxBackups(n int) {
-	logMaxBackups = n
-}
-
 //设置日志文件路径，如果日志文件不存在zap会自动创建文件
 func SetLogFile(fileName string) {
 	logFileName = fileName
@@ -66,15 +63,18 @@ func getLevel(lvl string) zapcore.Level {
 }
 
 func initCore() {
+	if logFileName == "" {
+		logFileName = os.TempDir() + "/zap.log" //默认日志文件名称
+	}
+
 	//日志最低级别设置
 	level := getLevel(logLevel)
 	syncWriter := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   logFileName,   //⽇志⽂件路径
-		MaxSize:    logMaxSize,    //单位为MB,默认为512MB
-		MaxAge:     logMaxAge,     // 文件最多保存多少天
-		MaxBackups: logMaxBackups, // 日志备份个数
-		LocalTime:  true,          //采用本地时间
-		Compress:   logCompress,   //是否压缩日志
+		Filename:  logFileName, //⽇志⽂件路径
+		MaxSize:   logMaxSize,  //单位为MB,默认为512MB
+		MaxAge:    logMaxAge,   // 文件最多保存多少天
+		LocalTime: true,        //采用本地时间
+		Compress:  logCompress, //是否压缩日志
 	})
 
 	encoderConf := zapcore.EncoderConfig{

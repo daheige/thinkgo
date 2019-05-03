@@ -12,10 +12,11 @@ import (
 func TestLog(t *testing.T) {
 	t.Log("测试ilog库")
 	SetLogDir("/web/wwwlogs/ilog")
+	LogSize(20) //单个日志文件大小
 
 	var wg sync.WaitGroup
-	var nums int = 30 //30w日志写入磁盘
-	wg.Add(nums)      //一次性计数器设置，保证独立携程都成处理完毕
+	var nums int = 30 * 10000 //30w个独立协程处理
+	wg.Add(nums)              //一次性计数器设置，保证独立携程都成处理完毕
 
 	for i := 0; i < nums; i++ {
 		go func() {

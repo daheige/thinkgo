@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"sync"
 	"testing"
 
 	"go.uber.org/zap"
@@ -8,7 +9,7 @@ import (
 
 func TestLog(t *testing.T) {
 	SetLogFile("./logs/zap.log") //设置日志文件路径
-	MaxSize(2)
+	MaxSize(20)
 
 	InitLogger()
 
@@ -19,14 +20,30 @@ func TestLog(t *testing.T) {
 
 	Info("111", zap.String("name", "abc"), zap.Int("age", 28))
 
+	nums := 30 * 10000
+	var wg sync.WaitGroup
+	wg.Add(nums)
+	for i := 0; i < nums; i++ {
+		go func() {
+			defer wg.Done()
 
-	for i := 0; i < 100; i++ {
-		Info("hello,world", zap.Int("a", 1), zap.String("b", "c"))
-		Warn("haha")
+			Info("hello,world", zap.Int("a", 1), zap.String("b", "c"))
+			Warn("haha")
+		}()
 	}
+
+	wg.Wait()
 
 	Info("write success")
 	Debug("hello")
 	DPanic("111")
 
 }
+
+/**
+$ go test -v
+=== RUN   TestLog
+--- PASS: TestLog (10.38s)
+PASS
+ok  	logger	10.458s
+ */

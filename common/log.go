@@ -52,9 +52,10 @@ var (
 	logtmFmtTime          = "2006-01-02"
 	defaultLogLevel       = INFO //默认为INFO级别
 	logtmLoc              = &time.Location{}
-	megabyte        int64 = 1024 * 1024 //1MB = 1024 * 1024byte
-	defaultMaxSize  int64 = 512         //默认单个日志文件大小,单位为mb
-	currentTime           = time.Now    //当前时间函数
+	megabyte        int64 = 1024 * 1024               //1MB = 1024 * 1024byte
+	defaultMaxSize  int64 = 512                       //默认单个日志文件大小,单位为mb
+	currentTime           = time.Now                  //当前时间函数
+	logtmSplit            = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
 )
 
 //设置日志记录时区
@@ -77,7 +78,7 @@ func SetLogDir(dir string) {
 	newFile(now)
 }
 
-func LogSize(n int64){
+func LogSize(n int64) {
 	defaultMaxSize = n
 }
 
@@ -99,11 +100,12 @@ func newFile(now time.Time) {
 	//创建文件
 	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Println(now.Format(logtmFmtMissMS), "open log file", filename, err, "use STDOUT")
-	} else {
-		fp.Close()
-		logFile = filename
+		fmt.Println(now.Format(logtmFmtMissMS), "open log file", filename, err, "use stdout")
+		return
 	}
+
+	fp.Close()
+	logFile = filename
 }
 
 func checkLogExist() {
@@ -119,10 +121,8 @@ func checkLogExist() {
 
 	defer logLock.Unlock()
 
-	loc, _ := time.LoadLocation(logTimeZone)
-	now := currentTime().In(loc)
 	//判断当天的日志文件是否存在，不存在就创建
-	if logDay != now.Day() {
+	if now := currentTime().In(logtmLoc); logDay != now.Day() {
 		newFile(now)
 	}
 
@@ -137,7 +137,7 @@ func backupName(name string) string {
 	ext := filepath.Ext(filename)
 	prefix := filename[:len(filename)-len(ext)]
 
-	timestamp := currentTime().Format(logtmFmtWithMS)
+	timestamp := currentTime().Format(logtmSplit)
 	return filepath.Join(dir, fmt.Sprintf("%s-%s%s", prefix, timestamp, ext))
 }
 
@@ -179,7 +179,7 @@ func writeLog(levelName string, message interface{}) {
 	if logTime {
 		_, file, line, _ := runtime.Caller(2)
 		now := currentTime().In(logtmLoc)
-		strBytes = []byte(fmt.Sprintf("%s %s %s line:[%d]: %v", now.Format(logtmFmtWithMS), levelName, filepath.Base(file), line, message))
+		strBytes = []byte(fmt.Sprintf("%s %s %s line:[%d]: %v", now.Format(logtmFmtWithMS), levelName, file, line, message))
 	} else {
 		if v, ok := message.(string); ok {
 			strBytes = []byte(v)
@@ -191,8 +191,8 @@ func writeLog(levelName string, message interface{}) {
 	//追加换行符
 	strBytes = append(strBytes, []byte("\n")...)
 	if logFile == "" {
-		now := currentTime().In(logtmLoc)
-		fmt.Println(now.Format(logtmFmtMissMS), "open log file", "use stdout")
+		fmt.Println("write log file,use stdout")
+		fmt.Println("log content:", string(strBytes))
 		return
 	}
 
@@ -205,16 +205,15 @@ func writeLog(levelName string, message interface{}) {
 
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		now := currentTime().In(logtmLoc)
-		fmt.Println(now.Format(logtmFmtMissMS), "open log file", logFile, err, "use stdout")
+		fmt.Printf("open log file: %s error: %s\n", logFile, err)
+		fmt.Println("log content:", string(strBytes))
 		return
 	}
 
 	defer fp.Close()
 
 	if _, err := fp.Write(strBytes); err != nil {
-		fmt.Println("write log to buf error: ", err)
-		fmt.Println("current log: ", string(strBytes))
+		fmt.Printf("write log file: %s error: %s\n", logFile, err)
 		return
 	}
 
