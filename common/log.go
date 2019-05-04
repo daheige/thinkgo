@@ -43,24 +43,46 @@ var (
 	logFile = ""             //日志文件
 	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
 	//logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
-	logTicker             = time.NewTicker(time.Second) //time一次性触发器
-	logDay                = 0                           //当前日期
-	logTime               = true                        //默认显示时间和行号，参考 SetLogTime 方法
-	logTimeZone           = "Local"                     //time zone default Local/Shanghai
-	logtmFmtWithMS        = "2006-01-02 15:04:05.999"
-	logtmFmtMissMS        = "2006-01-02 15:04:05"
-	logtmFmtTime          = "2006-01-02"
-	defaultLogLevel       = INFO //默认为INFO级别
-	logtmLoc              = &time.Location{}
-	megabyte        int64 = 1024 * 1024               //1MB = 1024 * 1024byte
-	defaultMaxSize  int64 = 512                       //默认单个日志文件大小,单位为mb
-	currentTime           = time.Now                  //当前时间函数
-	logtmSplit            = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
+	logTicker              = time.NewTicker(time.Second) //time一次性触发器
+	logDay                 = 0                           //当前日期
+	logTime                = true                        //默认显示时间和行号，参考 SetLogTime 方法
+	logTimeZone            = "Local"                     //time zone default Local/Shanghai
+	logtmFmtWithMS         = "2006-01-02 15:04:05.999"
+	logtmFmtMissMS         = "2006-01-02 15:04:05"
+	logtmFmtTime           = "2006-01-02"
+	defaultLogLevel        = INFO //默认为INFO级别
+	logtmLoc               = &time.Location{}
+	megabyte         int64 = 1024 * 1024               //1MB = 1024 * 1024byte
+	defaultMaxSize   int64 = 512                       //默认单个日志文件大小,单位为mb
+	currentTime            = time.Now                  //当前时间函数
+	logSplit               = true                      //默认日志分割,可以加快写入的速度
+	logtmSplit             = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
+	logSplitDone           = make(chan struct{}, 1)
+	logSplitInterval       = 10 //默认10s检测一次日志大小是否超过指定大小，超过了就进行分割日志
 )
 
 //设置日志记录时区
 func SetLogTimeZone(timezone string) {
 	logTimeZone = timezone
+}
+
+//优雅的退出日志分割操作
+//一般在main函数中，采用defer GracefulExitLog() 运行
+//这样就可以优雅的退出日志分割操作
+func GracefulExitLog() {
+	close(logSplitDone)
+}
+
+//日志分割设置
+func LogSplit(b bool) {
+	logSplit = b
+}
+
+//日志分割的间隔
+func LogSplitInterval(d int) {
+	if d > 0 {
+		logSplitInterval = d
+	}
 }
 
 //日志存放目录
@@ -73,9 +95,26 @@ func SetLogDir(dir string) {
 
 	logtmLoc, _ = time.LoadLocation(logTimeZone)
 	now := currentTime().In(logtmLoc)
+	newFile(now) //建立日志文件
 
-	//建立日志文件
-	newFile(now)
+	//日志分割设置
+	if logSplit {
+		//每隔logSplitInterval检测日志是否可以进行分割
+		//采用for---select--default无阻塞的监听是否需要分割日志
+		t := time.Tick(time.Second * time.Duration(logSplitInterval))
+		go func() {
+			for {
+				select {
+				case <-t:
+					splitLog()
+				case <-logSplitDone:
+					fmt.Println("log split will exit...")
+					return
+				default:
+				}
+			}
+		}()
+	}
 }
 
 func LogSize(n int64) {
@@ -141,29 +180,37 @@ func backupName(name string) string {
 	return filepath.Join(dir, fmt.Sprintf("%s-%s%s", prefix, timestamp, ext))
 }
 
-func backLog() {
+//当日志文件超过了指定大小，对其进行分割处理
+func splitLog() {
+	if logFile == "" {
+		return
+	}
+
 	//检测文件大小是否超过指定大小
-	if logFile != "" {
-		fileInfo, err := os.Stat(logFile)
-		if err != nil {
-			fmt.Println("get file stat error: ", err)
+	fileInfo, err := os.Stat(logFile)
+	if err != nil {
+		fmt.Println("get file stat error: ", err)
+		return
+	}
+
+	if fileInfo.Size() >= defaultMaxSize*megabyte {
+		newName := backupName(logFile)
+
+		logLock.Lock()
+		defer logLock.Unlock()
+
+		if err := os.Rename(logFile, newName); err != nil {
+			fmt.Printf("can't rename log file: %s\n", err)
 			return
 		}
 
-		if fileInfo.Size() >= defaultMaxSize*megabyte {
-			newName := backupName(logFile)
-			if err := os.Rename(logFile, newName); err != nil {
-				fmt.Printf("can't rename log file: %s", err)
-				return
-			}
-
-			// this is a no-op anywhere but linux
-			if err := Chown(logFile, fileInfo); err != nil {
-				fmt.Printf("can't chown log file: %s", err)
-				return
-			}
+		// this is a no-op anywhere but linux
+		if err := Chown(logFile, fileInfo); err != nil {
+			fmt.Printf("can't chown log file: %s\n", err)
+			return
 		}
 	}
+
 }
 
 func writeLog(levelName string, message interface{}) {
@@ -199,9 +246,6 @@ func writeLog(levelName string, message interface{}) {
 	//开始写日志，这里需要对文件句柄进行加锁
 	logLock.Lock()
 	defer logLock.Unlock()
-
-	//当日志大小超过了指定大小，备份日志
-	backLog()
 
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
