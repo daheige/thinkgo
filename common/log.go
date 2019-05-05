@@ -215,7 +215,7 @@ func writeLog(levelName string, msg interface{}, options interface{}) {
 	var strBytes []byte
 	_, file, line, _ := runtime.Caller(2)
 
-	c := logContent{
+	c := &logContent{
 		levelName: levelName,
 		Level:     LogLevelMap[levelName],
 		LocalTime: currentTime().In(logtmLoc).Format(logtmFmtWithMS),
