@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/daheige/thinkgo/jsoniter"
 )
 
 /* 日志级别 从上到下，由高到低 */
@@ -39,14 +41,11 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logDir  = ""             //日志文件存放目录
-	logFile = ""             //日志文件
-	logLock = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	//logLock         = NewChanLock()               //采用chan实现的乐观锁方式，实现加锁，效率稍微低一点
-	logTicker              = time.NewTicker(time.Second) //time一次性触发器
-	logDay                 = 0                           //当前日期
-	logTime                = true                        //默认显示时间和行号，参考 SetLogTime 方法
-	logTimeZone            = "Local"                     //time zone default Local/Shanghai
+	logDir                 = ""             //日志文件存放目录
+	logFile                = ""             //日志文件
+	logLock                = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
+	logDay                 = 0              //当前日期
+	logTimeZone            = "Local"        //time zone default Local/Shanghai
 	logtmFmtWithMS         = "2006-01-02 15:04:05.999"
 	logtmFmtMissMS         = "2006-01-02 15:04:05"
 	logtmFmtTime           = "2006-01-02"
@@ -55,11 +54,23 @@ var (
 	megabyte         int64 = 1024 * 1024               //1MB = 1024 * 1024byte
 	defaultMaxSize   int64 = 512                       //默认单个日志文件大小,单位为mb
 	currentTime            = time.Now                  //当前时间函数
-	logSplit               = true                      //默认日志分割,可以加快写入的速度
+	os_Stat                = os.Stat                   //os stat
+	logSplit               = false                     //默认日志不分割,当设置为true可以加快写入的速度
 	logtmSplit             = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
 	logSplitDone           = make(chan struct{}, 1)
 	logSplitInterval       = 10 //默认10s检测一次日志大小是否超过指定大小，超过了就进行分割日志
 )
+
+//日志内容结构体
+type logContent struct {
+	Level     int                    `json:"level"`
+	levelName string                 `json:"level_name"`
+	LocalTime string                 `json:"local_time"` //当前时间
+	Msg       interface{}            `json:"msg"`
+	LineNo    int                    `json:"line_no"`   //当前行号
+	FilePath  string                 `json:"file_path"` //当前文件
+	Context   map[string]interface{} `json:"context"`
+}
 
 //设置日志记录时区
 func SetLogTimeZone(timezone string) {
@@ -79,6 +90,7 @@ func LogSplit(b bool) {
 }
 
 //日志分割的间隔
+//一般建议不要超过60s
 func LogSplitInterval(d int) {
 	if d > 0 {
 		logSplitInterval = d
@@ -101,11 +113,11 @@ func SetLogDir(dir string) {
 	if logSplit {
 		//每隔logSplitInterval检测日志是否可以进行分割
 		//采用for---select--default无阻塞的监听是否需要分割日志
-		t := time.Tick(time.Second * time.Duration(logSplitInterval))
+		t := time.NewTicker(time.Second * time.Duration(logSplitInterval))
 		go func() {
 			for {
 				select {
-				case <-t:
+				case <-t.C:
 					splitLog()
 				case <-logSplitDone:
 					fmt.Println("log split will exit...")
@@ -119,12 +131,6 @@ func SetLogDir(dir string) {
 
 func LogSize(n int64) {
 	defaultMaxSize = n
-}
-
-//设置是否显示时间和行号
-//当logtime=false自定义日志格式
-func SetLogTime(logtime bool) {
-	logTime = logtime
 }
 
 //创建日志文件
@@ -147,24 +153,11 @@ func newFile(now time.Time) {
 	logFile = filename
 }
 
+//判断当天的日志文件是否存在，不存在就创建
 func checkLogExist() {
-	select {
-	case <-logTicker.C:
-	default:
-		return
-	}
-
-	if !logLock.TryLock() {
-		return
-	}
-
-	defer logLock.Unlock()
-
-	//判断当天的日志文件是否存在，不存在就创建
 	if now := currentTime().In(logtmLoc); logDay != now.Day() {
 		newFile(now)
 	}
-
 }
 
 // backupName creates a new filename from the given name, inserting a timestamp
@@ -187,7 +180,7 @@ func splitLog() {
 	}
 
 	//检测文件大小是否超过指定大小
-	fileInfo, err := os.Stat(logFile)
+	fileInfo, err := os_Stat(logFile)
 	if err != nil {
 		fmt.Println("get file stat error: ", err)
 		return
@@ -213,39 +206,50 @@ func splitLog() {
 
 }
 
-func writeLog(levelName string, message interface{}) {
+func writeLog(levelName string, msg interface{}, options interface{}) {
 	if _, ok := LogLevelMap[levelName]; !ok {
 		levelName = defaultLogLevel
 	}
 
-	//检测日志文件是否存在
-	checkLogExist()
-
 	//对日志内容转换为bytes
 	var strBytes []byte
-	if logTime {
-		_, file, line, _ := runtime.Caller(2)
-		now := currentTime().In(logtmLoc)
-		strBytes = []byte(fmt.Sprintf("%s %s %s line:[%d]: %v", now.Format(logtmFmtWithMS), levelName, file, line, message))
-	} else {
-		if v, ok := message.(string); ok {
-			strBytes = []byte(v)
-		} else {
-			strBytes = []byte(fmt.Sprintf("%v", message))
-		}
+	_, file, line, _ := runtime.Caller(2)
+
+	c := logContent{
+		levelName: levelName,
+		Level:     LogLevelMap[levelName],
+		LocalTime: currentTime().In(logtmLoc).Format(logtmFmtWithMS),
+		Msg:       msg,
+		LineNo:    line,
+		FilePath:  file,
+	}
+
+	if v, ok := options.(map[string]interface{}); ok {
+		c.Context = v
+	}
+
+	//序列化为json格式
+	strBytes, err := jsoniter.Marshal(c)
+	if err != nil {
+		fmt.Println("write log file,use stdout")
+		fmt.Println("log content: ", string(strBytes))
+		return
 	}
 
 	//追加换行符
 	strBytes = append(strBytes, []byte("\n")...)
+
+	//开始写日志，这里需要对文件句柄进行加锁
+	logLock.Lock()
+	defer logLock.Unlock()
+
+	//检测日志文件是否存在
+	checkLogExist()
 	if logFile == "" {
 		fmt.Println("write log file,use stdout")
 		fmt.Println("log content:", string(strBytes))
 		return
 	}
-
-	//开始写日志，这里需要对文件句柄进行加锁
-	logLock.Lock()
-	defer logLock.Unlock()
 
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
@@ -260,37 +264,36 @@ func writeLog(levelName string, message interface{}) {
 		fmt.Printf("write log file: %s error: %s\n", logFile, err)
 		return
 	}
-
 }
 
-func DebugLog(v interface{}) {
-	writeLog("debug", v)
+func DebugLog(v interface{}, options interface{}) {
+	writeLog("debug", v, options)
 }
 
-func InfoLog(v interface{}) {
-	writeLog("info", v)
+func InfoLog(v interface{}, options interface{}) {
+	writeLog("info", v, options)
 }
 
-func NoticeLog(v interface{}) {
-	writeLog("notice", v)
+func NoticeLog(v interface{}, options interface{}) {
+	writeLog("notice", v, options)
 }
 
-func WarnLog(v interface{}) {
-	writeLog("warn", v)
+func WarnLog(v interface{}, options interface{}) {
+	writeLog("warn", v, options)
 }
 
-func ErrorLog(v interface{}) {
-	writeLog("error", v)
+func ErrorLog(v interface{}, options interface{}) {
+	writeLog("error", v, options)
 }
 
-func CritLog(v interface{}) {
-	writeLog("crit", v)
+func CritLog(v interface{}, options interface{}) {
+	writeLog("crit", v, options)
 }
 
-func AlterLog(v interface{}) {
-	writeLog("alter", v)
+func AlterLog(v interface{}, options interface{}) {
+	writeLog("alter", v, options)
 }
 
-func EmergLog(v interface{}) {
-	writeLog("emerg", v)
+func EmergLog(v interface{}, options interface{}) {
+	writeLog("emerg", v, options)
 }
