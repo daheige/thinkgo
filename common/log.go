@@ -64,7 +64,7 @@ var (
 //日志内容结构体
 type logContent struct {
 	Level     int                    `json:"level"`
-	levelName string                 `json:"level_name"`
+	LevelName string                 `json:"level_name"`
 	LocalTime string                 `json:"local_time"` //当前时间
 	Msg       interface{}            `json:"msg"`
 	LineNo    int                    `json:"line_no"`   //当前行号
@@ -216,7 +216,7 @@ func writeLog(levelName string, msg interface{}, options interface{}) {
 	_, file, line, _ := runtime.Caller(2)
 
 	c := &logContent{
-		levelName: levelName,
+		LevelName: levelName,
 		Level:     LogLevelMap[levelName],
 		LocalTime: currentTime().In(logtmLoc).Format(logtmFmtWithMS),
 		Msg:       msg,
