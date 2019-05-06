@@ -13,8 +13,7 @@ func TestLog(t *testing.T) {
 	t.Log("测试log库")
 
 	LogSplit(true)
-	LogSize(20) //单个日志文件大小
-	LogSplitInterval(10)
+	LogSize(30) //单个日志文件大小
 
 	SetLogDir("/web/wwwlogs/ilog")
 	var wg sync.WaitGroup
@@ -52,7 +51,6 @@ func TestLog(t *testing.T) {
 	}
 
 	wg.Wait()
-	GracefulExitLog()
 
 	log.Println("write log success")
 
@@ -67,12 +65,8 @@ func TestLog(t *testing.T) {
 /**
 $ go test -v -test.run=TestLog
 === RUN   TestLog
-log split will exit...
-2019/05/05 21:37:12 write log success
-2019-05-05
-Log.go
---- PASS: TestLog (24.87s)
+--- PASS: TestLog (42.75s)
     log_test.go:13: 测试log库
 PASS
-ok  	github.com/daheige/thinkgo/common	24.902s
+ok      github.com/daheige/thinkgo/common       42.780s
 */
