@@ -46,4 +46,4 @@ $ go test -v
 --- PASS: TestLog (10.38s)
 PASS
 ok  	logger	10.458s
- */
+*/
