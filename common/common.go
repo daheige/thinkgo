@@ -2,15 +2,15 @@ package common
 
 import (
 	"bytes"
-	"flag"
+	"context"
+	"errors"
 	"fmt"
 	"html"
-	"io"
+	"log"
 	"math"
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/signal"
 	"runtime"
 	"strconv"
 	"strings"
@@ -20,36 +20,35 @@ import (
 	"github.com/daheige/thinkgo/crypto"
 )
 
-var localTimeZone = "Local" //time zone default prc
-
 // os_Chown is a var so we can mock it out during tests.
 var os_Chown = os.Chown
 
-// zero size, empty struct
+// EmptyStruct zero size, empty struct
 type EmptyStruct struct{}
 
-// parse flag and print usage/value to writer
-func Init(writer io.Writer) {
-	flag.Parse()
+// EmptyArray 兼容其他语言的[]空数组,一般在tojson的时候转换为[]
+type EmptyArray []struct{}
 
-	if writer != nil {
-		flag.VisitAll(func(f *flag.Flag) {
-			fmt.Fprintf(writer, "-%s=%v \n", f.Name, f.Value)
-		})
-	}
+// H 对map[string]interface{}别名类型，简化书写
+type H map[string]interface{}
+
+// dotask返回的结果
+type TaskRes struct {
+	Err      error
+	Result   chan interface{}
+	CostTime float64
 }
 
-// check panic when exit
+// CheckPanic check panic when exit
 func CheckPanic() {
 	if err := recover(); err != nil {
-		loc, _ := time.LoadLocation(localTimeZone)
+		loc, _ := time.LoadLocation("Local")
 		fmt.Fprintf(os.Stderr, "\n%s %+v\n", FormatTime19(time.Now().In(loc)), err)
 		fmt.Fprintf(os.Stderr, "full stack info: \n%s", CatchStack())
 	}
-
 }
 
-//捕获指定stack信息,一般在处理panic/recover中处理
+// CatchStack 捕获指定stack信息,一般在处理panic/recover中处理
 //返回完整的堆栈信息和函数调用信息
 func CatchStack() []byte {
 	buf := &bytes.Buffer{}
@@ -77,7 +76,7 @@ func CatchStack() []byte {
 	return buf.Bytes()
 }
 
-//获取完整的堆栈信息
+// Stack 获取完整的堆栈信息
 // Stack returns a formatted stack trace of the goroutine that calls it.
 // It calls runtime.Stack with a large enough buffer to capture the entire trace.
 func Stack() []byte {
@@ -92,20 +91,6 @@ func Stack() []byte {
 	}
 }
 
-// reload signal
-func HupSignal() <-chan os.Signal {
-	signals := make(chan os.Signal, 3)
-	signal.Notify(signals, syscall.SIGHUP)
-	return signals
-}
-
-// recive quit signal
-func QuitSignal() <-chan os.Signal {
-	signals := make(chan os.Signal, 3)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-	return signals
-}
-
 func Md5(str string) string {
 	return crypto.Md5(str)
 }
@@ -114,7 +99,7 @@ func Sha1(str string) string {
 	return crypto.Sha1(str)
 }
 
-//通过随机数的方式生成uuid
+// NewUUID 通过随机数的方式生成uuid
 //如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
 //该方式生成的uuid有可能存在重复值
 //返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
@@ -134,7 +119,7 @@ func NewUUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
 }
 
-//基于时间ns和随机数实现唯一的uuid
+// RndUuid 基于时间ns和随机数实现唯一的uuid
 //在单台机器上是不会出现重复的uuid
 //如果要在分布式的架构上生成不重复的uuid
 // 只需要在rndStr的前面加一些自定义的字符串
@@ -292,4 +277,203 @@ func Chown(name string, info os.FileInfo) error {
 	stat := info.Sys().(*syscall.Stat_t)
 
 	return os_Chown(name, int(stat.Uid), int(stat.Gid))
+}
+
+// DoTask 在独立携程中运行fn
+// 这里返回结果设计为interface{},因为有时候返回结果可以是error
+func DoTask(fn func() interface{}) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				log.Println("task exec panic error: ", err)
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn()
+		res.Result <- r
+	}()
+
+	<-done
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
+}
+
+// DoTaskWithArgs 在独立携程中执行有参数的fn
+func DoTaskWithArgs(fn func(args ...interface{}) interface{}, args ...interface{}) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				log.Println("task exec panic error: ", err)
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn(args...)
+		res.Result <- r
+	}()
+
+	<-done
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
+}
+
+// DoTaskWithTimeout 采用done+select+time.After实现goroutine超时调用
+func DoTaskWithTimeout(fn func() interface{}, timeout time.Duration) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn()
+		res.Result <- r
+	}()
+
+	select {
+	case <-done:
+		log.Println("task has done")
+	case <-time.After(timeout):
+		if res.Err == nil { //当执行过程中没有发生了panic的话，这里设置为任务超时错误
+			res.Err = errors.New("task timeout")
+		}
+	}
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
+}
+
+// DoTaskWithContext 通过上下文context+done+select实现goroutine超时调用
+func DoTaskWithContext(ctx context.Context, fn func() interface{}, timeout time.Duration) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	ctx2, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn()
+		res.Result <- r
+	}()
+
+	select {
+	case <-done:
+		log.Println("task has done")
+	case <-ctx2.Done(): //超时了
+		if res.Err == nil {
+			res.Err = errors.New("task timeout")
+		}
+	}
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
+}
+
+// DoTaskWithTimeoutArgs 采用done+select+time.After实现goroutine超时调用
+func DoTaskWithTimeoutArgs(fn func(args ...interface{}) interface{}, timeout time.Duration, args ...interface{}) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn(args...)
+		res.Result <- r
+	}()
+
+	select {
+	case <-done:
+		log.Println("task has done")
+	case <-time.After(timeout):
+		if res.Err == nil {
+			res.Err = errors.New("task timeout")
+		}
+	}
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
+}
+
+// DoTaskWithContextArgs 通过上下文context+done+select实现goroutine超时调用
+func DoTaskWithContextArgs(ctx context.Context, fn func(args ...interface{}) interface{}, timeout time.Duration, args ...interface{}) *TaskRes {
+	t := time.Now()
+	done := make(chan struct{}, 1)
+	res := &TaskRes{
+		Result: make(chan interface{}, 1),
+	}
+
+	ctx2, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	go func() {
+		defer func() {
+			close(res.Result)
+			close(done)
+			if err := recover(); err != nil {
+				res.Err = errors.New(fmt.Sprintf("%v", err))
+			}
+		}()
+
+		r := fn(args...)
+		res.Result <- r
+	}()
+
+	select {
+	case <-done:
+		log.Println("task has done")
+	case <-ctx2.Done(): //超时了
+		if res.Err == nil {
+			res.Err = ctx2.Err()
+		}
+	}
+
+	res.CostTime = time.Now().Sub(t).Seconds()
+	return res
 }
