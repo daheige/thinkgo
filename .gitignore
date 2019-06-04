@@ -4,3 +4,4 @@ common/**/*.log
 .idea/
 vendor/*
 logs
+settings.json
