@@ -10,6 +10,7 @@ package common
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -46,7 +47,7 @@ var (
 	logFile               = ""             //日志文件
 	logLock               = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
 	logDay                = 0              //当前日期
-	logTimeZone           = "Local"        //time zone default Local/Shanghai
+	logTimeZone           = "Local"        //time zone default Local "Asia/Shanghai"
 	logtmFmtWithMS        = "2006-01-02 15:04:05.999"
 	logtmFmtMissMS        = "2006-01-02 15:04:05"
 	logtmFmtTime          = "2006-01-02"
@@ -55,7 +56,6 @@ var (
 	megabyte        int64 = 1024 * 1024               //1MB = 1024 * 1024byte
 	defaultMaxSize  int64 = 512                       //默认单个日志文件大小,单位为mb
 	currentTime           = time.Now                  //当前时间函数
-	os_Stat               = os.Stat                   //os stat
 	logSplit              = false                     //默认日志不分割,当设置为true可以加快写入的速度
 	logtmSplit            = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
 )
@@ -86,6 +86,13 @@ func SetLogDir(dir string) {
 	if dir == "" {
 		logDir = os.TempDir()
 	} else {
+		if !CheckPathExist(dir) {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				log.Println(err)
+				return
+			}
+		}
+
 		logDir = dir
 	}
 
@@ -145,7 +152,7 @@ func splitLog() {
 	}
 
 	//检测文件大小是否超过指定大小
-	fileInfo, err := os_Stat(logFile)
+	fileInfo, err := os.Stat(logFile)
 	if err != nil {
 		fmt.Println("get file stat error: ", err)
 		return

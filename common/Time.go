@@ -8,7 +8,7 @@ const tmFmtWithMS = "2006-01-02 15:04:05.999"
 const tmFmtMissMS = "2006-01-02 15:04:05"
 const tmFmtTime = "2006-01-02"
 
-var TimeZone = "PRC" //默认时区设置
+var TimeZone = "Local" //默认时区设置，可以是Local本地时区
 
 func SetTimeZone(zone string) {
 	TimeZone = zone

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/daheige/thinkgo/crypto"
+	uuid "github.com/satori/go.uuid"
 )
 
 // os_Chown is a var so we can mock it out during tests.
@@ -129,10 +130,29 @@ func RndUuid() string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
 }
 
+// RndUuidMd5 uuid
 func RndUuidMd5() string {
 	ns := time.Now().UnixNano()
 	rndStr := StrJoin("", strconv.FormatInt(ns, 10), strconv.FormatInt(RandInt64(1000, 9999), 10))
 	return crypto.Md5(rndStr)
+}
+
+func Uuid() string {
+	return strings.Replace(uuid.NewV4().String(), "-", "", -1)
+}
+
+//check file or path exist
+func CheckPathExist(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return false
 }
 
 //获取文件的名称不带后缀
