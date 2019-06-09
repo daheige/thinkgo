@@ -22,7 +22,7 @@ import (
 /* 日志级别 从上到下，由高到低 */
 const (
 	EMERGENCY = "emerg"  // 严重错误: 导致系统崩溃无法使用
-	ALERT     = "alter"  // 警戒性错误: 必须被立即修改的错误
+	ALTER     = "alter"  // 警戒性错误: 必须被立即修改的错误
 	CRIT      = "crit"   // 临界值错误: 超过临界值的错误，例如一天24小时，而输入的是25小时这样
 	ERR       = "error"  // 一般错误:比如类型错误，数据库连接不上等等
 	WARN      = "warn"   // 警告性错误: 需要发出警告的错误
@@ -33,7 +33,7 @@ const (
 
 var LogLevelMap = map[string]int{
 	EMERGENCY: 600,
-	ALERT:     550,
+	ALTER:     550,
 	CRIT:      500,
 	ERR:       400,
 	WARN:      300,
@@ -269,4 +269,17 @@ func AlterLog(v interface{}, options map[string]interface{}) {
 
 func EmergLog(v interface{}, options map[string]interface{}) {
 	writeLog("emerg", v, options)
+}
+
+// RecoverLog 异常捕获处理，对于异常或者panic进行捕获处理
+// 记录到日志中，方便定位问题
+func RecoverLog() {
+	defer func() {
+		if err := recover(); err != nil {
+			EmergLog("exec panic", map[string]interface{}{
+				"error":       err,
+				"error_trace": string(CatchStack()),
+			})
+		}
+	}()
 }

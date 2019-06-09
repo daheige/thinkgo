@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -218,6 +220,61 @@ func Fatal(msg string, options map[string]interface{}) {
 	}
 
 	fLogger.Fatal(msg, fields...)
+}
+
+// Recover 异常捕获处理，对于异常或者panic进行捕获处理，记录到日志中，方便定位问题
+func Recover() {
+	defer func() {
+		if err := recover(); err != nil {
+			DPanic("exec panic", map[string]interface{}{
+				"error":       err,
+				"error_trace": string(catchFullStack()),
+			})
+		}
+	}()
+}
+
+// Stack 获取完整的堆栈信息
+// Stack returns a formatted stack trace of the goroutine that calls it.
+// It calls runtime.Stack with a large enough buffer to capture the entire trace.
+func Stack() []byte {
+	buf := make([]byte, 1024)
+	for {
+		n := runtime.Stack(buf, false) //当第二个参数为true，一次获取所有的堆栈信息
+		if n < len(buf) {
+			return buf[:n]
+		}
+
+		buf = make([]byte, 2*len(buf))
+	}
+}
+
+// catchFullStack 捕获指定stack信息,一般在处理panic/recover中处理
+//返回完整的堆栈信息和函数调用信息
+func catchFullStack() []byte {
+	buf := &bytes.Buffer{}
+
+	//完整的堆栈信息
+	stack := Stack()
+	buf.WriteString("full stack:\n")
+	buf.WriteString(string(stack))
+
+	//完整的函数调用信息
+	buf.WriteString("full fn call info:\n")
+
+	// skip为0时，打印当前调用文件及行数。
+	// 为1时，打印上级调用的文件及行数，依次类推
+	for i := 1; ; i++ {
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+
+		fn := runtime.FuncForPC(pc).Name()
+		buf.WriteString(fmt.Sprintf("error Stack file: %s:%d call func:%s\n", file, line, fn))
+	}
+
+	return buf.Bytes()
 }
 
 // parseFields 解析map[string]interface{}中的字段到zap.Field
