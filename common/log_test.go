@@ -65,8 +65,11 @@ func TestLog(t *testing.T) {
 /**
 $ go test -v -test.run=TestLog
 === RUN   TestLog
---- PASS: TestLog (42.75s)
+2019/06/09 13:28:21 write log success
+2019-06-09
+Log.go
+--- PASS: TestLog (28.73s)
     log_test.go:13: 测试log库
 PASS
-ok      github.com/daheige/thinkgo/common       42.780s
+ok      github.com/daheige/thinkgo/common       28.779s
 */

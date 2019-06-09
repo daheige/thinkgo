@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
@@ -25,11 +27,12 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge   = 7       //默认日志保留天数
-	logMaxSize  = 512     //默认日志大小，单位为Mb
-	logCompress = false   //默认日志不压缩
-	logLevel    = "debug" //最低日志级别
-	logFileName = ""
+	logMaxAge   = 7         //默认日志保留天数
+	logMaxSize  = 512       //默认日志大小，单位为Mb
+	logCompress = false     //默认日志不压缩
+	logLevel    = "debug"   //最低日志级别
+	logFileName = "zap.log" //默认日志文件，不包含全路径
+	logDir      = ""        //日志文件存放目录
 )
 
 func MaxAge(n int) {
@@ -62,9 +65,41 @@ func getLevel(lvl string) zapcore.Level {
 	return zapcore.InfoLevel
 }
 
+//check file or path exist
+func checkPathExist(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return false
+}
+
+//日志存放目录
+func SetLogDir(dir string) {
+	if dir == "" {
+		logDir = os.TempDir()
+	} else {
+		if !checkPathExist(dir) {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				log.Println(err)
+				return
+			}
+		}
+
+		logDir = dir
+	}
+}
+
 func initCore() {
-	if logFileName == "" {
-		logFileName = os.TempDir() + "/zap.log" //默认日志文件名称
+	if logDir == "" {
+		logFileName = filepath.Join(os.TempDir(), logFileName) //默认日志文件名称
+	} else {
+		logFileName = filepath.Join(logDir, logFileName)
 	}
 
 	//日志最低级别设置
@@ -114,34 +149,91 @@ func LogSugar() *zap.SugaredLogger {
 	return logger.Sugar()
 }
 
-func Debug(msg string, fields ...zap.Field) {
-	fLogger.Debug(msg, fields...)
+//debug日志直接输出到终端
+func Debug(msg string, options map[string]interface{}) {
+	log.Println("msg: ", msg)
+	log.Println("log fields: ", options)
 }
 
-func Info(msg string, fields ...zap.Field) {
+func Info(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.Info(msg)
+		return
+	}
+
 	fLogger.Info(msg, fields...)
 }
 
-func Warn(msg string, fields ...zap.Field) {
+func Warn(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.Warn(msg)
+		return
+	}
+
 	fLogger.Warn(msg, fields...)
 }
 
-func Error(msg string, fields ...zap.Field) {
+func Error(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.Error(msg)
+		return
+	}
+
 	fLogger.Error(msg, fields...)
 }
 
 //调试模式下的panic，程序不退出，继续运行
-func DPanic(msg string, fields ...zap.Field) {
+func DPanic(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.DPanic(msg)
+		return
+	}
+
 	fLogger.DPanic(msg, fields...)
 }
 
 //下面的panic,fatal一般不建议使用，除非不可恢复的panic或致命错误程序必须退出
 //抛出panic的时候，先记录日志，然后执行panic,退出当前goroutine
-func Panic(msg string, fields ...zap.Field) {
+func Panic(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.Panic(msg)
+		return
+	}
+
 	fLogger.Panic(msg, fields...)
 }
 
 //抛出致命错误，然后退出程序
-func Fatal(msg string, fields ...zap.Field) {
+func Fatal(msg string, options map[string]interface{}) {
+	fields := parseFields(options)
+	if fields == nil {
+		fLogger.Fatal(msg)
+		return
+	}
+
 	fLogger.Fatal(msg, fields...)
+}
+
+// parseFields 解析map[string]interface{}中的字段到zap.Field
+func parseFields(fields map[string]interface{}) []zap.Field {
+	if fields == nil {
+		return nil
+	}
+
+	fLen := len(fields)
+	if fLen == 0 {
+		return nil
+	}
+
+	f := make([]zap.Field, 0, fLen)
+	for k, v := range fields {
+		f = append(f, zap.Any(k, v))
+	}
+
+	return f
 }

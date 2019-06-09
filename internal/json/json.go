@@ -4,7 +4,7 @@
 
 // +build !jsoniter
 
-package jsoniter
+package json
 
 import "encoding/json"
 

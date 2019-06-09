@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/daheige/thinkgo/jsoniter"
+	"github.com/daheige/thinkgo/internal/json"
 )
 
 /* 日志级别 从上到下，由高到低 */
@@ -117,7 +117,7 @@ func newFile(now time.Time) {
 	//创建文件
 	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Println(now.Format(logtmFmtMissMS), "open log file", filename, err, "use stdout")
+		log.Println("open log file", filename, err, "use stdout")
 		return
 	}
 
@@ -154,27 +154,27 @@ func splitLog() {
 	//检测文件大小是否超过指定大小
 	fileInfo, err := os.Stat(logFile)
 	if err != nil {
-		fmt.Println("get file stat error: ", err)
+		log.Println("get file stat error: ", err)
 		return
 	}
 
 	if fileInfo.Size() >= defaultMaxSize*megabyte {
 		newName := backupName(logFile)
 		if err := os.Rename(logFile, newName); err != nil {
-			fmt.Printf("can't rename log file: %s\n", err)
+			log.Printf("can't rename log file: %s\n", err)
 			return
 		}
 
 		// this is a no-op anywhere but linux
 		if err := Chown(logFile, fileInfo); err != nil {
-			fmt.Printf("can't chown log file: %s\n", err)
+			log.Printf("can't chown log file: %s\n", err)
 			return
 		}
 	}
 
 }
 
-func writeLog(levelName string, msg interface{}, options interface{}) {
+func writeLog(levelName string, msg interface{}, options map[string]interface{}) {
 	if _, ok := LogLevelMap[levelName]; !ok {
 		levelName = defaultLogLevel
 	}
@@ -192,15 +192,15 @@ func writeLog(levelName string, msg interface{}, options interface{}) {
 		FilePath:  file,
 	}
 
-	if v, ok := options.(map[string]interface{}); ok {
-		c.Context = v
+	if len(options) > 0 {
+		c.Context = options
 	}
 
 	//序列化为json格式
-	strBytes, err := jsoniter.Marshal(c)
+	strBytes, err := json.Marshal(c)
 	if err != nil {
-		fmt.Println("write log file,use stdout")
-		fmt.Println("log content: ", string(strBytes))
+		log.Println("write log file,use stdout")
+		log.Println("log content: ", string(strBytes))
 		return
 	}
 
@@ -214,8 +214,8 @@ func writeLog(levelName string, msg interface{}, options interface{}) {
 	//检测日志文件是否存在
 	checkLogExist()
 	if logFile == "" {
-		fmt.Println("write log file,use stdout")
-		fmt.Println("log content:", string(strBytes))
+		log.Println("write log file,use stdout")
+		log.Println("log content:", string(strBytes))
 		return
 	}
 
@@ -226,47 +226,47 @@ func writeLog(levelName string, msg interface{}, options interface{}) {
 
 	fp, err := os.OpenFile(logFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Printf("open log file: %s error: %s\n", logFile, err)
-		fmt.Println("log content:", string(strBytes))
+		log.Printf("open log file: %s error: %s\n", logFile, err)
+		log.Println("log content:", string(strBytes))
 		return
 	}
 
 	defer fp.Close()
 
 	if _, err := fp.Write(strBytes); err != nil {
-		fmt.Printf("write log file: %s error: %s\n", logFile, err)
+		log.Printf("write log file: %s error: %s\n", logFile, err)
 		return
 	}
 }
 
-func DebugLog(v interface{}, options interface{}) {
+func DebugLog(v interface{}, options map[string]interface{}) {
 	writeLog("debug", v, options)
 }
 
-func InfoLog(v interface{}, options interface{}) {
+func InfoLog(v interface{}, options map[string]interface{}) {
 	writeLog("info", v, options)
 }
 
-func NoticeLog(v interface{}, options interface{}) {
+func NoticeLog(v interface{}, options map[string]interface{}) {
 	writeLog("notice", v, options)
 }
 
-func WarnLog(v interface{}, options interface{}) {
+func WarnLog(v interface{}, options map[string]interface{}) {
 	writeLog("warn", v, options)
 }
 
-func ErrorLog(v interface{}, options interface{}) {
+func ErrorLog(v interface{}, options map[string]interface{}) {
 	writeLog("error", v, options)
 }
 
-func CritLog(v interface{}, options interface{}) {
+func CritLog(v interface{}, options map[string]interface{}) {
 	writeLog("crit", v, options)
 }
 
-func AlterLog(v interface{}, options interface{}) {
+func AlterLog(v interface{}, options map[string]interface{}) {
 	writeLog("alter", v, options)
 }
 
-func EmergLog(v interface{}, options interface{}) {
+func EmergLog(v interface{}, options map[string]interface{}) {
 	writeLog("emerg", v, options)
 }

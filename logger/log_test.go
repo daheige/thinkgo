@@ -3,12 +3,11 @@ package logger
 import (
 	"sync"
 	"testing"
-
-	"go.uber.org/zap"
 )
 
 func TestLog(t *testing.T) {
-	SetLogFile("./logs/zap.log") //设置日志文件路径
+	SetLogDir("./logs/") //设置日志文件目录
+	SetLogFile("mytest.log")
 	MaxSize(20)
 
 	InitLogger()
@@ -18,7 +17,10 @@ func TestLog(t *testing.T) {
 	logSugar.Info(222)
 	logSugar.Infof("hello,%s", "world")
 
-	Info("111", zap.String("name", "abc"), zap.Int("age", 28))
+	Info("111", map[string]interface{}{
+		"abc": "daheige",
+		"age": 28,
+	})
 
 	nums := 30 * 10000
 	var wg sync.WaitGroup
@@ -27,23 +29,29 @@ func TestLog(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			Info("hello,world", zap.Int("a", 1), zap.String("b", "c"))
-			Warn("haha")
+			Info("hello,world", map[string]interface{}{
+				"a": 1,
+				"b": "free",
+			})
+
+			Warn("haha", nil)
 		}()
 	}
 
 	wg.Wait()
 
-	Info("write success")
-	Debug("hello")
-	DPanic("111")
-
+	Info("write success", nil)
+	Error("type error", nil)
+	Debug("hello", nil)
+	DPanic("111", nil)
 }
 
 /**
 $ go test -v
 === RUN   TestLog
---- PASS: TestLog (10.38s)
+2019/06/09 13:25:53 msg:  hello
+2019/06/09 13:25:53 log fields:  map[]
+--- PASS: TestLog (11.50s)
 PASS
-ok  	logger	10.458s
+ok      github.com/daheige/thinkgo/logger       11.638s
 */

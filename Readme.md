@@ -12,9 +12,9 @@
     ├── crypto          md5,sha1,sha1File,cbc256,ecb,aes加解密函数等
     ├── goPool          批量执行task pool池
     ├── gQueue          通过指定goroutine个数,实现task queue执行器
-    ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等
+    ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等等
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
-    ├── jsoniter        json优化库使用
+    ├── logger          基于uber zap框架封装而成的高性能logger日志库
     ├── mysql           gorm/mysql封装
     ├── dao             xorm/mysql封装,支持读写分离连接对象设置
     ├── mytest          单元测试用例
@@ -23,6 +23,8 @@
     ├── runner          runner按照顺序，执行任务操作，可作为cron作业或定时任务
     ├── WatchDog        监控狗,用以监控容易失控的循环或超时
     ├── work            利用无缓冲chan创建goroutine池来控制一组task的执行
+    ├── workPool        workerPool工作池，实现百万级的并发,一般用于持续不断的大规模作业
+    ├── xerrors         error错误处理拓展包，支持错误堆栈信息
     └── yamlConf        yaml配置文件读取
 
 # Use help
