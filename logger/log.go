@@ -289,6 +289,10 @@ func parseFields(fields map[string]interface{}) []zap.Field {
 		f = append(f, zap.Int("trace_line", line))
 	}
 
+	if fLen == 0 {
+		return f
+	}
+
 	for k, _ := range fields {
 		f = append(f, zap.Any(k, fields[k]))
 	}
