@@ -49,9 +49,9 @@ func TestLog(t *testing.T) {
 /**
 $ go test -v
 === RUN   TestLog
-2019/06/09 17:13:50 msg:  hello
-2019/06/09 17:13:50 log fields:  map[]
---- PASS: TestLog (13.12s)
+2019/06/22 17:16:31 msg:  hello
+2019/06/22 17:16:31 log fields:  map[]
+--- PASS: TestLog (12.55s)
 PASS
-ok      github.com/daheige/thinkgo/logger       13.269s
+ok      github.com/daheige/thinkgo/logger       12.679s
 */

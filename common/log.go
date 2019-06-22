@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/daheige/thinkgo/internal/json"
+	"encoding/json"
 )
 
 /* 日志级别 从上到下，由高到低 */

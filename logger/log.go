@@ -160,42 +160,22 @@ func Debug(msg string, options map[string]interface{}) {
 
 func Info(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.Info(msg)
-		return
-	}
-
 	fLogger.Info(msg, fields...)
 }
 
 func Warn(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.Warn(msg)
-		return
-	}
-
 	fLogger.Warn(msg, fields...)
 }
 
 func Error(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.Error(msg)
-		return
-	}
-
 	fLogger.Error(msg, fields...)
 }
 
 //调试模式下的panic，程序不退出，继续运行
 func DPanic(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.DPanic(msg)
-		return
-	}
-
 	fLogger.DPanic(msg, fields...)
 }
 
@@ -203,22 +183,12 @@ func DPanic(msg string, options map[string]interface{}) {
 //抛出panic的时候，先记录日志，然后执行panic,退出当前goroutine
 func Panic(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.Panic(msg)
-		return
-	}
-
 	fLogger.Panic(msg, fields...)
 }
 
 //抛出致命错误，然后退出程序
 func Fatal(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
-	if len(fields) == 0 {
-		fLogger.Fatal(msg)
-		return
-	}
-
 	fLogger.Fatal(msg, fields...)
 }
 
@@ -280,7 +250,7 @@ func catchFullStack() []byte {
 // parseFields 解析map[string]interface{}中的字段到zap.Field
 func parseFields(fields map[string]interface{}) []zap.Field {
 	fLen := len(fields)
-	f := make([]zap.Field, 0, fLen+2)
+	f := make([]zap.Field, 0, fLen+2) //至少2个元素包含trace_file,trace_line
 
 	//当前函数调用的位置和行数
 	if _, ok := fields["trace_line"]; !ok {
