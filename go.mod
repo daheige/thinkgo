@@ -9,7 +9,7 @@ require (
 	github.com/go-xorm/xorm v0.7.1
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/jinzhu/gorm v1.9.8
+	github.com/jinzhu/gorm v1.9.9
 	github.com/json-iterator/go v1.1.6
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
