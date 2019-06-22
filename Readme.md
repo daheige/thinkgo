@@ -15,7 +15,7 @@
     ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等等
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
     ├── logger          基于uber zap框架封装而成的高性能logger日志库
-    ├── mysql           gorm/mysql封装
+    ├── mysql           gorm/mysql封装,gorm1.9.9+版本
     ├── dao             xorm/mysql封装,支持读写分离连接对象设置
     ├── mytest          单元测试用例
     ├── rbmq            rbmq连接封装
