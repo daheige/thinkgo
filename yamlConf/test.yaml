@@ -11,3 +11,7 @@ RedisCommon:
   MaxIdle: 3
   MaxActive: 10
   IdleTimeout: 120
+  Ip:
+    - 11.12.1.1
+    - 11.12.1.2
+    - 11.12.1.3

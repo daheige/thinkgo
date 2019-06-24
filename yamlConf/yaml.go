@@ -207,6 +207,7 @@ func (c *ConfigEngine) GetStruct(name string, s interface{}) interface{} {
 	case string:
 		SetField(s, name, d)
 	case map[interface{}]interface{}:
+		//log.Println("s", s)
 		mapToStruct(d.(map[interface{}]interface{}), s)
 	}
 
@@ -223,11 +224,13 @@ func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
 		}
 
 		//打印k,v
-		/*log.Println("k = ", k)
-		log.Printf("k type = %T\n", k)
-		log.Println("v = ", v)*/
+		//log.Println("k = ", k)
+		//log.Printf("k type = %T\n", k)
+		//log.Println("v = ", v)
 
 		if val, ok := k.(string); ok {
+			//log.Println("key:", val)
+
 			err := SetField(obj, val, v)
 			if err != nil {
 				return err
@@ -261,17 +264,23 @@ func SetField(obj interface{}, name string, value interface{}) error {
 	if structFieldType.Kind() == reflect.Struct && val.Kind() == reflect.Map {
 		vint := val.Interface()
 		//类型断言,根据不同的类型设置k,v
-		switch vint.(type) {
+		switch v := vint.(type) {
 		case map[interface{}]interface{}:
-			for key, value := range vint.(map[interface{}]interface{}) {
+			for key, value := range v {
 				SetField(structFieldValue.Addr().Interface(), key.(string), value)
 			}
 		case map[string]interface{}:
-			for key, value := range vint.(map[string]interface{}) {
+			for key, value := range v {
 				SetField(structFieldValue.Addr().Interface(), key, value)
 			}
 		}
+	} else if structFieldType.Kind() == reflect.Slice && val.Kind() == reflect.Slice {
+		//log.Println("k:", name)
+		//log.Println("v", value)
+		//arr := getSlice(value.([]interface{}))
+		//log.Println("arr: ", arr)
 
+		structFieldValue.Set(getSlice(value.([]interface{})))
 	} else {
 		if structFieldType != val.Type() {
 			return errors.New("Provided value type didn't match obj field type")
@@ -281,6 +290,38 @@ func SetField(obj interface{}, name string, value interface{}) error {
 	}
 
 	return nil
+}
+
+// getSlice 根据v []interface{}进行类型断言，返回指定类型的切片
+func getSlice(v []interface{}) reflect.Value {
+	vType := reflect.ValueOf(v[0]).Kind()
+	switch vType {
+	case reflect.String: //字符串类型
+		arr := []string{}
+		for _, _v := range v {
+			arr = append(arr, _v.(string))
+		}
+
+		return reflect.ValueOf(arr)
+	case reflect.Int: //整数类型，这里不区分int32,int64统一用int类型
+		arr := []int{}
+		for _, _v := range v {
+			arr = append(arr, _v.(int))
+		}
+
+		return reflect.ValueOf(arr)
+	case reflect.Float64: //浮点类型统一用float64类型
+		arr := []float64{}
+		for _, _v := range v {
+			arr = append(arr, _v.(float64))
+		}
+
+		return reflect.ValueOf(arr)
+	default:
+	}
+
+	//默认[]interface{}
+	return reflect.ValueOf(v)
 }
 
 //用map的值替换结构的值，参数obj是一个struct
