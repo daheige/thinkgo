@@ -75,7 +75,10 @@ func (c *ConfigEngine) Get(name string) interface{} {
 
 // 从配置文件中获取string类型的值
 func (c *ConfigEngine) GetString(name string, defaultValue string) string {
-	value := c.Get(name)
+	return setString(c.Get(name), defaultValue)
+}
+
+func setString(value interface{}, defaultValue string) string {
 	if value == nil {
 		return defaultValue
 	}
@@ -89,13 +92,16 @@ func (c *ConfigEngine) GetString(name string, defaultValue string) string {
 
 // 从配置文件中获取int类型的值,defaultValue是默认值的
 func (c *ConfigEngine) GetInt(name string, defaultValue int) int {
-	value := c.Get(name)
-	if value == nil {
+	return setInt(c.Get(name), defaultValue)
+}
+
+func setInt(v interface{}, defaultValue int) int {
+	if v == nil {
 		return defaultValue
 	}
 
 	//类型断言
-	switch value := value.(type) {
+	switch value := v.(type) {
 	case string:
 		i, _ := strconv.Atoi(value)
 		return i
@@ -142,14 +148,44 @@ func (c *ConfigEngine) GetInt64(name string, defaultValue int64) int64 {
 	}
 }
 
-// 从配置文件中获取bool类型的值
-func (c *ConfigEngine) GetBool(name string, defaultValue bool) bool {
-	value := c.Get(name)
-	if value == nil {
+func setInt64(v interface{}, defaultValue int64) int64 {
+	if v == nil {
 		return defaultValue
 	}
 
-	switch value := value.(type) {
+	//类型断言
+	switch value := v.(type) {
+	case int64:
+		return value
+	case string:
+		i, _ := strconv.ParseInt(value, 10, 64)
+		return i
+	case int:
+		return int64(value)
+	case bool:
+		if value {
+			return 1
+		}
+
+		return 0
+	case float64:
+		return int64(value)
+	default:
+		return defaultValue
+	}
+}
+
+// 从配置文件中获取bool类型的值
+func (c *ConfigEngine) GetBool(name string, defaultValue bool) bool {
+	return setBool(c.Get(name), defaultValue)
+}
+
+func setBool(v interface{}, defaultValue bool) bool {
+	if v == nil {
+		return defaultValue
+	}
+
+	switch value := v.(type) {
 	case string:
 		str, _ := strconv.ParseBool(value)
 		return str
@@ -172,12 +208,15 @@ func (c *ConfigEngine) GetBool(name string, defaultValue bool) bool {
 
 // 从配置文件中获取Float64类型的值
 func (c *ConfigEngine) GetFloat64(name string, defaultValue float64) float64 {
-	value := c.Get(name)
-	if value == nil {
+	return setFloat64(c.Get(name), defaultValue)
+}
+
+func setFloat64(v interface{}, defaultValue float64) float64 {
+	if v == nil {
 		return defaultValue
 	}
 
-	switch value := value.(type) {
+	switch value := v.(type) {
 	case string:
 		str, _ := strconv.ParseFloat(value, 64)
 		return str
@@ -279,7 +318,6 @@ func SetField(obj interface{}, name string, value interface{}) error {
 		//log.Println("v", value)
 		//arr := getSlice(value.([]interface{}))
 		//log.Println("arr: ", arr)
-
 		structFieldValue.Set(getSlice(value.([]interface{})))
 	} else {
 		if structFieldType != val.Type() {
@@ -295,25 +333,27 @@ func SetField(obj interface{}, name string, value interface{}) error {
 // getSlice 根据v []interface{}进行类型断言，返回指定类型的切片
 func getSlice(v []interface{}) reflect.Value {
 	vType := reflect.ValueOf(v[0]).Kind()
+	vLen := len(v)
+
 	switch vType {
 	case reflect.String: //字符串类型
-		arr := []string{}
+		arr := make([]string, 0, vLen)
 		for _, _v := range v {
-			arr = append(arr, _v.(string))
+			arr = append(arr, setString(_v, ""))
 		}
 
 		return reflect.ValueOf(arr)
 	case reflect.Int: //整数类型，这里不区分int32,int64统一用int类型
-		arr := []int{}
+		arr := make([]int, 0, vLen)
 		for _, _v := range v {
-			arr = append(arr, _v.(int))
+			arr = append(arr, setInt(_v, 0))
 		}
 
 		return reflect.ValueOf(arr)
 	case reflect.Float64: //浮点类型统一用float64类型
-		arr := []float64{}
+		arr := make([]float64, 0, vLen)
 		for _, _v := range v {
-			arr = append(arr, _v.(float64))
+			arr = append(arr, setFloat64(_v, 0))
 		}
 
 		return reflect.ValueOf(arr)
