@@ -22,6 +22,7 @@ func TestLog(t *testing.T) {
 		"age": 28,
 	})
 
+	//测试60w日志输出到文件
 	nums := 30 * 10000
 	var wg sync.WaitGroup
 	wg.Add(nums)
@@ -49,9 +50,9 @@ func TestLog(t *testing.T) {
 /**
 $ go test -v
 === RUN   TestLog
-2019/06/22 17:16:31 msg:  hello
-2019/06/22 17:16:31 log fields:  map[]
---- PASS: TestLog (12.55s)
+2019/06/29 11:50:01 msg:  hello
+2019/06/29 11:50:01 log fields:  map[]
+--- PASS: TestLog (12.76s)
 PASS
-ok      github.com/daheige/thinkgo/logger       12.679s
+ok  	github.com/daheige/thinkgo/logger	12.917s
 */

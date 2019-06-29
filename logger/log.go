@@ -116,7 +116,7 @@ func initCore() {
 	})
 
 	encoderConf := zapcore.EncoderConfig{
-		TimeKey:        "time",
+		TimeKey:        "time_local", //本地时间
 		LevelKey:       "level",
 		CallerKey:      "line",
 		MessageKey:     "msg",
