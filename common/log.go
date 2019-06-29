@@ -64,7 +64,7 @@ var (
 type logContent struct {
 	Level     int                    `json:"level"`
 	LevelName string                 `json:"level_name"`
-	LocalTime string                 `json:"local_time"` //当前时间
+	TimeLocal string                 `json:"time_local"` //当前时间
 	Msg       interface{}            `json:"msg"`
 	LineNo    int                    `json:"line_no"`   //当前行号
 	FilePath  string                 `json:"file_path"` //当前文件
@@ -186,7 +186,7 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 	c := &logContent{
 		LevelName: levelName,
 		Level:     LogLevelMap[levelName],
-		LocalTime: currentTime().In(logtmLoc).Format(logtmFmtWithMS),
+		TimeLocal: currentTime().In(logtmLoc).Format(logtmFmtWithMS),
 		Msg:       msg,
 		LineNo:    line,
 		FilePath:  file,
