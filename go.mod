@@ -12,6 +12,7 @@ require (
 	github.com/jinzhu/gorm v1.9.9
 	github.com/mozillazg/request v0.8.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
 	github.com/satori/go.uuid v1.2.0
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
 	go.uber.org/atomic v1.4.0 // indirect
