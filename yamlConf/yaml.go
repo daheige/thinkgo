@@ -121,31 +121,7 @@ func setInt(v interface{}, defaultValue int) int {
 }
 
 func (c *ConfigEngine) GetInt64(name string, defaultValue int64) int64 {
-	value := c.Get(name)
-	if value == nil {
-		return defaultValue
-	}
-
-	//类型断言
-	switch value := value.(type) {
-	case int64:
-		return value
-	case string:
-		i, _ := strconv.ParseInt(value, 10, 64)
-		return i
-	case int:
-		return int64(value)
-	case bool:
-		if value {
-			return 1
-		}
-
-		return 0
-	case float64:
-		return int64(value)
-	default:
-		return defaultValue
-	}
+	return setInt64(c.Get(name), defaultValue)
 }
 
 func setInt64(v interface{}, defaultValue int64) int64 {
