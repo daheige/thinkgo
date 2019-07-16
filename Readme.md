@@ -10,7 +10,6 @@
     ├── cache           基于key/val内存缓存设计，支持过期时间设置
     ├── common          公共函数库logger每天流动日志,Time,Lock操作,uuid生成等
     ├── crypto          md5,sha1,sha1File,cbc256,ecb,aes加解密函数等
-    ├── goPool          批量执行task pool池
     ├── gQueue          通过指定goroutine个数,实现task queue执行器
     ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等等
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
