@@ -20,7 +20,6 @@
     ├── rbmq            rbmq连接封装
     ├── redisCache      redisgo操作库封装
     ├── runner          runner按照顺序，执行任务操作，可作为cron作业或定时任务
-    ├── WatchDog        监控狗,用以监控容易失控的循环或超时
     ├── work            利用无缓冲chan创建goroutine池来控制一组task的执行
     ├── workPool        workerPool工作池，实现百万级的并发,一般用于持续不断的大规模作业
     ├── xerrors         error错误处理拓展包，支持错误堆栈信息
@@ -42,7 +41,6 @@
             go get -u github.com/kardianos/govendor
         3. 切换到对应的目录进行 go install编译包
     如果采用go mod (golang1.11版本+) 不需要将该包放在$GOPATH/src，只需要在使用的项目中引入就可以。
-        1. 请直接执行go mod tidy # 下载依赖包和去掉多余的包
-        2. go mod vendor #将包移动到vendor下
+        请直接执行go mod tidy # 下载依赖包
 # License
     MIT
