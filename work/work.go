@@ -13,7 +13,6 @@ package work
 
 import (
 	"log"
-	"runtime"
 	"sync"
 )
 
@@ -36,7 +35,7 @@ func New(gNum int) *Pool {
 
 	p.wg.Add(gNum) //最大goroutine个数
 	for i := 0; i < gNum; i++ {
-		runtime.Gosched() //让出控制权给其他的goroutine,在逻辑上形成并发,只有出让cpu时，另外一个协程才会运行
+		//runtime.Gosched() //让出控制权给其他的goroutine,在逻辑上形成并发,只有出让cpu时，另外一个协程才会运行
 
 		//开启独立的goroutine来执行任务
 		go func(p *Pool) {
@@ -44,7 +43,7 @@ func New(gNum int) *Pool {
 
 			defer p.wg.Done() //执行完毕后计数信号量减去1
 
-			for w := range p.work { //for...range会一直阻塞,知道从work通道中收到一个Worker接口值
+			for w := range p.work { //for...range会一直阻塞,直到从work通道中收到一个Worker接口值
 				w.Task() //执行任务
 			}
 		}(p)
@@ -62,8 +61,7 @@ func (p *Pool) Add(w Worker) {
 
 // Shutdown 等待所有的goroutine执行完毕,它关闭了 work 通道
 // 这会导致所有池里的 goroutine 停止工作
-// 并调用 WaitGroup 的 Done 方法使得计数器减去1;
-// 然后调用pg.wg 的 Wait 方法,这会让 Shutdown 方法等待所有 goroutine 终止
+// 调用pg.wg 的 Wait 方法,会等待所有 goroutine 终止
 func (p *Pool) Shutdown() {
 	close(p.work) //关闭通道会让所有池里的goroutine全部停止
 	p.wg.Wait()   //等待所有的goroutine执行完毕
