@@ -54,17 +54,19 @@ type DbConf struct {
 }
 
 //给当前数据库指定engineName
-func (conf *DbConf) SetEngineName(name string) {
+func (conf *DbConf) SetEngineName(name string) error {
 	if name == "" {
-		panic(fmt.Sprintf("current %s engine name is empty!", name))
+		return errors.New("current engine name is empty!")
 	}
 
 	if conf.dbObj == nil {
-		panic(fmt.Sprintf("current %s db engine not initDb", name))
+		return errors.New("current " + name + " db engine not be initDb")
 	}
 
 	conf.engineName = name
 	engineMap[conf.engineName] = conf.dbObj
+
+	return nil
 }
 
 //创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
@@ -155,8 +157,8 @@ func (conf *DbConf) initDb() error {
 	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
 		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
 		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
-	if err != nil {
-		return errors.New("set gorm.DB failed")
+	if err != nil { //数据库连接错误
+		return err
 	}
 
 	//将sql打印到终端
@@ -174,6 +176,9 @@ func (conf *DbConf) initDb() error {
 	}
 
 	conf.dbObj = db
+
+	// log.Println("current dbObj: ",db)
+
 	return nil
 }
 

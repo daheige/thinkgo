@@ -1,9 +1,10 @@
 package dao
 
 import (
-	"github.com/go-xorm/xorm"
 	"log"
 	"testing"
+
+	"github.com/go-xorm/xorm"
 )
 
 /**
@@ -19,9 +20,9 @@ import (
 */
 
 type myUser struct {
-	Id   int   `xorm:"pk autoincr"` //定义的字段属性，要用空格隔开
+	Id   int    `xorm:"pk autoincr"` //定义的字段属性，要用空格隔开
 	Name string `xorm:"varchar(200)"`
-	Age int `xorm:"tinyint(3)"`
+	Age  int    `xorm:"tinyint(3)"`
 }
 
 func (myUser) TableName() string {
@@ -47,8 +48,7 @@ func TestDao(t *testing.T) {
 	dbconf.SetEngine() //设置数据库连接对象，并非真正连接，只有在用的时候才会建立连接
 	dbconf.SetEngineName("default")
 
-
-	db,err := dbconf.Db()
+	db, err := dbconf.Db()
 	if db == nil || err != nil {
 		log.Println("db error")
 		return
@@ -78,11 +78,11 @@ func TestDao(t *testing.T) {
 	}
 
 	readConf.SetEngine()
-	readConf.SetEngineName("readEngine")
+	readConf.SetEngineName("readEngine") //为每个db设置一个engine name
 
-	readEngine,err := readConf.Db()
-	if err != nil{
-		log.Println("set read db engine error: ",err.Error())
+	readEngine, err := readConf.Db()
+	if err != nil {
+		log.Println("set read db engine error: ", err.Error())
 		return
 	}
 
@@ -102,26 +102,26 @@ func TestDao(t *testing.T) {
 	}
 
 	readConf2.SetEngine()
-	readConf2.SetEngineName("readEngine2")
-	readEngine2,err := readConf2.Db()
-	if err != nil{
-		log.Println("set read db engine error: ",err.Error())
+	readConf2.SetEngineName("readEngine2") //为每个db设置一个engine name
+	readEngine2, err := readConf2.Db()
+	if err != nil {
+		log.Println("set read db engine error: ", err.Error())
 		return
 	}
 
 	defer readConf2.Close()
 
 	//设置读写分离的引擎句柄
-	engineGroup,err := SetEngineGroup(db,readEngine,readEngine2)
-	if err != nil{
-		log.Println("set db engineGroup error: ",err.Error())
+	engineGroup, err := SetEngineGroup(db, readEngine, readEngine2)
+	if err != nil {
+		log.Println("set db engineGroup error: ", err.Error())
 		return
 	}
 
 	//defer engineGroup.Close() //关闭读写分离的连接对象
 
 	//设置读写分离连接对象，并非真正建立连接
-	SetEngineGroupName("dbGroup",engineGroup)
+	SetEngineGroupName("dbGroup", engineGroup) //为每个db设置一个engine name
 
 	user2 := &myUser{}
 	has, err = engineGroup.Where("id = ?", 3).Get(user2)
@@ -130,8 +130,8 @@ func TestDao(t *testing.T) {
 	log.Println(user2)
 
 	//通过辅助函数获取读写分离连接对象
-	db2,err := GetEngineGroup("dbGroup")
-	if err != nil{
+	db2, err := GetEngineGroup("dbGroup")
+	if err != nil {
 		log.Println(err)
 		return
 	}
@@ -144,16 +144,17 @@ func TestDao(t *testing.T) {
 
 	//采用读写分离实现数据插入
 	user4 := &myUser{
-		Name:"xiaoxiao",
-		Age:12,
+		Name: "xiaoxiao",
+		Age:  12,
 	}
 
-	affectedNum,err := db2.InsertOne(user4) //插入单条数据，多条数据请用Insert(user3,user4,user5)
-	log.Println("affected num: ",affectedNum)
-	log.Println("insert id: ",user4.Id)
-	log.Println("err: ",err)
+	affectedNum, err := db2.InsertOne(user4) //插入单条数据，多条数据请用Insert(user3,user4,user5)
+	log.Println("affected num: ", affectedNum)
+	log.Println("insert id: ", user4.Id)
+	log.Println("err: ", err)
 
 }
+
 /**
 $ go test -v
 === RUN   TestDao
@@ -178,4 +179,4 @@ $ go test -v
 --- PASS: TestDao (0.06s)
 PASS
 ok  	github.com/daheige/thinkgo/dao	0.064s
- */
+*/

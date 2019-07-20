@@ -104,17 +104,19 @@ func (conf *DbConf) SetEngine() error {
 }
 
 //给当前数据库指定engineName
-func (conf *DbConf) SetEngineName(name string) {
+func (conf *DbConf) SetEngineName(name string) error {
 	if name == "" {
-		panic(fmt.Sprintf("current %s engineGroup name is empty!", name))
+		return errors.New("current engineGroup name is empty!")
 	}
 
 	if conf.dbObj == nil {
-		panic(fmt.Sprintf("current %s db engine not initDb", name))
+		return errors.New("current " + name + " db engine not be init")
 	}
 
 	conf.engineName = name
 	engineMap[name] = conf.dbObj
+
+	return nil
 }
 
 //短连接设置，一般用于短连接服务的数据库句柄
@@ -158,17 +160,19 @@ func SetEngineGroup(masterEngine *xorm.Engine, slave1Engine ...*xorm.Engine) (*x
 }
 
 //给读写分离的dbGroup设置name，一般用于业务上游层调度
-func SetEngineGroupName(name string, engineGroup *xorm.EngineGroup) {
+func SetEngineGroupName(name string, engineGroup *xorm.EngineGroup) error {
 	if name == "" {
-		panic(fmt.Sprintf("current %s engineGroup name is empty", name))
+		return errors.New("current engineGroup name is empty")
 	}
 
 	if engineGroup == nil {
-		panic(fmt.Sprintf("current %s engineGroup is nil", name))
+		return errors.New("current " + name + " engineGroup not be init")
 	}
 
 	//设置读写分离的句柄名称
 	engineGroupMap[name] = engineGroup
+
+	return nil
 }
 
 //通过name获取读写分离的句柄对象,并非真正建立连接，只有在使用的时候才会建立连接
