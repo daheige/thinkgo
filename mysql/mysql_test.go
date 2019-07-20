@@ -42,8 +42,6 @@ func TestGorm(t *testing.T) {
 		SqlCmd:       true,
 	}
 
-	dbconf.setLogType(true)
-
 	//设置db engine name
 	dbconf.SetDbPool()              //建立db连接池
 	dbconf.SetEngineName("default") //为每个db设置一个engine name
@@ -138,19 +136,25 @@ func TestShortConnect(t *testing.T) {
 
 /** go test -v -test.run TestGorm
 采用长连接测试
---- PASS: TestGorm (1.35s)
-ok  	github.com/daheige/thinkgo/mysql	1.365s
+2019/07/20 20:14:51 &{2 hello}
+2019/07/20 20:14:51 &{2 hello}
+2019/07/20 20:14:51 test success
+--- PASS: TestGorm (0.38s)
+PASS
+ok      github.com/daheige/thinkgo/mysql        0.388s
+
 采用短连接方式测试
 $ go test -v -test.run TestShortConnect
-2019/04/04 21:39:47 test success
---- PASS: TestShortConnect (16.44s)
+2019/07/20 20:16:23 test success
+--- PASS: TestShortConnect (1.22s)
 PASS
-ok      github.com/daheige/thinkgo/mysql        16.449s
+ok      github.com/daheige/thinkgo/mysql        1.229s
 
 当我们把maxConnections 调到2000后
 $ go test -v -test.run TestShortConnect
 === RUN   TestShortConnect
-2019/03/20 15:15:06 get db error:  set gorm.DB failed
+2019/07/20 12:17:51 get db error:  set gorm.DB failed
+2019/07/20 12:17:51 get db error:  set gorm.DB failed
 panic: runtime error: invalid memory address or nil pointer dereference
 [signal SIGSEGV: segmentation violation code=0x1 addr=0x88 pc=0x6be466]
 

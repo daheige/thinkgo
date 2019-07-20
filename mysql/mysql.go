@@ -17,7 +17,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
@@ -33,7 +32,7 @@ var engineMap = map[string]*gorm.DB{}
 //into zero value of time.Time.
 type DbConf struct {
 	Ip           string
-	Port         int
+	Port         int //默认3306
 	User         string
 	Password     string
 	Database     string
@@ -45,12 +44,8 @@ type DbConf struct {
 	Loc          string   //时区字符串 Local,PRC
 	engineName   string   //当前数据库连接句柄标识
 	dbObj        *gorm.DB //当前数据库连接句柄
-	SqlCmd       bool     //sql语句是否输出到终端,true输出到终端
+	SqlCmd       bool     //sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
 	UsePool      bool     //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
-
-	//默认采用gorm log输出sql语句到终端
-	//当 defaultLogType=true,就采用自定义的stdout输出sql日志
-	defaultLogType bool
 }
 
 //给当前数据库指定engineName
@@ -79,11 +74,6 @@ func (conf *DbConf) SetDbObj() error {
 	}
 
 	return nil
-}
-
-//设置日志自定义os.Stdout输出格式
-func (conf *DbConf) setLogType(flag bool) {
-	conf.defaultLogType = flag
 }
 
 //设置db pool连接池
@@ -164,9 +154,6 @@ func (conf *DbConf) initDb() error {
 	//将sql打印到终端
 	if conf.SqlCmd {
 		db.LogMode(true)
-		if conf.defaultLogType { //采用os.Stdout输出日志格式
-			db.SetLogger(log.New(os.Stdout, "\n", log.LstdFlags))
-		}
 	}
 
 	//设置连接池
