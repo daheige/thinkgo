@@ -34,7 +34,7 @@ func TestGorm(t *testing.T) {
 		Ip:           "127.0.0.1",
 		Port:         3306,
 		User:         "root",
-		Password:     "1234",
+		Password:     "root",
 		Database:     "test",
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
@@ -45,8 +45,8 @@ func TestGorm(t *testing.T) {
 	dbconf.setLogType(true)
 
 	//设置db engine name
-	dbconf.SetDbPool() //建立db连接池
-	dbconf.SetEngineName("default")
+	dbconf.SetDbPool()              //建立db连接池
+	dbconf.SetEngineName("default") //为每个db设置一个engine name
 
 	//defer dbconf.Close() //关闭当前连接
 	defer CloseAllDb() //关闭所有的连接句柄
@@ -54,21 +54,22 @@ func TestGorm(t *testing.T) {
 	db, err := GetDbObj("default")
 	if err != nil {
 		t.Log("get db error: ", err.Error())
+		return
 	}
 
 	user := &myUser{}
 	db.Where("name = ?", "hello").First(user)
-	log.Println(user)
+	log.Println("user: ", user)
 
 	var wg sync.WaitGroup
-	testFind(&wg)
+	testFind(&wg, 1000)
 
 	wg.Wait()
 	log.Println("test success")
 }
 
-func testFind(wg *sync.WaitGroup) {
-	for i := 0; i < 10000; i++ {
+func testFind(wg *sync.WaitGroup, nums int) {
+	for i := 0; i < nums; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -93,7 +94,7 @@ func TestShortConnect(t *testing.T) {
 			Ip:        "127.0.0.1",
 			Port:      3306,
 			User:      "root",
-			Password:  "1234",
+			Password:  "root",
 			Database:  "test",
 			ParseTime: true,
 			SqlCmd:    true,
