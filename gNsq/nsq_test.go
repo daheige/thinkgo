@@ -106,7 +106,7 @@ type nsqHandler struct {
 //实现 Handler接口上的HandleMessage方法
 //message是接收到的消息
 func (s *nsqHandler) HandleMessage(message *nsq.Message) error {
-	//没收到一条消息+1
+	//每收到一条消息+1
 	s.msqCount++
 	//打印输出信息和ID
 	fmt.Println(s.msqCount, s.nsqHandlerID)
