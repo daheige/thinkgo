@@ -14,15 +14,11 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/daheige/thinkgo/crypto"
 	uuid "github.com/satori/go.uuid"
 )
-
-// os_Chown is a var so we can mock it out during tests.
-var os_Chown = os.Chown
 
 // EmptyStruct zero size, empty struct
 type EmptyStruct struct{}
@@ -294,9 +290,8 @@ func Chown(name string, info os.FileInfo) error {
 	}
 
 	f.Close()
-	stat := info.Sys().(*syscall.Stat_t)
 
-	return os_Chown(name, int(stat.Uid), int(stat.Gid))
+	return nil
 }
 
 // DoTask 在独立携程中运行fn
