@@ -12,6 +12,7 @@ require (
 	github.com/jinzhu/gorm v1.9.10
 	github.com/mozillazg/request v0.8.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/nsqio/go-nsq v1.0.7
 	github.com/prometheus/client_golang v1.0.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
