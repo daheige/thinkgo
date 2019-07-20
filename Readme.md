@@ -16,6 +16,7 @@
     ├── logger          基于uber zap框架封装而成的高性能logger日志库
     ├── mysql           gorm/mysql封装,gorm1.9.9+版本
     ├── dao             xorm/mysql封装,支持读写分离连接对象设置
+    ├── gNsq            golang nsq消费队列封装
     ├── mytest          单元测试用例
     ├── rbmq            rbmq连接封装
     ├── redisCache      redisgo操作库封装
@@ -30,6 +31,7 @@
     vim ~/.bashrc添加如下内容：
     export GOPROXY=https://goproxy.io
     或者使用 export GOPROXY=https://athens.azurefd.net
+    或者使用 export GOPROXY=https://mirrors.aliyun.com/goproxy/ #推荐该goproxy
     让bashrc生效
     source ~/.bashrc
     
