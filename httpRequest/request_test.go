@@ -31,8 +31,7 @@ func TestRequest(t *testing.T) {
 /**
 $ go test -v
 === RUN   TestRequest
-2019/03/30 17:47:56 data:  xxx
---- PASS: TestRequest (0.26s)
+--- PASS: TestRequest (0.27s)
 PASS
-ok  	httpRequest	0.265s
+ok      github.com/daheige/thinkgo/httpRequest  0.274s
 */
