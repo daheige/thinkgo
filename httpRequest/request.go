@@ -12,17 +12,17 @@ import (
 )
 
 type ApiRequest struct {
-	Url     string                 //请求的相对地址，如果BaseUri为空，就必须是绝对路径
+	Url     string                 //请求的相对地址，如果BaseUri为空，就必须是完整的url地址
 	Params  map[string]interface{} //get,delete的Params参数
 	BaseUri string                 //请求地址url的前缀
-	Body    map[string]interface{}
-	Header  map[string]interface{}
-	Cookie  map[string]interface{}
-	Method  string //请求的方法get,post,put,patch,delete,head等
-	Proxy   string //请求设置的http_proxy代理
+	Data    map[string]interface{} //post请求的data表单数据
+	Header  map[string]interface{} //header头信息
+	Cookie  map[string]interface{} //cookie信息
+	Method  string                 //请求的方法get,post,put,patch,delete,head等
+	Proxy   string                 //请求设置的http_proxy代理
 
 	//支持post,put,patch以json格式传递,[]int{1, 2, 3},map[string]string{"a":"b"}格式
-	//也可以是json字符串
+	//json支持[],{}数据格式,主要是golang的基本数据类型，就可以
 	Json interface{}
 	FileField
 }
@@ -78,47 +78,37 @@ func (a *ApiRequest) Do() *Result {
 	a.Method = strings.ToLower(a.Method)
 	switch a.Method {
 	case "get":
-		if len(a.Params) > 0 {
-			req.Params = a.ParseData(a.Params)
-		}
-
+		req.Params = a.ParseData(a.Params)
 		resp, err := req.Get(a.Url)
+
 		return a.GetData(resp, err)
 	case "post":
-		if len(a.Body) > 0 {
-			req.Data = a.ParseData(a.Body) //请求的数据data
+		if len(req.Data) > 0 {
+			req.Data = a.ParseData(a.Data) //请求的数据data
 		}
 
 		resp, err := req.Post(a.Url)
+
 		return a.GetData(resp, err)
 	case "put":
-		if len(a.Body) > 0 {
-			req.Data = a.ParseData(a.Body)
-		}
-
+		req.Data = a.ParseData(a.Data)
 		resp, err := req.Put(a.Url)
+
 		res = a.GetData(resp, err)
 	case "patch":
-		if len(a.Body) > 0 {
-			req.Data = a.ParseData(a.Body)
-		}
-
-		req.Data = a.ParseData(a.Body)
+		req.Data = a.ParseData(a.Data)
 		resp, err := req.Patch(a.Url)
+
 		return a.GetData(resp, err)
 	case "delete":
-		if len(a.Params) > 0 {
-			req.Params = a.ParseData(a.Params)
-		}
-
+		req.Params = a.ParseData(a.Params)
 		resp, err := req.Delete(a.Url)
+
 		return a.GetData(resp, err)
 	case "head":
-		if len(a.Params) > 0 {
-			req.Params = a.ParseData(a.Params)
-		}
-
+		req.Params = a.ParseData(a.Params)
 		resp, err := req.Head(a.Url)
+
 		res = a.GetData(resp, err)
 	case "file":
 		if a.FileName == "" {
@@ -152,25 +142,22 @@ func (a *ApiRequest) SetFileName(fileName string) {
 }
 
 func (a *ApiRequest) ParseData(d map[string]interface{}) map[string]string {
-	if d == nil {
+	dLen := len(d)
+	if dLen == 0 {
 		return nil
 	}
 
-	dLen := len(d)
-	if dLen > 0 {
-		data := make(map[string]string, dLen)
-		for k, v := range d {
-			if val, ok := v.(string); ok {
-				data[k] = val
-			}
-
+	//对d参数进行处理
+	data := make(map[string]string, dLen)
+	for k, v := range d {
+		if val, ok := v.(string); ok {
+			data[k] = val
+		} else {
 			data[k] = fmt.Sprintf("%v", v)
 		}
-
-		return data
 	}
 
-	return nil
+	return data
 }
 
 //处理请求的结果
