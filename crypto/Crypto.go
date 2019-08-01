@@ -55,6 +55,13 @@ func Hmac256(data, key string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+//实现php hmac_sha1
+func HmacSha1(str string, key string) string {
+	mac := hmac.New(sha1.New, []byte(key))
+	mac.Write([]byte(str))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
 //得到指定16进制的数字
 func GetIteratorStr(length int) string {
 	str := "0123456789abcdef"
