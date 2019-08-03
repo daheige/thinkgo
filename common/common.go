@@ -53,7 +53,7 @@ func CatchStack() []byte {
 	//完整的堆栈信息
 	stack := Stack()
 	buf.WriteString("full stack:\n")
-	buf.WriteString(string(stack))
+	buf.Write(stack)
 
 	//完整的函数调用信息
 	buf.WriteString("full fn call info:\n")
