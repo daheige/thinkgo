@@ -30,12 +30,12 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge   = 7         //默认日志保留天数
-	logMaxSize  = 512       //默认日志大小，单位为Mb
-	logCompress = false     //默认日志不压缩
-	logLevel    = "debug"   //最低日志级别
-	logFileName = "zap.log" //默认日志文件，不包含全路径
-	logDir      = ""        //日志文件存放目录
+	logMaxAge   = 7            //默认日志保留天数
+	logMaxSize  = 512          //默认日志大小，单位为Mb
+	logCompress = false        //默认日志不压缩
+	logLevel    = "debug"      //最低日志级别
+	logFileName = "go-zap.log" //默认日志文件，不包含全路径
+	logDir      = ""           //日志文件存放目录
 )
 
 func MaxAge(n int) {

@@ -43,11 +43,11 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logDir                = ""             //日志文件存放目录
-	logFile               = ""             //日志文件
-	logLock               = NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	logDay                = 0              //当前日期
-	logTimeZone           = "Local"        //time zone default Local "Asia/Shanghai"
+	logDir                = ""              //日志文件存放目录
+	logFile               = ""              //日志文件
+	logLock               = NewMutexLock()  //采用sync实现加锁，效率比chan实现的加锁效率高一点
+	logDay                = 0               //当前日期
+	logTimeZone           = "Asia/Shanghai" //time zone default Local "Asia/Shanghai"
 	logtmFmtWithMS        = "2006-01-02 15:04:05.999"
 	logtmFmtMissMS        = "2006-01-02 15:04:05"
 	logtmFmtTime          = "2006-01-02"
