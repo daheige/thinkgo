@@ -35,6 +35,8 @@ func Sha1File(fName string) (string, error) {
 		return "", e
 	}
 
+	defer f.Close()
+
 	h := sha1.New()
 	_, e = io.Copy(h, f)
 	if e != nil {
