@@ -1,11 +1,13 @@
 package common
 
+//StringList helper
+
 import (
 	"reflect"
 	"sort"
 )
 
-//str list
+// StringList: str list
 type StringList []string
 
 func (this StringList) Len() int {
