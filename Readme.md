@@ -25,6 +25,7 @@
     ├── mytest          thinkgo单元测试用例
     ├── rbmq            rbmq连接封装，可用于rabbitmq消息队列go api使用
     ├── redisCache      redisgo操作库封装
+    ├── redisLock       redis+lua脚步实现redis分布式锁TryLock,Unlock
     ├── runner          runner按照顺序，执行任务操作，可作为cron作业或定时任务
     ├── sem             采用空结构体struct{}和chan实现信号量互斥锁
     ├── work            利用无缓冲chan创建goroutine池来控制一组task的执行
