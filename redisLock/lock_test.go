@@ -76,6 +76,6 @@ func TestLock(t *testing.T) {
 2019/08/10 23:36:13 ok
 --- PASS: TestLock (0.02s)
 PASS
-ok      redisLock       0.054s
+ok      github.com/daheige/thinkgo/redisLock    0.073s
 
 */
