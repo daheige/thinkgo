@@ -24,14 +24,13 @@ func TestRequest(t *testing.T) {
 		return
 	}
 
-	log.Println("data: ", res.Body)
+	log.Println("data: ", string(res.Body))
 
 }
 
 /**
 $ go test -v
-=== RUN   TestRequest
---- PASS: TestRequest (0.27s)
+--- PASS: TestRequest (0.68s)
 PASS
-ok      github.com/daheige/thinkgo/httpRequest  0.274s
+ok      github.com/daheige/thinkgo/httpRequest  0.681s
 */

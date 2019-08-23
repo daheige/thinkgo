@@ -34,8 +34,8 @@ type FileField struct {
 }
 
 type Result struct {
-	Err  error
-	Body string
+	Err  error  //请求过程中，发生的error
+	Body []byte //返回的body内容
 }
 
 //标准的api返回格式
@@ -168,34 +168,33 @@ func (a *ApiRequest) GetData(resp *request.Response, err error) *Result {
 		return res
 	}
 
-	defer resp.Body.Close()
-
+	res.Body, res.Err = resp.Content()
 	if resp.StatusCode != 200 || !resp.OK() {
 		res.Err = errors.New(resp.Reason())
 		return res
 	}
 
-	body, err := resp.Text()
-	if err != nil {
-		res.Err = err
-		res.Body = body
-		return res
-	}
-
-	res.Body = body
-
 	return res
 }
 
 //对返回的result.Body做json反序列化处理
-func (result *Result) ParseJson() (res *ApiStdRes, e error) {
-	if result.Body != "" {
-		err := json.Unmarshal([]byte(result.Body), res)
+func (result *Result) ParseJson() (*ApiStdRes, error) {
+	res := &ApiStdRes{}
+	err := result.Json(res)
+	return res, err
+}
+
+func (result *Result) Text() string {
+	return string(result.Body)
+}
+
+func (result *Result) Json(data interface{}) error {
+	if len(result.Body) > 0 {
+		err := json.Unmarshal(result.Body, data)
 		if err != nil {
-			e = err
-			return
+			return err
 		}
 	}
 
-	return
+	return nil
 }
