@@ -46,11 +46,11 @@ type ApiStdRes struct {
 }
 
 func (a *ApiRequest) Do() *Result {
-	res := &Result{}
 	a.Url = a.BaseUri + a.Url
 	if a.Url == "" {
-		res.Err = errors.New("request url is empty")
-		return res
+		return &Result{
+			Err: errors.New("request url is empty"),
+		}
 	}
 
 	client := &http.Client{} //http客户端
@@ -94,7 +94,7 @@ func (a *ApiRequest) Do() *Result {
 		req.Data = a.ParseData(a.Data)
 		resp, err := req.Put(a.Url)
 
-		res = a.GetData(resp, err)
+		return a.GetData(resp, err)
 	case "patch":
 		req.Data = a.ParseData(a.Data)
 		resp, err := req.Patch(a.Url)
@@ -109,17 +109,19 @@ func (a *ApiRequest) Do() *Result {
 		req.Params = a.ParseData(a.Params)
 		resp, err := req.Head(a.Url)
 
-		res = a.GetData(resp, err)
+		return a.GetData(resp, err)
 	case "file":
 		if a.FileName == "" {
-			res.Err = errors.New("file not exist")
-			return res
+			return &Result{
+				Err: errors.New("file not exist"),
+			}
 		}
 
 		fd, err := os.Open(a.FileName)
 		if err != nil {
-			res.Err = errors.New(fmt.Sprintf("open file:%s error:%s", a.FileName, err.Error()))
-			return res
+			return &Result{
+				Err: errors.New(fmt.Sprintf("open file:%s error:%s", a.FileName, err.Error())),
+			}
 		}
 
 		defer fd.Close()
@@ -133,8 +135,9 @@ func (a *ApiRequest) Do() *Result {
 	default:
 	}
 
-	res.Err = errors.New("request method not support")
-	return res
+	return &Result{
+		Err: errors.New("request method not support"),
+	}
 }
 
 func (a *ApiRequest) SetFileName(fileName string) {
@@ -168,6 +171,7 @@ func (a *ApiRequest) GetData(resp *request.Response, err error) *Result {
 		return res
 	}
 
+	//resp.Context() will auto close body
 	res.Body, res.Err = resp.Content()
 	if resp.StatusCode != 200 || !resp.OK() {
 		res.Err = errors.New(resp.Reason())
