@@ -113,11 +113,11 @@ func (a *ApiRequest) Do() *Result {
 	case "file":
 		if a.FileName == "" {
 			return &Result{
-				Err: errors.New("file not exist"),
+				Err: errors.New("upload fileName is empty"),
 			}
 		}
 
-		fd, err := os.Open(a.FileName)
+		fd, err := os.Open(a.File)
 		if err != nil {
 			return &Result{
 				Err: errors.New(fmt.Sprintf("open file:%s error:%s", a.FileName, err.Error())),
