@@ -6,31 +6,41 @@ import (
 )
 
 func TestRequest(t *testing.T) {
-	r := ApiRequest{
+	//请求句柄
+	s := Service{
 		BaseUri: "",
-		Url:     "https://studygolang.com/object/comments?objid=12784",
+		Timeout: 1,
+	}
+
+	//请求参数设置
+	opt := &ReqOpt{
 		Params: map[string]interface{}{
-			// "objid": 12784,
+			"objid":   12784,
 			"objtype": 1,
 			"p":       0,
 		},
-		Method: "get",
 	}
 
-	res := r.Do()
+	res := s.Do("get", "https://studygolang.com/object/comments", opt)
 	if res.Err != nil {
 		log.Println("err: ", res.Err)
 		t.Error(res.Err)
 		return
 	}
 
-	log.Println("data: ", string(res.Body))
+	//log.Println("data: ", string(res.Body))
+
+	data := &ApiStdRes{}
+	err := res.Json(data)
+	log.Println(err)
+	log.Println(data.Code, data.Message)
+	log.Println(data.Data)
 
 }
 
 /**
 $ go test -v
---- PASS: TestRequest (0.68s)
+--- PASS: TestRequest (0.26s)
 PASS
-ok      github.com/daheige/thinkgo/httpRequest  0.681s
+ok      github.com/daheige/httpRequest     0.265s
 */
