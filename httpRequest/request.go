@@ -1,47 +1,54 @@
-// package httpRequest
-// go http client support get,post,delete,patch,put,head,file method
-// author:daheige
-
 package httpRequest
 
+// go http client support get,post,delete,patch,put,head,file method
+// go-resty/resty: https://github.com/go-resty/resty
+
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
+	"io/ioutil"
 	"net/http"
-	"os"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/mozillazg/request"
+	"github.com/go-resty/resty/v2"
 )
 
-var DefaultReqTimeout = 5 //默认请求超时，单位s
+//默认请求超时
+var DefaultReqTimeout time.Duration = 5 * time.Second
 
 // Service 请求句柄设置
 type Service struct {
-	BaseUri string //请求地址url的前缀
-	Timeout int    //请求超时限制
-	Proxy   string //请求设置的http_proxy代理
+	BaseUri         string        //请求地址url的前缀
+	Timeout         time.Duration //请求超时限制
+	Proxy           string        //请求设置的http_proxy代理
+	EnableKeepAlive bool          //是否允许长连接方式请求接口，默认短连接方式
 }
 
 // ReqOpt 请求参数设置
 type ReqOpt struct {
-	Params map[string]interface{} //get,delete的Params参数
-	Data   map[string]interface{} //post请求的data表单数据
-	Header map[string]interface{} //header头信息
-	Cookie map[string]interface{} //cookie信息
-	Method string                 //请求的方法get,post,put,patch,delete,head等
+	Params  map[string]interface{} //get,delete的Params参数
+	Data    map[string]interface{} //post请求form data表单数据
+	Headers map[string]interface{} //header头信息
+
+	//cookie参数设置
+	Cookies        map[string]interface{} //cookie信息
+	CookiePath     string                 //可选参数
+	CookieDomain   string                 //cookie domain可选
+	CookieMaxAge   int                    //cookie MaxAge
+	CookieHttpOnly bool                   //cookie httpOnly
 
 	//支持post,put,patch以json格式传递,[]int{1, 2, 3},map[string]string{"a":"b"}格式
 	//json支持[],{}数据格式,主要是golang的基本数据类型，就可以
+	//直接调用SetBody方法，自动添加header头"Content-Type":"application/json"
 	Json interface{}
 
-	//上传文件参数
-	FieldName string //上传文件对应的表单file字段名
-	File      string //上传文件名称,需要绝对路径
-	FileName  string //上传后的文件名称
+	//支持文件上传的参数
+	FileName      string //文件名称
+	FileParamName string //文件上传的表单file参数名称
 }
 
 // Reply 请求后的结果
@@ -78,8 +85,14 @@ func (ReqOpt) ParseData(d map[string]interface{}) map[string]string {
 }
 
 // Do 请求方法
+// method string  请求的方法get,post,put,patch,delete,head等
 // uri    string  请求的相对地址，如果BaseUri为空，就必须是完整的url地址
+// opt 	  *ReqOpt 请求参数ReqOpt
 func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
+	if opt == nil {
+		opt = &ReqOpt{}
+	}
+
 	if s.BaseUri != "" {
 		reqUrl = strings.TrimRight(s.BaseUri, "/") + "/" + reqUrl
 	}
@@ -98,99 +111,108 @@ func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
 	//关于如何关闭http connection
 	//https://www.cnblogs.com/cobbliu/p/4517598.html
 
-	tr := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   time.Duration(s.Timeout) * time.Second,
-			KeepAlive: time.Duration(s.Timeout) * time.Second,
-		}).DialContext,
-		DisableKeepAlives: true, //禁用长连接
-	}
-
-	//http客户端
-	client := &http.Client{
-		Transport: tr,
-		Timeout:   time.Duration(s.Timeout) * time.Second,
-	}
-
 	//创建请求客户端
-	req := request.NewRequest(client)
+	client := resty.New()
+	client = client.SetTimeout(s.Timeout) //timeout设置
+
+	if !s.EnableKeepAlive {
+		client = client.SetHeader("Connection", "close") //显示指定短连接
+	}
 
 	if s.Proxy != "" {
-		req.Proxy = s.Proxy
-	}
-
-	//post,put,patch等支持json格式
-	if opt.Json != nil {
-		req.Json = opt.Json
+		client = client.SetProxy(s.Proxy)
 	}
 
 	//设置cookie
-	if len(opt.Cookie) > 0 {
-		req.Cookies = opt.ParseData(opt.Cookie)
+	if cLen := len(opt.Cookies); cLen > 0 {
+		cookies := make([]*http.Cookie, cLen)
+		for k, _ := range opt.Cookies {
+			cookies = append(cookies, &http.Cookie{
+				Name:     k,
+				Value:    fmt.Sprintf("%v", opt.Cookies[k]),
+				Path:     opt.CookiePath,
+				Domain:   opt.CookieDomain,
+				MaxAge:   opt.CookieMaxAge,
+				HttpOnly: opt.CookieHttpOnly,
+			})
+		}
+
+		client = client.SetCookies(cookies)
 	}
 
 	//设置header头
-	if len(opt.Header) > 0 {
-		req.Headers = opt.ParseData(opt.Header)
+	if len(opt.Headers) > 0 {
+		client = client.SetHeaders(opt.ParseData(opt.Headers))
 	}
+
+	var resp *resty.Response
+	var err error
 
 	method = strings.ToLower(method)
 	switch method {
-	case "get":
-		req.Params = opt.ParseData(opt.Params)
-		resp, err := req.Get(reqUrl)
-
-		return s.GetData(resp, err)
-	case "post":
-		if len(req.Data) > 0 {
-			req.Data = opt.ParseData(opt.Data) //请求的数据data
+	case "get", "delete", "head":
+		client = client.SetQueryParams(opt.ParseData(opt.Params))
+		if method == "get" {
+			resp, err = client.R().Get(reqUrl)
+			return s.GetResult(resp, err)
 		}
 
-		resp, err := req.Post(reqUrl)
+		if method == "delete" {
+			resp, err = client.R().Delete(reqUrl)
+			return s.GetResult(resp, err)
+		}
 
-		return s.GetData(resp, err)
-	case "put":
-		req.Data = opt.ParseData(opt.Data)
-		resp, err := req.Put(reqUrl)
+		if method == "head" {
+			resp, err = client.R().Head(reqUrl)
+			return s.GetResult(resp, err)
+		}
 
-		return s.GetData(resp, err)
-	case "patch":
-		req.Data = opt.ParseData(opt.Data)
-		resp, err := req.Patch(reqUrl)
+	case "post", "put", "patch":
+		req := client.R()
+		if len(opt.Data) > 0 {
+			// SetFormData method sets Form parameters and their values in the current request.
+			// It's applicable only HTTP method `POST` and `PUT` and requests content type would be
+			// set as `application/x-www-form-urlencoded`.
 
-		return s.GetData(resp, err)
-	case "delete":
-		req.Params = opt.ParseData(opt.Params)
-		resp, err := req.Delete(reqUrl)
+			req = req.SetFormData(opt.ParseData(opt.Data))
+		}
 
-		return s.GetData(resp, err)
-	case "head":
-		req.Params = opt.ParseData(opt.Params)
-		resp, err := req.Head(reqUrl)
+		//setBody: for struct and map data type defaults to 'application/json'
+		// SetBody method sets the request body for the request. It supports various realtime needs as easy.
+		// We can say its quite handy or powerful. Supported request body data types is `string`,
+		// `[]byte`, `struct`, `map`, `slice` and `io.Reader`. Body value can be pointer or non-pointer.
+		// Automatic marshalling for JSON and XML content type, if it is `struct`, `map`, or `slice`.
+		if opt.Json != nil {
+			req = req.SetBody(opt.Json)
+		}
 
-		return s.GetData(resp, err)
+		if method == "post" {
+			resp, err = req.Post(reqUrl)
+			return s.GetResult(resp, err)
+		}
+
+		if method == "put" {
+			resp, err = req.Put(reqUrl)
+			return s.GetResult(resp, err)
+		}
+
+		if method == "patch" {
+			resp, err = req.Patch(reqUrl)
+			return s.GetResult(resp, err)
+		}
 	case "file":
-		if opt.FileName == "" {
-			return &Reply{
-				Err: errors.New("upload fileName is empty"),
-			}
-		}
-
-		fd, err := os.Open(opt.File)
+		b, err := ioutil.ReadFile(opt.FileName)
 		if err != nil {
 			return &Reply{
-				Err: errors.New(fmt.Sprintf("open file:%s error:%s", opt.File, err.Error())),
+				Err: errors.New("read file error: " + err.Error()),
 			}
 		}
 
-		defer fd.Close()
-
-		req.Files = []request.FileField{
-			request.FileField{opt.FieldName, opt.FileName, fd},
-		}
-
-		resp, err := req.Post(reqUrl)
-		return s.GetData(resp, err)
+		//文件上传
+		resp, err := client.R().
+			SetFileReader(opt.FileParamName, opt.FileName, bytes.NewReader(b)).
+			Post(reqUrl)
+		return s.GetResult(resp, err)
 	default:
 	}
 
@@ -199,19 +221,25 @@ func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
 	}
 }
 
+// NewClient创建一个resty客户端，支持post,get,delete,head,put,patch,file文件上传等
+// 可以快速使用go-resty/resty上面的方法
+// 参考文档： https://github.com/go-resty/resty
+func NewClient() *resty.Client {
+	return resty.New()
+}
+
 // GetData 处理请求的结果
-func (s *Service) GetData(resp *request.Response, err error) *Reply {
+func (s *Service) GetResult(resp *resty.Response, err error) *Reply {
 	res := &Reply{}
 	if err != nil {
 		res.Err = err
 		return res
 	}
 
-	//resp.Context() will auto close body
-	//调用Content方法会自动关闭resp句柄
-	res.Body, res.Err = resp.Content()
-	if resp.StatusCode != 200 || !resp.OK() {
-		res.Err = errors.New(resp.Reason())
+	//请求返回的body
+	res.Body = resp.Body()
+	if !resp.IsSuccess() || resp.StatusCode() != 200 {
+		res.Err = errors.New("request error: " + fmt.Sprintf("%v", resp.Error()) + "http StatusCode: " + strconv.Itoa(resp.StatusCode()) + "status: " + resp.Status())
 		return res
 	}
 
