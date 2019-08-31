@@ -3,13 +3,14 @@ package httpRequest
 import (
 	"log"
 	"testing"
+	"time"
 )
 
 func TestRequest(t *testing.T) {
 	//请求句柄
 	s := Service{
 		BaseUri: "",
-		Timeout: 1,
+		Timeout: 2 * time.Second,
 	}
 
 	//请求参数设置
@@ -24,7 +25,6 @@ func TestRequest(t *testing.T) {
 	res := s.Do("get", "https://studygolang.com/object/comments", opt)
 	if res.Err != nil {
 		log.Println("err: ", res.Err)
-		t.Error(res.Err)
 		return
 	}
 
@@ -36,11 +36,22 @@ func TestRequest(t *testing.T) {
 	log.Println(data.Code, data.Message)
 	log.Println(data.Data)
 
+	res = s.Do("post", "http://localhost:1338/v1/data", &ReqOpt{
+		Data: map[string]interface{}{
+			"id": "1234",
+		},
+	})
+	if res.Err != nil {
+		log.Println("err: ", res.Err)
+		return
+	}
+
+	log.Println(res.Err, string(res.Body))
 }
 
 /**
 $ go test -v
---- PASS: TestRequest (0.26s)
+2019/08/31 15:25:10 <nil> {"code":0,"data":["js","php","hello"],"message":"ok"}
+--- PASS: TestRequest (0.25s)
 PASS
-ok      github.com/daheige/httpRequest     0.265s
 */

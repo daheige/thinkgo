@@ -4,6 +4,8 @@ import (
 	"log"
 	"testing"
 
+	"github.com/daheige/thinkgo/mysql"
+
 	"github.com/daheige/thinkgo/redisCache"
 )
 
@@ -25,6 +27,10 @@ func TestYaml(t *testing.T) {
 	log.Println(redisConf)
 	log.Println("Ip:", redisConf.Ip)
 	log.Println(redisConf.Password == "")
+
+	dbConf := &mysql.DbConf{}
+	conf.GetStruct("DbDefault", dbConf)
+	log.Println(dbConf)
 }
 
 /**
