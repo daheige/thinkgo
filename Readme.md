@@ -1,11 +1,11 @@
-# Thinkgo
+# Thinkgo package
 
     Public libraries and components for glang development.
 
-# Package manage
+# Package management
 
     golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
-    golang1.11+版本，可采用go mod机制管理包
+    golang1.11+版本，可采用go mod机制管理包,需设置goproxy
 
 # About package
 
@@ -33,8 +33,19 @@
     ├── xerrors         error错误处理拓展包，支持错误堆栈信息
     └── yamlConf        yaml配置文件读取，支持int,int64,float64,string,struct等类型读取
 
-# Use help
+# usage
 
+    go version >= 1.13
+    设置goproxy代理
+    vim ~/.bashrc添加如下内容:
+    export GOPROXY=https://goproxy.io,direct
+    或者
+    export GOPROXY=https://goproxy.cn,direct
+
+    让bashrc生效
+    source ~/.bashrc
+
+    go version < 1.13
     设置golang proxy
     vim ~/.bashrc添加如下内容：
     export GOPROXY=https://goproxy.io
@@ -43,6 +54,7 @@
     让bashrc生效
     source ~/.bashrc
 
+    go version < 1.11
     如果是采用govendor管理包请按照如下方式进行：
         1. 下载thinkgo包
             cd $GOPATH/src
@@ -50,8 +62,6 @@
         2. 安装govendor go第三方包管理工具
             go get -u github.com/kardianos/govendor
         3. 切换到对应的目录进行 go install编译包
-    如果采用go mod (golang1.11版本+) 不需要将该包放在$GOPATH/src，只需要在使用的项目中引入就可以。
-        请直接执行go mod tidy # 下载依赖包
 
 # License
 

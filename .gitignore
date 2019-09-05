@@ -5,3 +5,5 @@ common/**/*.log
 vendor/*
 logs
 settings.json
+go.sum
+
