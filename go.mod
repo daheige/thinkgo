@@ -1,6 +1,6 @@
 module github.com/daheige/thinkgo
 
-go 1.12
+go 1.13
 
 require (
 	github.com/go-resty/resty/v2 v2.0.0
@@ -11,9 +11,9 @@ require (
 	github.com/jinzhu/gorm v1.9.10
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nsqio/go-nsq v1.0.7
-	github.com/prometheus/client_golang v1.0.0
+	github.com/prometheus/client_golang v1.1.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
+	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0
