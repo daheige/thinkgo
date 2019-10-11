@@ -1,3 +1,4 @@
+// Package dao base on xorm library.
 package dao
 
 import (
@@ -31,6 +32,7 @@ type DbConf struct {
 	dbObj        *xorm.Engine //当前数据库连接句柄
 	SqlCmd       bool         //sql语句是否输出到终端,true输出到终端
 	UsePool      bool         //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	ShowExecTime bool         //是否打印sql执行时间
 }
 
 //每个数据库连接pool就是一个db引擎
@@ -79,6 +81,10 @@ func (conf *DbConf) initDb() error {
 
 	if conf.SqlCmd {
 		db.ShowSQL(true) //控制台打印出sql
+	}
+
+	if conf.ShowExecTime {
+		db.ShowExecTime(true)
 	}
 
 	//设置连接池
