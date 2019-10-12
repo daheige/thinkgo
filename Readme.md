@@ -11,10 +11,9 @@
 
     .
     ├── bitSet          bitSet位图实现，将int数放到内存中进行curd操作
-    ├── cache           基于key/val内存缓存设计，支持过期时间设置
     ├── common          公共函数库，包含每天流动日志,Time,Lock操作,uuid生成等
     ├── crypto          md5,sha1,sha1File,cbc256,ecb,aes加解密函数等
-    ├── dao             xorm/mysql封装,支持读写分离连接对象设置
+    ├── gxorm           基于xorm/mysql封装,支持读写分离连接对象设置
     ├── gNsq            go nsq消费队列封装,主要是pub/sub模式，其他类型也支持句柄调用
     ├── gQueue          通过指定goroutine个数,实现task queue执行器
     ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等等

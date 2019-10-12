@@ -6,10 +6,11 @@ require (
 	github.com/go-redis/redis v6.15.5+incompatible
 	github.com/go-resty/resty/v2 v2.0.0
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/go-xorm/xorm v0.7.6
+	github.com/go-xorm/xorm v0.7.8
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/jinzhu/gorm v1.9.10
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nsqio/go-nsq v1.0.7
 	github.com/prometheus/client_golang v1.1.0
