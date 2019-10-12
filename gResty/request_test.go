@@ -1,4 +1,4 @@
-package httpRequest
+package gResty
 
 import (
 	"log"
@@ -20,6 +20,7 @@ func TestRequest(t *testing.T) {
 			"objtype": 1,
 			"p":       0,
 		},
+		RetryCount: 2,
 	}
 
 	res := s.Do("get", "https://studygolang.com/object/comments", opt)
@@ -40,6 +41,7 @@ func TestRequest(t *testing.T) {
 		Data: map[string]interface{}{
 			"id": "1234",
 		},
+		RetryCount: 2, //重试次数
 	})
 	if res.Err != nil {
 		log.Println("err: ", res.Err)
@@ -51,7 +53,7 @@ func TestRequest(t *testing.T) {
 
 /**
 $ go test -v
-2019/08/31 15:25:10 <nil> {"code":0,"data":["js","php","hello"],"message":"ok"}
---- PASS: TestRequest (0.25s)
+2019/10/12 21:38:56 <nil> {"code":0,"data":["js","php",""],"message":"ok"}
+--- PASS: TestRequest (0.41s)
 PASS
 */

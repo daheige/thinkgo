@@ -16,7 +16,7 @@
     ├── gxorm           基于xorm/mysql封装,支持读写分离连接对象设置
     ├── gNsq            go nsq消费队列封装,主要是pub/sub模式，其他类型也支持句柄调用
     ├── gQueue          通过指定goroutine个数,实现task queue执行器
-    ├── httpRequest     http request请求封装，支持get,post,put,patch,delete等等
+    ├── gResty          request请求封装，支持get,post,put,patch,delete等等
     ├── inMemcache      通过接口的形式实现内存cache实现kv存储
     ├── logger          基于uber zap框架封装而成的高性能logger日志库
     ├── monitor         用于对go程序做prometheus/metrics性能监控，包含内存，cpu,请求数等

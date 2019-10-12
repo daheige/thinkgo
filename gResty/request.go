@@ -1,4 +1,4 @@
-package httpRequest
+package gResty
 
 // go http client support get,post,delete,patch,put,head,file method
 // go-resty/resty: https://github.com/go-resty/resty
@@ -18,7 +18,9 @@ import (
 )
 
 //默认请求超时
-var DefaultReqTimeout time.Duration = 5 * time.Second
+var defaultTimeout = 3 * time.Second
+
+var defaultMaxRetries = 3 //默认最大重试次数
 
 // Service 请求句柄设置
 type Service struct {
@@ -30,6 +32,11 @@ type Service struct {
 
 // ReqOpt 请求参数设置
 type ReqOpt struct {
+	//重试机制设置
+	RetryCount       int           //重试次数
+	RetryWaitTime    time.Duration //重试间隔,默认100ms
+	RetryMaxWaitTime time.Duration //重试最大等待间隔,默认2s
+
 	Params  map[string]interface{} //get,delete的Params参数
 	Data    map[string]interface{} //post请求form data表单数据
 	Headers map[string]interface{} //header头信息
@@ -89,6 +96,18 @@ func (ReqOpt) ParseData(d map[string]interface{}) map[string]string {
 // uri    string  请求的相对地址，如果BaseUri为空，就必须是完整的url地址
 // opt 	  *ReqOpt 请求参数ReqOpt
 func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
+	if method == "" {
+		return &Reply{
+			Err: errors.New("request method is empty"),
+		}
+	}
+
+	if reqUrl == "" {
+		return &Reply{
+			Err: errors.New("request url is empty"),
+		}
+	}
+
 	if opt == nil {
 		opt = &ReqOpt{}
 	}
@@ -98,13 +117,7 @@ func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
 	}
 
 	if s.Timeout == 0 {
-		s.Timeout = DefaultReqTimeout
-	}
-
-	if reqUrl == "" {
-		return &Reply{
-			Err: errors.New("request url is empty"),
-		}
+		s.Timeout = defaultTimeout
 	}
 
 	//短连接的形式请求api
@@ -121,6 +134,23 @@ func (s *Service) Do(method string, reqUrl string, opt *ReqOpt) *Reply {
 
 	if s.Proxy != "" {
 		client = client.SetProxy(s.Proxy)
+	}
+
+	//重试次数，重试间隔，最大重试超时时间
+	if opt.RetryCount > 0 {
+		if opt.RetryCount > defaultMaxRetries {
+			opt.RetryCount = defaultMaxRetries //最大重试次数
+		}
+
+		client = client.SetRetryCount(opt.RetryCount)
+
+		if opt.RetryWaitTime != 0 {
+			client = client.SetRetryWaitTime(opt.RetryWaitTime)
+		}
+
+		if opt.RetryMaxWaitTime != 0 {
+			client = client.SetRetryMaxWaitTime(opt.RetryMaxWaitTime)
+		}
 	}
 
 	//设置cookie
