@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"log"
 	"testing"
 )
 
@@ -42,6 +43,40 @@ func TestAesEbc(t *testing.T) {
 
 	s, _ := DecryptEcb(b, k)
 	t.Log("ebc解密:", s)
+}
+
+/**
+测试aes-256-cbc加密
+$ go test -v -test.run=TestAesCbc
+=== RUN   TestAesCbc
+2019/10/15 23:37:41 /fxQRPGIHJ9AFsG67MSVDvLFSDp+/ZFGkHT+Y46h4jln9IzORfsEhR6L2qh5mDDQ
+2019/10/15 23:37:41 HRHtimkjsJktwu6AzH2ji9MP9OLpRBRf35Xcm7zFNmr5Lj8X1rxxJiCIQJqnLC8r
+2019/10/15 23:37:41 Sj1ENtUBam7C6PglPZgLZGy9lC8bppce7NS8RExuVa+xWow04Trnlc+kJh+Wz9LL
+2019/10/15 23:37:41 中文数字123字母ABC符号!@#$%^&*() <nil>
+--- PASS: TestAesCbc (0.00s)
+PASS
+ok      github.com/daheige/thinkgo/crypto       0.002s
+*/
+func TestAesCbc(t *testing.T) {
+	str := `中文数字123字母ABC符号!@#$%^&*()`
+	k2 := `abcdefghijklmnop`
+	iv2 := `1234567890123456`
+	b, _ := AesEncrypt(str, k2, iv2)
+	log.Println(string(b))
+
+	// log.Println(AesDecrypt(`/fxQRPGIHJ9AFsG67MSVDvLFSDp+/ZFGkHT+Y46h4jln9IzORfsEhR6L2qh5mDDQ`, k2, iv2))
+
+	k2 = `abcdefghijklmnop1234567890123456`
+	iv2 = `1234567890123456`
+	b, _ = AesEncrypt(str, k2, iv2)
+	log.Println(b)
+
+	k2 = `abcdefghijklmnop12345678`
+	iv2 = `1234567890123456`
+	b, _ = AesEncrypt(str, k2, iv2)
+	log.Println(b)
+
+	log.Println(AesDecrypt(b, k2, iv2))
 }
 
 /*

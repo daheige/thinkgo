@@ -171,15 +171,19 @@ CBC（密文分组链接方式）有向量的概念, 它的实现机制使加密
     发送方和接收方都需要知道初始化向量
     加密过程是串行的，无法被并行化(在解密时，从两个邻接的密文块中即可得到一个平文块。因此，解密过程可以被并行化
 */
-//CBC加密 key,iv必须是16位
+// AesEncrypt CBC加密 key
+// iv必须是16位
+// 当key 16位的时候 相当于php base64_encode(openssl_encrypt($str, 'aes-128-cbc', $key, true, $iv));
+// 当key 24位的时候 相当于php base64_encode(openssl_encrypt($str, 'aes-192-cbc', $key, true, $iv));
+// 当key 32位的时候 相当于php base64_encode(openssl_encrypt($str, 'aes-256-cbc', $key, true, $iv));
 func AesEncrypt(encodeStr, key string, iv string) (string, error) {
-	encodeBytes := []byte(encodeStr)
 	//根据key 生成密文
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
 	}
 
+	encodeBytes := []byte(encodeStr)
 	blockSize := block.BlockSize()
 	encodeBytes = PKCS5Padding(encodeBytes, blockSize)
 
@@ -190,7 +194,12 @@ func AesEncrypt(encodeStr, key string, iv string) (string, error) {
 	return base64.StdEncoding.EncodeToString(crypted), nil
 }
 
-//CBC解密key,iv必须是16位
+// AesDecrypt CBC解密key
+// iv必须是16位
+// 对应php 解密方式
+// 当key 16位的时候 相当于php openssl_decrypt(base64_decode($strEncode), 'aes-128-cbc', $key, true, $iv)
+// 当key 24位的时候 相当于php openssl_decrypt(base64_decode($strEncode), 'aes-192-cbc', $key, true, $iv)
+// 当key 32位的时候 相当于php openssl_decrypt(base64_decode($strEncode), 'aes-256-cbc', $key, true, $iv)
 func AesDecrypt(decodeStr, key, iv string) (string, error) {
 	decodeBytes, err := base64.StdEncoding.DecodeString(decodeStr) //先解密base64
 	if err != nil {
@@ -211,14 +220,14 @@ func AesDecrypt(decodeStr, key, iv string) (string, error) {
 	return string(origData), nil
 }
 
-//明文补码算法
+// PKCS5Padding 明文补码算法
 func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-//明文减码算法
+// PKCS5UnPadding 明文减码算法
 func PKCS5UnPadding(origData []byte) []byte {
 	length := len(origData)
 	unpadding := int(origData[length-1])
