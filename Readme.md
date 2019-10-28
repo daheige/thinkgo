@@ -16,14 +16,12 @@
     ├── gxorm                      基于xorm/mysql封装,支持读写分离连接对象设置
     ├── gNsq                        go nsq消费队列封装,主要是pub/sub模式，其他类型也支持句柄调用
     ├── gQueue                  通过指定goroutine个数,实现task queue执行器
-    ├── gResty                     request请求封装，支持get,post,put,patch,delete等等
-    ├── inMemcache        通过接口的形式实现内存cache实现kv存储
+    ├── gResty                     request请求封装，支持get,post,put,patch,delete等
     ├── jsonTime                fix time.Time datetime格式的json encode/decode bug
     ├── logger                      基于uber zap框架封装而成的高性能logger日志库
     ├── monitor                  用于对go程序做prometheus/metrics性能监控，包含内存，cpu,请求数等
     ├── mysql                       gorm/mysql封装,主要基于gorm1.9.10+版本
     ├── mytest                      thinkgo单元测试用例
-    ├── rbmq                        rbmq连接封装，可用于rabbitmq消息队列go api使用
     ├── redisCache             redisgo操作库封装
     ├── redisLock                redis+lua脚步实现redis分布式锁TryLock,Unlock
     ├── runner                      runner按照顺序，执行任务操作，可作为cron作业或定时任务
