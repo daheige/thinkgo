@@ -15,7 +15,6 @@ require (
 	github.com/nsqio/go-nsq v1.0.7
 	github.com/prometheus/client_golang v1.1.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0

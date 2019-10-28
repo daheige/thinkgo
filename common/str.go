@@ -5,64 +5,57 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"hash/crc32"
 	"html"
 	"io"
 	"math/rand"
+	"net"
+	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/daheige/thinkgo/crypto"
 	uuid "github.com/satori/go.uuid"
 )
 
-//================str,int,int64,float64 conv func=======================
-// IntToStr int-->string
-func IntToStr(n int) string {
-	return strconv.Itoa(n)
-}
-
-// StrToInt string-->int
-func StrToInt(s string) int {
-	if i, err := strconv.Atoi(s); err != nil {
-		return 0
-	} else {
-		return i
+// Addslashes addslashes()
+func Addslashes(str string) string {
+	var buf bytes.Buffer
+	for _, char := range str {
+		switch char {
+		case '\'', '"', '\\':
+			buf.WriteRune('\\')
+		}
+		buf.WriteRune(char)
 	}
+	return buf.String()
 }
 
-// Int64ToStr int64-->string
-func Int64ToStr(i64 int64) string {
-	return strconv.FormatInt(i64, 10)
-}
-
-// StrToInt64 string--> int64
-func StrToInt64(s string) int64 {
-	if i64, err := strconv.ParseInt(s, 10, 64); err != nil {
-		return 0
-	} else {
-		return i64
+// Stripslashes stripslashes()
+func Stripslashes(str string) string {
+	var buf bytes.Buffer
+	l, skip := len(str), false
+	for i, char := range str {
+		if skip {
+			skip = false
+		} else if char == '\\' {
+			if i+1 < l && str[i+1] == '\\' {
+				skip = true
+			}
+			continue
+		}
+		buf.WriteRune(char)
 	}
-}
-
-// StrToFloat64 string--->float64
-func StrToFloat64(str string) float64 {
-	f, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		return 0
-	}
-
-	return f
-}
-
-// Float64ToStr float64 to string
-// 'e' (-d.dddde±dd，十进制指数)
-func Float64ToStr(f64 float64) string {
-	return strconv.FormatFloat(f64, 'e', -1, 64)
+	return buf.String()
 }
 
 //===================str join func========================
@@ -135,6 +128,20 @@ func Hex2bin(str string) []byte {
 	return s
 }
 
+// Decbin decbin()
+func Decbin(number int64) string {
+	return strconv.FormatInt(number, 2)
+}
+
+// Bindec bindec()
+func Bindec(str string) (string, error) {
+	i, err := strconv.ParseInt(str, 2, 0)
+	if err != nil {
+		return "", err
+	}
+	return strconv.FormatInt(i, 10), nil
+}
+
 // Hash : []byte to uint64
 func Hash(mem []byte) uint64 {
 	var hash uint64 = 5381
@@ -169,7 +176,7 @@ func DeAES(in, key, iv []byte) ([]byte, error) {
 	return out, nil
 }
 
-//=================uuid,rnduuid func====================
+//=================uuid,rnduuid,uniqid func====================
 // NewUUID 通过随机数的方式生成uuid
 //如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
 //该方式生成的uuid有可能存在重复值
@@ -209,6 +216,12 @@ func RndUuidMd5() string {
 
 func Uuid() string {
 	return strings.Replace(uuid.NewV4().String(), "-", "", -1)
+}
+
+// Uniqid uniqid()
+func Uniqid(prefix string) string {
+	now := time.Now()
+	return fmt.Sprintf("%s%08x%05x", prefix, now.Unix(), now.UnixNano()%0x100000)
 }
 
 //=====================html special characters================
@@ -256,7 +269,7 @@ func Krand(size int, kind int) string {
 	return string(result)
 }
 
-//================str chr,ord func======================
+// ================str chr,ord func======================
 // Chr returns a one-character string containing the character specified by ascii
 func Chr(ascii int) string {
 	for ascii < 0 {
@@ -294,9 +307,7 @@ func Strlen(str string) int {
 // Strpos find position of first occurrence of string in a string
 // It's multi-byte safe. return -1 if can not find the substring
 func Strpos(haystack, needle string) int {
-
 	pos := strings.Index(haystack, needle)
-
 	if pos < 0 {
 		return pos
 	}
@@ -328,4 +339,293 @@ func Stripos(haystack, needle string) int {
 // Strripos find the position of the last occurrence of a case-insensitive substring in a string
 func Strripos(haystack, needle string) int {
 	return Strrpos(strings.ToLower(haystack), strings.ToLower(needle))
+}
+
+// StrReplace str_replace()
+func StrReplace(search, replace, subject string, count int) string {
+	return strings.Replace(subject, search, replace, count)
+}
+
+// StrRepeat str_repeat()
+func StrRepeat(input string, multiplier int) string {
+	return strings.Repeat(input, multiplier)
+}
+
+// Strstr strstr()
+func Strstr(haystack string, needle string) string {
+	if needle == "" {
+		return ""
+	}
+	idx := strings.Index(haystack, needle)
+	if idx == -1 {
+		return ""
+	}
+	return haystack[idx+len([]byte(needle))-1:]
+}
+
+// Substr substr()
+func Substr(str string, start uint, length int) string {
+	if start < 0 || length < -1 {
+		return str
+	}
+	switch {
+	case length == -1:
+		return str[start:]
+	case length == 0:
+		return ""
+	}
+	end := int(start) + length
+	if end > len(str) {
+		end = len(str)
+	}
+	return str[start:end]
+}
+
+// MbStrlen mb_strlen()
+func MbStrlen(str string) int {
+	return utf8.RuneCountInString(str)
+}
+
+//==================str upper/lower==============================
+
+// Strtoupper strtoupper()
+func Strtoupper(str string) string {
+	return strings.ToUpper(str)
+}
+
+// Strtolower strtolower()
+func Strtolower(str string) string {
+	return strings.ToLower(str)
+}
+
+// StrShuffle str_shuffle()
+func StrShuffle(str string) string {
+	runes := []rune(str)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	s := make([]rune, len(runes))
+	for i, v := range r.Perm(len(runes)) {
+		s[i] = runes[v]
+	}
+	return string(s)
+}
+
+// Trim trim()
+func Trim(str string, characterMask ...string) string {
+	if len(characterMask) == 0 {
+		return strings.TrimSpace(str)
+	}
+	return strings.Trim(str, characterMask[0])
+}
+
+// Ltrim ltrim()
+func Ltrim(str string, characterMask ...string) string {
+	if len(characterMask) == 0 {
+		return strings.TrimLeftFunc(str, unicode.IsSpace)
+	}
+	return strings.TrimLeft(str, characterMask[0])
+}
+
+// Rtrim rtrim()
+func Rtrim(str string, characterMask ...string) string {
+	if len(characterMask) == 0 {
+		return strings.TrimRightFunc(str, unicode.IsSpace)
+	}
+	return strings.TrimRight(str, characterMask[0])
+}
+
+//=======================str Ucfirst/Lcfirst/Ucwords==================
+
+// UcFirst ucfirst()
+func UcFirst(str string) string {
+	for _, v := range str {
+		u := string(unicode.ToUpper(v))
+		return u + str[len(u):]
+	}
+	return ""
+}
+
+// LcFirst lcfirst()
+func LcFirst(str string) string {
+	for _, v := range str {
+		u := string(unicode.ToLower(v))
+		return u + str[len(u):]
+	}
+	return ""
+}
+
+// Ucwords ucwords()
+func Ucwords(str string) string {
+	return strings.Title(str)
+}
+
+//======================url encode/decode=======================
+
+// URLEncode urlencode()
+func URLEncode(str string) string {
+	return url.QueryEscape(str)
+}
+
+// URLDecode urldecode()
+func URLDecode(str string) (string, error) {
+	return url.QueryUnescape(str)
+}
+
+// Rawurlencode rawurlencode()
+func Rawurlencode(str string) string {
+	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
+}
+
+// Rawurldecode rawurldecode()
+func Rawurldecode(str string) (string, error) {
+	return url.QueryUnescape(strings.Replace(str, "%20", "+", -1))
+}
+
+// HTTPBuildQuery http_build_query()
+func HTTPBuildQuery(queryData url.Values) string {
+	return queryData.Encode()
+}
+
+//=================base64 encode/decode=========================
+
+// Base64Encode base64_encode()
+func Base64Encode(str string) string {
+	return base64.StdEncoding.EncodeToString([]byte(str))
+}
+
+// Base64Decode base64_decode()
+func Base64Decode(str string) (string, error) {
+	switch len(str) % 4 {
+	case 2:
+		str += "=="
+	case 3:
+		str += "="
+	}
+
+	data, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+// Empty empty()
+func Empty(val interface{}) bool {
+	if val == nil {
+		return true
+	}
+	v := reflect.ValueOf(val)
+	switch v.Kind() {
+	case reflect.String, reflect.Array:
+		return v.Len() == 0
+	case reflect.Map, reflect.Slice:
+		return v.Len() == 0 || v.IsNil()
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+
+	return reflect.DeepEqual(val, reflect.Zero(v.Type()).Interface())
+}
+
+//========================ip convert===========
+// IP2long ip2long()
+// IPv4
+func IP2long(ipAddress string) uint32 {
+	ip := net.ParseIP(ipAddress)
+	if ip == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint32(ip.To4())
+}
+
+// Long2ip long2ip()
+// IPv4
+func Long2ip(properAddress uint32) string {
+	ipByte := make([]byte, 4)
+	binary.BigEndian.PutUint32(ipByte, properAddress)
+	ip := net.IP(ipByte)
+	return ip.String()
+}
+
+// This function compares whether the two version numbers are equal and whether they are greater or less than the relationship.
+// Return value: 0 means v1 is equal to v2; 1 means v1 is greater than v2; 2 means v1 is less than v2
+func Compare(v1, v2 string) int {
+	// 替换一些常见的版本符号
+	replaceMap := map[string]string{"V": "", "v": "", "-": "."}
+	//keywords := {"alpha,beta,rc,p"}
+	for k, v := range replaceMap {
+		if strings.Contains(v1, k) {
+			strings.Replace(v1, k, v, -1)
+		}
+		if strings.Contains(v2, k) {
+			strings.Replace(v2, k, v, -1)
+		}
+	}
+	ver1 := strings.Split(v1, ".")
+	ver2 := strings.Split(v2, ".")
+	// 找出v1和v2哪一个最短
+	var shorter int
+	if len(ver1) > len(ver2) {
+		shorter = len(ver2)
+	} else {
+		shorter = len(ver1)
+	}
+	// 循环比较
+	for i := 0; i < shorter; i++ {
+		if ver1[i] == ver2[i] {
+			if shorter-1 == i {
+				if len(ver1) == len(ver2) {
+					return 0
+				} else {
+					// @todo check for keywords
+					if len(ver1) > len(ver2) {
+						return 1
+					} else {
+						return 2
+					}
+				}
+			}
+		} else if ver1[i] > ver2[i] {
+			return 1
+		} else {
+			return 2
+		}
+	}
+	return -1
+}
+
+// VersionCompare compare str1,str2 eg 1.2.1 >= 1.2.0
+func VersionCompare(v1, v2, operator string) bool {
+	com := Compare(v1, v2)
+	switch operator {
+	case "==":
+		if com == 0 {
+			return true
+		}
+	case "<":
+		if com == 2 {
+			return true
+		}
+	case ">":
+		if com == 1 {
+			return true
+		}
+	case "<=":
+		if com == 0 || com == 2 {
+			return true
+		}
+	case ">=":
+		if com == 0 || com == 1 {
+			return true
+		}
+	}
+	return false
 }
