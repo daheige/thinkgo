@@ -36,6 +36,7 @@
     ├── work                            利用无缓冲chan创建goroutine池来控制一组task的执行
     ├── workpool                   workerPool工作池，实现百万级的并发,一般用于持续不断的大规模作业
     ├── xerrors                         error错误处理拓展包，支持错误堆栈信息
+    ├── xsort                         基于标准包sort封装的一些sort操作方法
     ├── yamlconf                     yaml配置文件读取，支持int,int64,float64,string,struct等类型读取
     ├── commonstr_convert.go              字符串相关的函数，参考php函数实现
     ├── common/file.go                              文件/目录相关的函数，参考php函数实现
