@@ -1,4 +1,4 @@
-package redisLock
+package redislock
 
 import (
 	"github.com/gomodule/redigo/redis"

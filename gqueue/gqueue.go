@@ -1,8 +1,8 @@
-//通过指定goroutine个数,实现task queue执行器
+// package gqueue 通过指定goroutine个数,实现task queue执行器
 //提交任务到tash chan中，然后不断从chan中取出task执行
 //结合官方的sync.WaitGroup计数信号等待执行完毕
 //go goroutine非抢占式的,通过runtime.Gosched()让出cpu给其他goroutine
-package gQueue
+package gqueue
 
 import (
 	"runtime"

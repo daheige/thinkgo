@@ -1,4 +1,4 @@
-package gResty
+package gresty
 
 // go http client support get,post,delete,patch,put,head,file method
 // go-resty/resty: https://github.com/go-resty/resty

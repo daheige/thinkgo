@@ -1,4 +1,4 @@
-package gNsq
+package gnsq
 
 import (
 	"fmt"

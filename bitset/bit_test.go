@@ -1,4 +1,4 @@
-package bitSet
+package bitset
 
 import (
 	"fmt"
@@ -66,5 +66,5 @@ x symmetricDifference y: {1 2 42 144}
 1 2 42 144 --- PASS: TestBitSet (0.00s)
     bit_test.go:45: test success
 PASS
-ok  	/mygo/goweb/bitSet	0.002s
+ok      github.com/daheige/thinkgo/bitset       0.003s
 */

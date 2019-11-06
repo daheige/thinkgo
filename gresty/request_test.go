@@ -1,4 +1,4 @@
-package gResty
+package gresty
 
 import (
 	"log"

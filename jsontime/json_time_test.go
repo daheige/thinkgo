@@ -1,4 +1,4 @@
-package jsonTime
+package jsontime
 
 import (
 	"encoding/json"
@@ -43,12 +43,12 @@ func TestTime(t *testing.T) {
 /**
 $ go test -v
 === RUN   TestTime
-2019/10/12 23:07:52 str: {"id":1,"name":"fefe","birthday":null}
+2019/11/04 23:20:57 str:  {"id":1,"name":"fefe","birthday":null}
 --- PASS: TestTime (0.00s)
-    json_time_test.go:20: 2019-10-12 23:07:52
+    json_time_test.go:20: 2019-11-04 23:20:57
     json_time_test.go:28: &{5 xiaoming 0001-01-01 00:00:00}
     json_time_test.go:29: 0001-01-01 00:00:00 +0000 UTC
     json_time_test.go:31: {"id":5,"name":"xiaoming","birthday":null}
 PASS
-ok  	github.com/daheige/thinkgo/jsonTime	0.003s
+ok  	github.com/daheige/thinkgo/jsontime	0.002s
 */

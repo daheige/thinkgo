@@ -1,4 +1,4 @@
-package yamlConf
+package yamlconf
 
 import (
 	"errors"

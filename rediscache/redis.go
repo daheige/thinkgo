@@ -1,4 +1,4 @@
-package redisCache
+package rediscache
 
 import (
 	"time"

@@ -18,7 +18,7 @@
 	这样的话我们完全可以将这40亿个int数放到内存中进行处理
 */
 
-package bitSet
+package bitset
 
 import (
 	"bytes"

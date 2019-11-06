@@ -1,4 +1,4 @@
-package goRedis
+package goredis
 
 import (
 	"errors"

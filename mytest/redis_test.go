@@ -6,13 +6,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/daheige/thinkgo/redisCache"
+	"github.com/daheige/thinkgo/rediscache"
 
 	"github.com/gomodule/redigo/redis"
 )
 
 func TestRedisPool(t *testing.T) {
-	conf := &redisCache.RedisConf{
+	conf := &rediscache.RedisConf{
 		Host:        "127.0.0.1",
 		Port:        6379,
 		MaxIdle:     100,
@@ -28,7 +28,7 @@ func TestRedisPool(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			client := redisCache.GetRedisClient("default")
+			client := rediscache.GetRedisClient("default")
 			defer client.Close()
 
 			ok, err := client.Do("set", "myname", "daheige")
@@ -51,8 +51,9 @@ func TestRedisPool(t *testing.T) {
 
 /*
 $ go test -v -test.run TestRedisPool
-2019/03/20 22:56:04 exec success...
---- PASS: TestRedisPool (0.95s)
+OK <nil>
+2019/11/06 22:07:50 exec success...
+--- PASS: TestRedisPool (2.25s)
 PASS
-ok  	github.com/daheige/thinkgo/mytest	1.902s
+ok  	github.com/daheige/thinkgo/mytest	2.260s
 */

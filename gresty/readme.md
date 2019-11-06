@@ -1,4 +1,4 @@
-# gResty package
+# gresty package
 
         go http client library,base on go-resty.
         go-resty: https://github.com/go-resty/resty
@@ -7,14 +7,14 @@
 
         go version 1.11+
 
-        import "github.com/daheige/thinkgo/gResty"
+        import "github.com/daheige/thinkgo/gresty"
 
-        s := &gResty.Service{
+        s := &gresty.Service{
             BaseUri: "http://localhost:1338/",
             Timeout: 2 * time.Second,
         }
 
-        opt := &gResty.ReqOpt{
+        opt := &gresty.ReqOpt{
             Data: map[string]interface{}{
                 "id": "1234",
             },
@@ -25,4 +25,4 @@
         log.Println("err: ", res.Err)
         log.Println("body:", res.Text())
 
-        For other usage, please see the method in the gResty source package.
+        For other usage, please see the method in the gresty source package.

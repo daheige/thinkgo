@@ -1,8 +1,8 @@
-//workerPool实现百万级的并发
+// package workpool 实现百万级的并发
 //go程序开发过程中,通过简单的调用go func 函数来开启协程,容易导致程序死锁
 //并且会无限制的开启groutine,groutine数量激增的情况下并发性能会明显下降
 // 所以需要考虑使用工作池来控制协程数量,以达到高并发的效果.
-package workPool
+package workpool
 
 import (
 	"log"

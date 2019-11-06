@@ -1,5 +1,5 @@
-// package jsonTime fix time.Time  json encode/decode bug.
-package jsonTime
+// package jsontime fix time.Time  json encode/decode bug.
+package jsontime
 
 import (
 	"database/sql/driver"

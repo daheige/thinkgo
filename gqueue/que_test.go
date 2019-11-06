@@ -1,4 +1,4 @@
-package gQueue
+package gqueue
 
 import (
 	"log"

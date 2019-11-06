@@ -1,4 +1,4 @@
-package goRedis
+package goredis
 
 import (
 	"fmt"
@@ -72,9 +72,10 @@ func TestRedis(t *testing.T) {
 /**
 === RUN   TestRedis
 PONG <nil>
-2019/09/26 21:48:30 OK <nil>
-2019/09/26 21:48:30 OK <nil>
-2019/09/26 21:48:30 daheige <nil>
---- PASS: TestRedis (0.01s)
+2019/11/06 22:11:08 OK <nil>
+2019/11/06 22:11:08 OK <nil>
+2019/11/06 22:11:08 daheige <nil>
+--- PASS: TestRedis (0.03s)
 PASS
+ok  	github.com/daheige/thinkgo/goredis	0.028s
 */
