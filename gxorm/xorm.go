@@ -4,38 +4,41 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/go-xorm/xorm"
 )
 
-//mysql连接信息
+//DbConf mysql连接信息
 //parseTime=true changes the output type of DATE and DATETIME
 //values to time.Time instead of []byte / string
 //The date or datetime like 0000-00-00 00:00:00 is converted
 //into zero value of time.Time.
 type DbConf struct {
-	Ip           string
-	Port         int
-	User         string
-	Password     string
-	Database     string
-	Charset      string //字符集 utf8mb4 支持表情符号
-	Collation    string //整理字符集 utf8mb4_unicode_ci
-	MaxIdleConns int    //空闲pool个数
-	MaxOpenConns int    //最大open connection个数
-	ParseTime    bool
-	Loc          string //时区字符串 Local,PRC
-	SqlCmd       bool   //sql语句是否输出到终端,true输出到终端
-	UsePool      bool   //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
-	ShowExecTime bool   //是否打印sql执行时间
+	Ip        string
+	Port      int
+	User      string
+	Password  string
+	Database  string
+	Charset   string //字符集 utf8mb4 支持表情符号
+	Collation string //整理字符集 utf8mb4_unicode_ci
+	ParseTime bool
+	Loc       string //时区字符串 Local,PRC
+
+	MaxIdleConns int  //设置连接池的空闲数大小
+	MaxOpenConns int  //最大open connection个数
+	SqlCmd       bool //sql语句是否输出到终端,true输出到终端
+	UsePool      bool //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	ShowExecTime bool //是否打印sql执行时间
 }
 
 //每个数据库连接pool就是一个db引擎
 var engineMap = map[string]*xorm.Engine{}
 
-func (conf *DbConf) InitEngine() (*xorm.Engine, error) {
+// InitDbEngine new a db engine
+func (conf *DbConf) InitDbEngine() (*xorm.Engine, error) {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
 	}
@@ -60,6 +63,17 @@ func (conf *DbConf) InitEngine() (*xorm.Engine, error) {
 	db, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
 		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
 		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+// NewEngine create a db engine
+// 如果配置上有显示sql执行时间和采用pool机制，就会建立db连接池
+func (conf *DbConf) NewEngine() (*xorm.Engine, error) {
+	db, err := conf.InitDbEngine()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +104,7 @@ func (conf *DbConf) SetEngineName(name string) error {
 	}
 
 	//初始化db 句柄
-	db, err := conf.InitEngine()
+	db, err := conf.NewEngine()
 	if err != nil {
 		return errors.New("current " + name + " db engine init error: " + err.Error())
 	}
@@ -102,10 +116,10 @@ func (conf *DbConf) SetEngineName(name string) error {
 // ShortConnect 短连接设置，一般用于短连接服务的数据库句柄
 func (conf *DbConf) ShortConnect() (*xorm.Engine, error) {
 	conf.UsePool = false
-	return conf.InitEngine()
+	return conf.NewEngine()
 }
 
-//从db pool获取一个数据库连接句柄
+// GetEngine 从db pool获取一个数据库连接句柄
 //根据数据库连接句柄name获取指定的连接句柄
 func GetEngine(name string) (*xorm.Engine, error) {
 	if _, ok := engineMap[name]; ok {
@@ -152,4 +166,34 @@ func NewEngineGroup(masterEngine *xorm.Engine, slave1Engine ...*xorm.Engine) (*x
 	}
 
 	return engineGroup, nil
+}
+
+// EngineGroupOption 读写分离引擎组其他参数
+type EngineGroupOption struct {
+	MaxIdleConns int  //设置连接池的空闲数大小
+	MaxOpenConns int  //最大open connection个数
+	SqlCmd       bool //sql语句是否输出到终端,true输出到终端
+	ShowExecTime bool //是否打印sql执行时间
+	MaxLifetime  time.Duration
+}
+
+// NewEngineGroupWithOption 创建读写分离的引擎组，附带一些拓展配置
+// 这里可以采用功能模式，方便后面对引擎组句柄进行拓展
+func NewEngineGroupWithOption(m *xorm.Engine, s []*xorm.Engine, opt *EngineGroupOption) (*xorm.EngineGroup, error) {
+	eg, err := NewEngineGroup(m, s...)
+	if err != nil {
+		return nil, err
+	}
+
+	eg.ShowSQL(opt.SqlCmd)               //当为true时则会在控制台打印出生成的SQL语句；
+	eg.ShowExecTime(opt.ShowExecTime)    //显示SQL语句执行时间
+	eg.SetMaxIdleConns(opt.MaxIdleConns) //最大db空闲数
+	eg.SetMaxOpenConns(opt.MaxOpenConns) //db最大连接数
+
+	// 设置连接可以重用的最大时间
+	if opt.MaxLifetime > 0 {
+		eg.SetConnMaxLifetime(opt.MaxLifetime)
+	}
+
+	return eg, nil
 }
