@@ -11,12 +11,7 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
-//DbConf mysql连接信息
-//parseTime=true changes the output type of DATE and DATETIME
-//values to time.Time instead of []byte / string
-//The date or datetime like 0000-00-00 00:00:00 is converted
-//into zero value of time.Time.
-type DbConf struct {
+type DbBaseConf struct {
 	Ip        string
 	Port      int
 	User      string
@@ -26,6 +21,15 @@ type DbConf struct {
 	Collation string //整理字符集 utf8mb4_unicode_ci
 	ParseTime bool
 	Loc       string //时区字符串 Local,PRC
+}
+
+//DbConf mysql连接信息
+//parseTime=true changes the output type of DATE and DATETIME
+//values to time.Time instead of []byte / string
+//The date or datetime like 0000-00-00 00:00:00 is converted
+//into zero value of time.Time.
+type DbConf struct {
+	DbBaseConf
 
 	MaxIdleConns int  //设置连接池的空闲数大小
 	MaxOpenConns int  //最大open connection个数
@@ -38,7 +42,7 @@ type DbConf struct {
 var engineMap = map[string]*xorm.Engine{}
 
 // InitDbEngine new a db engine
-func (conf *DbConf) InitDbEngine() (*xorm.Engine, error) {
+func (conf *DbBaseConf) InitDbEngine() (*xorm.Engine, error) {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
 	}
@@ -119,14 +123,14 @@ func (conf *DbConf) ShortConnect() (*xorm.Engine, error) {
 	return conf.NewEngine()
 }
 
-// GetEngine 从db pool获取一个数据库连接句柄
+// GetEngineByName 从db pool获取一个数据库连接句柄
 //根据数据库连接句柄name获取指定的连接句柄
-func GetEngine(name string) (*xorm.Engine, error) {
+func GetEngineByName(name string) (*xorm.Engine, error) {
 	if _, ok := engineMap[name]; ok {
 		return engineMap[name], nil
 	}
 
-	return nil, errors.New("get db obj failed!")
+	return nil, errors.New("get db obj fail")
 }
 
 // CloseAllDb 由于xorm db.Close()是关闭当前连接，一般建议如下函数放在main/init关闭连接就可以
@@ -156,43 +160,65 @@ func CloseDbByName(name string) error {
 }
 
 //======================读写分离设置==================
-// NewEngineGroup 设置读写分离db engine
-// slaveEngine可以多个
-// 返回读写分离的db engine
-func NewEngineGroup(masterEngine *xorm.Engine, slave1Engine ...*xorm.Engine) (*xorm.EngineGroup, error) {
-	engineGroup, err := xorm.NewEngineGroup(masterEngine, slave1Engine)
-	if err != nil {
-		return nil, err
-	}
+// EngineGroupConf 读写分离引擎配置
+type EngineGroupConf struct {
+	Master DbBaseConf
+	Slaves []DbBaseConf
 
-	return engineGroup, nil
-}
-
-// EngineGroupOption 读写分离引擎组其他参数
-type EngineGroupOption struct {
 	MaxIdleConns int  //设置连接池的空闲数大小
 	MaxOpenConns int  //最大open connection个数
 	SqlCmd       bool //sql语句是否输出到终端,true输出到终端
 	ShowExecTime bool //是否打印sql执行时间
-	MaxLifetime  time.Duration
+
+	// sets the maximum amount of time a connection may be reused.
+	MaxLifetime time.Duration
 }
 
 // NewEngineGroupWithOption 创建读写分离的引擎组，附带一些拓展配置
 // 这里可以采用功能模式，方便后面对引擎组句柄进行拓展
-func NewEngineGroupWithOption(m *xorm.Engine, s []*xorm.Engine, opt *EngineGroupOption) (*xorm.EngineGroup, error) {
-	eg, err := NewEngineGroup(m, s...)
+func (conf *EngineGroupConf) NewEngineGroup() (*xorm.EngineGroup, error) {
+	master, err := conf.Master.InitDbEngine()
 	if err != nil {
 		return nil, err
 	}
 
-	eg.ShowSQL(opt.SqlCmd)               //当为true时则会在控制台打印出生成的SQL语句；
-	eg.ShowExecTime(opt.ShowExecTime)    //显示SQL语句执行时间
-	eg.SetMaxIdleConns(opt.MaxIdleConns) //最大db空闲数
-	eg.SetMaxOpenConns(opt.MaxOpenConns) //db最大连接数
+	slaveLen := len(conf.Slaves)
+	if slaveLen == 0 {
+		return nil, errors.New("slave db conf is empty")
+	}
+
+	slaves := make([]*xorm.Engine, 0, slaveLen)
+	slaveErrs := make([]error, 0, slaveLen)
+
+	for k, _ := range conf.Slaves {
+		db, err := conf.Slaves[k].InitDbEngine()
+		if err != nil {
+			slaveErrs = append(slaveErrs, err)
+			continue
+		}
+
+		slaves = append(slaves, db)
+	}
+
+	if len(slaveErrs) > 0 {
+		log.Println("init slaves error: ", slaveErrs)
+
+		return nil, errors.New("init slaves fail")
+	}
+
+	eg, err := xorm.NewEngineGroup(master, slaves)
+	if err != nil {
+		return nil, err
+	}
+
+	eg.ShowSQL(conf.SqlCmd)               //当为true时则会在控制台打印出生成的SQL语句；
+	eg.ShowExecTime(conf.ShowExecTime)    //显示SQL语句执行时间
+	eg.SetMaxIdleConns(conf.MaxIdleConns) //最大db空闲数
+	eg.SetMaxOpenConns(conf.MaxOpenConns) //db最大连接数
 
 	// 设置连接可以重用的最大时间
-	if opt.MaxLifetime > 0 {
-		eg.SetConnMaxLifetime(opt.MaxLifetime)
+	if conf.MaxLifetime > 0 {
+		eg.SetConnMaxLifetime(conf.MaxLifetime)
 	}
 
 	return eg, nil

@@ -3,6 +3,7 @@ package gxorm
 import (
 	"log"
 	"testing"
+	"time"
 
 	"github.com/go-xorm/xorm"
 )
@@ -34,18 +35,19 @@ func TestGxorm(t *testing.T) {
 	log.Println(e == nil)
 
 	dbConf := &DbConf{
-
-		Ip:        "127.0.0.1",
-		Port:      3306,
-		User:      "root",
-		Password:  "root",
-		Database:  "test",
-		ParseTime: true,
+		DbBaseConf: DbBaseConf{
+			Ip:        "127.0.0.1",
+			Port:      3306,
+			User:      "root",
+			Password:  "root",
+			Database:  "test",
+			ParseTime: true,
+		},
 
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
 		SqlCmd:       true,
-		ShowExecTime: false,
+		ShowExecTime: true,
 	}
 
 	db, err := dbConf.NewEngine() //设置数据库连接对象，并非真正连接，只有在用的时候才会建立连接
@@ -63,75 +65,53 @@ func TestGxorm(t *testing.T) {
 	log.Println("user info: ", user.Id, user.Name)
 
 	//测试读写分离
-	readConf := &DbConf{
-		Ip:        "127.0.0.1",
-		Port:      3306,
-		User:      "test1",
-		Password:  "1234",
-		Database:  "test",
-		ParseTime: true,
-
+	rwConf := &EngineGroupConf{
+		Master: DbBaseConf{
+			Ip:        "127.0.0.1",
+			Port:      3306,
+			User:      "root",
+			Password:  "root",
+			Database:  "test",
+			ParseTime: true,
+		},
+		Slaves: []DbBaseConf{
+			DbBaseConf{
+				Ip:        "127.0.0.1",
+				Port:      3306,
+				User:      "test1",
+				Password:  "1234",
+				Database:  "test",
+				ParseTime: true,
+			},
+			DbBaseConf{
+				Ip:        "127.0.0.1",
+				Port:      3306,
+				User:      "test2",
+				Password:  "1234",
+				Database:  "test",
+				ParseTime: true,
+			},
+		},
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
 		SqlCmd:       true,
 		ShowExecTime: true,
+		MaxLifetime:  200 * time.Second,
 	}
 
-	readDb, err := readConf.NewEngine()
+	eg, err := rwConf.NewEngineGroup()
 	if err != nil {
 		log.Println("set read db engine error: ", err.Error())
 		return
 	}
 
-	defer readDb.Close()
-
-	log.Println("===========read db of one=======")
 	userInfo := &myUser{}
-	has, err = readDb.Where("id = ?", 1).Get(userInfo)
-	log.Println("read one db,get id = 1 of userInfo: ", has, err)
-
-	//设置第二个读的实例
-	readConf2 := &DbConf{
-		Ip:        "127.0.0.1",
-		Port:      3306,
-		User:      "test2",
-		Password:  "1234",
-		Database:  "test",
-		ParseTime: true,
-
-		MaxIdleConns: 10,
-		MaxOpenConns: 100,
-		SqlCmd:       true,
-		ShowExecTime: true,
-	}
-
-	readDb2, err := readConf2.NewEngine()
-	if err != nil {
-		log.Println("set read db engine error: ", err.Error())
-		return
-	}
-
-	defer readDb2.Close()
-
-	log.Println("=========slave two db====")
-	userInfo2 := &myUser{}
-	has, err = readDb2.Where("id = ?", 2).Get(userInfo2)
-	log.Println("read two db user: ", has, err)
-
-	//设置读写分离的引擎句柄
-	// engineGroup, err := NewEngineGroup(db, readDb)
-	// engineGroup, err := NewEngineGroup(db, readDb2)
-	engineGroup, err := NewEngineGroup(db, readDb, readDb2)
-	if err != nil {
-		log.Println("set db engineGroup error: ", err.Error())
-		return
-	}
-
-	defer engineGroup.Close() //关闭读写分离的连接对象
+	has, err = eg.Where("id = ?", 1).Get(userInfo)
+	log.Println("get id = 1 of userInfo: ", has, err)
 
 	log.Println("=======engine select=========")
 	user2 := &myUser{}
-	has, err = engineGroup.Where("id = ?", 3).Get(user2)
+	has, err = eg.Where("id = ?", 3).Get(user2)
 	log.Println(has, err)
 	log.Println(user2)
 
@@ -141,42 +121,38 @@ func TestGxorm(t *testing.T) {
 		Age:  12,
 	}
 
-	affectedNum, err := engineGroup.InsertOne(user4) //插入单条数据，多条数据请用Insert(user3,user4,user5)
+	affectedNum, err := eg.InsertOne(user4) //插入单条数据，多条数据请用Insert(user3,user4,user5)
 	log.Println("affected num: ", affectedNum)
 	log.Println("insert id: ", user4.Id)
 	log.Println("err: ", err)
 
 	log.Println("get on slave to query")
 	user5 := &myUser{}
-	log.Println(engineGroup.Slave().Where("id = ?", 4).Get(user5))
+	log.Println(eg.Slave().Where("id = ?", 4).Get(user5))
 }
 
 /**
 $ go test -v
 === RUN   TestGxorm
-2019/11/12 00:01:21 true
-2019/11/12 00:01:21 ====master db===
-[xorm] [info]  2019/11/12 00:01:21.831136 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{1}
-2019/11/12 00:01:21 true <nil>
-2019/11/12 00:01:21 user info:  1 xiaoxiao
-2019/11/12 00:01:21 ===========read db of one=======
-[xorm] [info]  2019/11/12 00:01:21.884865 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{1} - took: 2.563032ms
-2019/11/12 00:01:21 read one db,get id = 1 of userInfo:  true <nil>
-2019/11/12 00:01:21 =========slave two db====
-[xorm] [info]  2019/11/12 00:01:21.894919 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{2} - took: 9.691442ms
-2019/11/12 00:01:21 read two db user:  true <nil>
-2019/11/12 00:01:21 =======engine select=========
-[xorm] [info]  2019/11/12 00:01:21.895281 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{3}
-2019/11/12 00:01:21 true <nil>
-2019/11/12 00:01:21 &{3 xiaoxiao 12}
-[xorm] [info]  2019/11/12 00:01:21.896021 [SQL] INSERT INTO `user` (`name`,`age`) VALUES (?, ?) []interface {}{"xiaoxiao", 12}
-2019/11/12 00:01:21 affected num:  1
-2019/11/12 00:01:21 insert id:  104
-2019/11/12 00:01:21 err:  <nil>
-2019/11/12 00:01:21 get on slave to query
-[xorm] [info]  2019/11/12 00:01:21.953948 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{4} - took: 917.993µs
-2019/11/12 00:01:21 true <nil>
---- PASS: TestGxorm (0.12s)
+2019/11/12 21:45:29 true
+2019/11/12 21:45:29 ====master db===
+[xorm] [info]  2019/11/12 21:45:29.633242 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{1} - took: 49.72224ms
+2019/11/12 21:45:29 true <nil>
+2019/11/12 21:45:29 user info:  1 xiaoxiao
+[xorm] [info]  2019/11/12 21:45:29.665330 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{1} - took: 31.500405ms
+2019/11/12 21:45:29 get id = 1 of userInfo:  true <nil>
+2019/11/12 21:45:29 =======engine select=========
+[xorm] [info]  2019/11/12 21:45:29.665787 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{3} - took: 297.281µs
+2019/11/12 21:45:29 true <nil>
+2019/11/12 21:45:29 &{3 xiaoxiao 12}
+[xorm] [info]  2019/11/12 21:45:29.715391 [SQL] INSERT INTO `user` (`name`,`age`) VALUES (?, ?) []interface {}{"xiaoxiao", 12} - took: 49.453763ms
+2019/11/12 21:45:29 affected num:  1
+2019/11/12 21:45:29 insert id:  106
+2019/11/12 21:45:29 err:  <nil>
+2019/11/12 21:45:29 get on slave to query
+[xorm] [info]  2019/11/12 21:45:29.743923 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{4} - took: 28.349699ms
+2019/11/12 21:45:29 true <nil>
+--- PASS: TestGxorm (0.16s)
 PASS
-ok      github.com/daheige/thinkgo/gxorm        0.128s
+ok      github.com/daheige/thinkgo/gxorm        0.164s
 */
