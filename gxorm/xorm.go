@@ -165,6 +165,9 @@ type EngineGroupConf struct {
 	Master DbBaseConf
 	Slaves []DbBaseConf
 
+	// the following configuration is for the configuration on each instance of master and slave
+	// not the overall configuration of the engine group.
+	//下面的配置对于每个实例的配置，并非整个引擎组的配置
 	MaxIdleConns int  //设置连接池的空闲数大小
 	MaxOpenConns int  //最大open connection个数
 	SqlCmd       bool //sql语句是否输出到终端,true输出到终端
