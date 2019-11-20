@@ -7,13 +7,13 @@ import (
 var DefaultExpire = 20 //默认key过期时间20s
 
 type Lock struct {
-	conn   redis.Conn //redis连接句柄，支持redis pool连接句柄
-	expire int        //设置加锁key的过期时间
-	key    string     //加锁的key
-	val    string     //加锁的val
+	conn   redis.Conn  //redis连接句柄，支持redis pool连接句柄
+	expire int         //设置加锁key的过期时间
+	key    string      //加锁的key
+	val    interface{} //加锁的val
 }
 
-func New(conn redis.Conn, key string, val string, expire int) *Lock {
+func New(conn redis.Conn, key string, val interface{}, expire int) *Lock {
 	if expire <= 0 {
 		expire = DefaultExpire
 	}
