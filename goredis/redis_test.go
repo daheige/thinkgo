@@ -328,6 +328,10 @@ func TestRedisHScan(t *testing.T) {
 		log.Println("user: ", userInfo)
 		log.Println("ids: ", ids)
 		client.HDel("mykey", ids...)
+
+		if nextCursor == 0 {
+			break
+		}
 	}
 
 }
