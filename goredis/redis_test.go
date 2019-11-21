@@ -3,6 +3,7 @@ package goredis
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -225,3 +226,113 @@ go test -v -test.run=TestRedis2
 综合上面的测试，需要对redis设置的时候，只需要一次执行就可以
 可以加上一个分布式锁或乐观锁实现
 */
+
+/**
+127.0.0.1:6379> hset mykey 1 123
+(integer) 1
+127.0.0.1:6379> hset mykey 2 234
+(integer) 1
+127.0.0.1:6379> hset mykey 3 345
+(integer) 1
+127.0.0.1:6379> hset mykey 4 345
+(integer) 1
+127.0.0.1:6379> hset mykey 5 34s5
+(integer) 1
+127.0.0.1:6379> hgetall mykey
+ 1) "1"
+ 2) "123"
+ 3) "2"
+ 4) "234"
+ 5) "3"
+ 6) "345"
+ 7) "4"
+ 8) "345"
+ 9) "5"
+10) "34s5"
+127.0.0.1:6379>
+*/
+
+//  redis hash hScan游标读取key/val
+/*
+go test -v -test.run=TestRedisHScan
+=== RUN   TestRedisHScan
+2019/11/21 22:05:02 hash len:  5
+2019/11/21 22:05:02 [1 123 2 234 3 345 4 345 5 34s5] 0 <nil>
+2019/11/21 22:05:02 cursor:  0
+2019/11/21 22:05:02 1 123
+2019/11/21 22:05:02 2 234
+2019/11/21 22:05:02 3 345
+2019/11/21 22:05:02 4 345
+2019/11/21 22:05:02 5 34s5
+2019/11/21 22:05:02 user:  [{1 123} {2 234} {3 345} {4 345} {5 34s5}]
+--- PASS: TestRedisHScan (0.00s)
+PASS
+*/
+
+func TestRedisHScan(t *testing.T) {
+	conf := RedisClientConf{
+		Address:     "127.0.0.1:6379",
+		Password:    "", // no password set
+		DB:          0,  // use default DB
+		PoolSize:    10,
+		PoolTimeout: 10 * time.Second,
+	}
+
+	conf.SetClientName("default")
+
+	client, err := GetRedisClient("default")
+	if err != nil {
+		panic(err)
+	}
+
+	defer client.Close()
+
+	//通过hscan 游标方式获取hash中的key对应的val
+	uLen := client.HLen("mykey").Val()
+	log.Println("hash len: ", uLen)
+
+	var nextCursor uint64 //下一次的游标
+
+	for {
+		res, cursor, err := client.HScan("mykey", nextCursor, "*", 10).Result()
+		log.Println(res, cursor, err)
+
+		log.Println("cursor: ", cursor)
+
+		rLen := len(res)
+		if rLen == 0 {
+			break
+		}
+
+		nextCursor = cursor
+
+		userInfo := make([]user, 0, rLen+1)
+		ids := make([]string, 0, rLen+1)
+		for i := 0; i < rLen; i = i + 2 {
+			// log.Println(res[i], res[i+1])
+
+			i64, err := strconv.ParseInt(res[i], 10, 64)
+			if err != nil {
+				continue
+			}
+
+			ids = append(ids, res[i])
+
+			userInfo = append(userInfo, user{
+				Id:   i64,
+				Name: res[i+1],
+			})
+		}
+
+		//模拟db插入
+		log.Println("user: ", userInfo)
+		log.Println("ids: ", ids)
+		client.HDel("mykey", ids...)
+	}
+
+}
+
+type user struct {
+	Id   int64
+	Name string
+}
