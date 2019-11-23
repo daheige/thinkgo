@@ -1,3 +1,4 @@
+// str 字符串相关的辅助函数，实现方式参考php str字符串函数实现
 package common
 
 import (

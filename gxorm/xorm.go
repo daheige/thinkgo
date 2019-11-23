@@ -31,8 +31,14 @@ type DbBaseConf struct {
 type DbConf struct {
 	DbBaseConf
 
-	MaxIdleConns int  //设置连接池的空闲数大小
-	MaxOpenConns int  //最大open connection个数
+	MaxIdleConns int //设置连接池的空闲数大小
+	MaxOpenConns int //最大open connection个数
+
+	// sets the maximum amount of time a connection may be reused.
+	// 设置连接可以重用的最大时间
+	// 给db设置一个超时时间，时间小于数据库的超时时间
+	MaxLifetime time.Duration
+
 	SqlCmd       bool //sql语句是否输出到终端,true输出到终端
 	UsePool      bool //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
 	ShowExecTime bool //是否打印sql执行时间
@@ -94,6 +100,12 @@ func (conf *DbConf) NewEngine() (*xorm.Engine, error) {
 	if conf.UsePool {
 		db.SetMaxIdleConns(conf.MaxIdleConns) //设置连接池的空闲数大小
 		db.SetMaxOpenConns(conf.MaxOpenConns) //设置最大打开连接数
+	}
+
+	// 设置连接可以重用的最大时间
+	// 给db设置一个超时时间，时间小于数据库的超时时间
+	if conf.MaxLifetime > 0 {
+		db.SetConnMaxLifetime(conf.MaxLifetime)
 	}
 
 	return db, nil
@@ -217,9 +229,10 @@ func (conf *EngineGroupConf) NewEngineGroup() (*xorm.EngineGroup, error) {
 	eg.ShowSQL(conf.SqlCmd)               //当为true时则会在控制台打印出生成的SQL语句；
 	eg.ShowExecTime(conf.ShowExecTime)    //显示SQL语句执行时间
 	eg.SetMaxIdleConns(conf.MaxIdleConns) //最大db空闲数
-	eg.SetMaxOpenConns(conf.MaxOpenConns) //db最大连接数
+	eg.SetMaxOpenConns(conf.MaxOpenConns) //db最大连接数,小于数据库配置的最大连接
 
 	// 设置连接可以重用的最大时间
+	// 给db设置一个超时时间，时间小于数据库的超时时间
 	if conf.MaxLifetime > 0 {
 		eg.SetConnMaxLifetime(conf.MaxLifetime)
 	}

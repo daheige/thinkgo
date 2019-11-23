@@ -128,20 +128,15 @@ func GetRedisClient(name string) (*redis.Client, error) {
 	return nil, errors.New("current client " + name + " not exist")
 }
 
-type RedisData struct {
-	Expire int64
-	Data   interface{}
-}
-
 // SetJson 设置任意类型到redis中，以json格式保存
-func SetJson(client *redis.Client, key string, d RedisData) error {
+func SetJson(client *redis.Client, key string, d interface{}, expire int64) error {
 	b, err := json.Marshal(d)
 	if err != nil {
 		return err
 	}
 
-	if d.Expire > 0 {
-		_, err = client.Do("setEx", key, d.Expire, string(b)).Result()
+	if expire > 0 {
+		_, err = client.Do("setEx", key, expire, string(b)).Result()
 	} else {
 		_, err = client.Do("set", key, string(b)).Result()
 	}
@@ -149,67 +144,24 @@ func SetJson(client *redis.Client, key string, d RedisData) error {
 	return err
 }
 
-// GetJson 从redis中获取指定的key对应的val
-func GetJson(client *redis.Client, key string) (interface{}, error) {
+// GetJson 从redis中获取指定的key对应的val解析到data中
+// data必须是提前定义好的类型，且为指针类型
+func GetJson(client *redis.Client, key string, data interface{}) error {
 	str, err := client.Do("get", key).String()
-	if err != nil {
-		return nil, err
-	}
-
-	if str == "" {
-		return nil, errors.New("redis data is empty")
-	}
-
-	res := &RedisData{}
-	err = json.Unmarshal([]byte(str), res)
-	if err != nil {
-		return nil, err
-	}
-
-	return res.Data, nil
-}
-
-// SetExHash 拓展redis hash里面的key没有过期时间的问题
-func SetExHash(client *redis.Client, key string, innerKey string, d RedisData) error {
-	if d.Expire <= 0 {
-		d.Expire = time.Now().Unix() + HashDefaultExpire
-	}
-
-	b, err := json.Marshal(d)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.Do("hSet", key, innerKey, string(b)).Result()
-
-	return err
-}
-
-// GetExHash 获取redis hash内部key对应的val
-func GetExHash(client *redis.Client, key string, innerKey string) (interface{}, error) {
-	str, err := client.Do("hget", key, innerKey).String()
-	if err != nil {
-		return nil, err
-	}
-
 	if str == "" {
-		return nil, errors.New("redis data is empty")
+		return errors.New("redis data is empty")
 	}
 
-	res := &RedisData{}
-	err = json.Unmarshal([]byte(str), res)
+	err = json.Unmarshal([]byte(str), data)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	//当数据没有过期，就直接返回,否则就删除
-	if res.Expire >= time.Now().Unix() {
-		return res.Data, nil
-	}
-
-	client.Do("hDel", key, innerKey)
-
-	return nil, errors.New("hash data has expired")
+	return nil
 }
 
 // GetCluster return redis cluster client

@@ -5,27 +5,30 @@
 * 一个Orm引擎称为Engine，一个Engine一般只对应一个数据库
 * 因此,可以将gorm的每个数据库连接句柄，可以作为一个Engine来进行处理
 * 容易踩坑的地方：
-	对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
-	但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
-	对于短连接的话，建议用完就调用db.Close()方法释放db连接资源
-	对于长连接服务，一般建议在main/init中关闭连接就可以
-	具体可以看gorm/main.go源码85行
-*/
+*	对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
+*	但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
+*	对于短连接的话，建议用完就调用db.Close()方法释放db连接资源
+*	对于长连接服务，一般建议在main/init中关闭连接就可以
+*	具体可以看gorm/main.go源码85行
+* 对于gorm实现读写分离:
+*	可以实例化master,slaves实例，对于curd用不同的句柄就可以
+ */
 package mysql
 
 import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
 
-//每个数据库连接pool就是一个db引擎
+// engineMap 每个数据库连接pool就是一个db引擎
 var engineMap = map[string]*gorm.DB{}
 
-//mysql连接信息
+// DbConf mysql连接信息
 //parseTime=true changes the output type of DATE and DATETIME
 //values to time.Time instead of []byte / string
 //The date or datetime like 0000-00-00 00:00:00 is converted
@@ -40,15 +43,21 @@ type DbConf struct {
 	Collation    string //整理字符集 utf8mb4_unicode_ci
 	MaxIdleConns int    //空闲pool个数
 	MaxOpenConns int    //最大open connection个数
-	ParseTime    bool
-	Loc          string   //时区字符串 Local,PRC
-	engineName   string   //当前数据库连接句柄标识
-	dbObj        *gorm.DB //当前数据库连接句柄
-	SqlCmd       bool     //sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
-	UsePool      bool     //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+
+	// sets the maximum amount of time a connection may be reused.
+	// 设置连接可以重用的最大时间
+	// 给db设置一个超时时间，时间小于数据库的超时时间
+	MaxLifetime int64 //数据库超时时间，单位s
+
+	ParseTime  bool
+	Loc        string   //时区字符串 Local,PRC
+	engineName string   //当前数据库连接句柄标识
+	dbObj      *gorm.DB //当前数据库连接句柄
+	SqlCmd     bool     //sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
+	UsePool    bool     //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
 }
 
-//给当前数据库指定engineName
+// SetEngineName 给当前数据库指定engineName
 func (conf *DbConf) SetEngineName(name string) error {
 	if name == "" {
 		return errors.New("current engine name is empty!")
@@ -64,7 +73,7 @@ func (conf *DbConf) SetEngineName(name string) error {
 	return nil
 }
 
-//创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
+// SetDbObj 创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
 //为兼容之前的版本，这里新增SetDb创建db对象
 func (conf *DbConf) SetDbObj() error {
 	err := conf.initDb()
@@ -76,13 +85,13 @@ func (conf *DbConf) SetDbObj() error {
 	return nil
 }
 
-//设置db pool连接池
+// SetDbPool 设置db pool连接池
 func (conf *DbConf) SetDbPool() error {
 	conf.UsePool = true
 	return conf.SetDbObj()
 }
 
-//建立短连接，用完需要调用Close()进行关闭连接，释放资源，否则就会出现too many connection
+// ShortConnect 建立短连接，用完需要调用Close()进行关闭连接，释放资源，否则就会出现too many connection
 func (conf *DbConf) ShortConnect() error {
 	conf.UsePool = false
 	err := conf.initDb()
@@ -94,7 +103,7 @@ func (conf *DbConf) ShortConnect() error {
 	return nil
 }
 
-//关闭当前数据库连接
+// Close 关闭当前数据库连接
 // 一般建议，将当前db engine close函数放在main/init关闭连接就可以
 func (conf *DbConf) Close() error {
 	if conf.dbObj == nil {
@@ -114,12 +123,12 @@ func (conf *DbConf) Close() error {
 	return nil
 }
 
-//返回当前db对象
+// Db 返回当前db对象
 func (conf *DbConf) Db() *gorm.DB {
 	return conf.dbObj
 }
 
-//建立db连接句柄
+// initDb 建立db连接句柄
 func (conf *DbConf) initDb() error {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
@@ -162,6 +171,12 @@ func (conf *DbConf) initDb() error {
 		db.DB().SetMaxOpenConns(conf.MaxOpenConns)
 	}
 
+	// 设置连接可以重用的最大时间
+	// 给db设置一个超时时间，时间小于数据库的超时时间
+	if conf.MaxLifetime > 0 {
+		db.DB().SetConnMaxLifetime(time.Duration(conf.MaxLifetime) * time.Second)
+	}
+
 	conf.dbObj = db
 
 	// log.Println("current dbObj: ",db)
@@ -170,7 +185,7 @@ func (conf *DbConf) initDb() error {
 }
 
 // ========================辅助函数===============
-//从db pool获取一个数据库连接句柄
+// GetDbObj 从db pool获取一个数据库连接句柄
 //根据数据库连接句柄name获取指定的连接句柄
 func GetDbObj(name string) (*gorm.DB, error) {
 	if _, ok := engineMap[name]; ok {
@@ -180,7 +195,7 @@ func GetDbObj(name string) (*gorm.DB, error) {
 	return nil, errors.New("get db obj failed")
 }
 
-//由于gorm db.Close()是关闭当前连接，一般建议如下函数放在main/init关闭连接就可以
+// CloseAllDb 由于gorm db.Close()是关闭当前连接，一般建议如下函数放在main/init关闭连接就可以
 func CloseAllDb() {
 	for name, db := range engineMap {
 		if err := db.Close(); err != nil {
@@ -192,7 +207,7 @@ func CloseAllDb() {
 	}
 }
 
-//关闭指定name的db engine
+// CloseDbByName 关闭指定name的db engine
 func CloseDbByName(name string) error {
 	if _, ok := engineMap[name]; ok {
 		if err := engineMap[name].Close(); err != nil {

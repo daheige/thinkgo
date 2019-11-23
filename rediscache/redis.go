@@ -8,7 +8,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-//redis连接信息
+// RedisConf redis连接信息
+// redigo实现集群参考： go get github.com/chasex/redis-go-cluster
 type RedisConf struct {
 	Host        string
 	Port        int
@@ -21,6 +22,7 @@ type RedisConf struct {
 
 var RedisPoolList = map[string]*redis.Pool{} //存放连接池信息
 
+// GetRedisClient 通过指定name获取池子中的redis连接句柄
 func GetRedisClient(name string) redis.Conn {
 	if value, ok := RedisPoolList[name]; ok {
 		return value.Get()
@@ -29,16 +31,17 @@ func GetRedisClient(name string) redis.Conn {
 	return nil
 }
 
-//添加新的redis连接池
+// AddRedisPool 添加新的redis连接池
 func AddRedisPool(name string, conf *RedisConf) {
 	RedisPoolList[name] = NewRedisPool(conf)
 }
 
+// SetRedisPool 设置redis连接池
 func (this *RedisConf) SetRedisPool(name string) {
 	AddRedisPool(name, this)
 }
 
-//创建redis pool连接池
+// NewRedisPool 创建redis pool连接池
 // If Wait is true and the pool is at the MaxActive limit, then Get() waits
 // for a connection to be returned to the pool before returning.
 func NewRedisPool(conf *RedisConf) *redis.Pool {

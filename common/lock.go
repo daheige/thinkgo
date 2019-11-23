@@ -135,6 +135,7 @@ func (this *Semaphore) TryAlloc() bool {
 		return true
 	default:
 	}
+
 	return false
 }
 
@@ -144,5 +145,6 @@ func (this *Semaphore) Free() bool {
 		return true
 	default:
 	}
+
 	return false
 }

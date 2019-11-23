@@ -4,8 +4,15 @@
 
     1、在init()方法中添加如下代码
     //注册监控指标
-	prometheus.MustRegister(monitor.WebRequestTotal)
-	prometheus.MustRegister(monitor.WebRequestDuration)
+    
+    monitor.IsWebRequest = true
+    
+    //web程序的性能监控
+	if monitor.IsWebRequest {
+    		prometheus.MustRegister(WebRequestTotal)
+    		prometheus.MustRegister(WebRequestDuration)
+    }
+    	
 	prometheus.MustRegister(monitor.CpuTemp)
 	prometheus.MustRegister(monitor.HdFailures)
 
@@ -33,6 +40,8 @@
 			log.Println(err)
 		}
 	}()
+	
+	也可以直接调用 PrometheusHandler 监控,包含了PProf性能监控
 
 # 实战案例
     https://github.com/daheige/hg-mux
