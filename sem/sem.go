@@ -1,9 +1,10 @@
 package sem
 
+// 指定数量的空结构体缓存通道，实现信息号实现互斥锁
 // Mutually exclusive by channel semaphore
 // A semaphore is a synchronization pattern/primitive
 // that imposes mutual exclusion on a limited number of resources.
-//信号量是同步模式/原语，它在有限数量的资源上强加互斥
+// 信号量是同步模式/原语，它在有限数量的资源上强加互斥
 
 import (
 	"errors"
@@ -22,13 +23,21 @@ type SemInterface interface {
 	Release() error
 }
 
-// semaphonre define
+// sem define
 type semaphore struct {
 	sem     chan struct{}
 	timeout time.Duration //acquire/release timeout
 }
 
-// get a sem
+//New create semaphonre mutex lock with timeout,tickets: a limited number of resources
+func New(tickets int, timeout time.Duration) SemInterface {
+	return &semaphore{
+		sem:     make(chan struct{}, tickets),
+		timeout: timeout,
+	}
+}
+
+// Acquire get a sem
 func (s *semaphore) Acquire() error {
 	select {
 	case s.sem <- struct{}{}:
@@ -38,7 +47,7 @@ func (s *semaphore) Acquire() error {
 	}
 }
 
-//release sem
+// Release release sem
 func (s *semaphore) Release() error {
 	t := time.After(s.timeout)
 	select {
@@ -46,13 +55,5 @@ func (s *semaphore) Release() error {
 		return nil
 	case <-t: //release error
 		return ErrIllegalRelease
-	}
-}
-
-//New create semaphonre mutex lock with timeout,tickets: a limited number of resources
-func New(tickets int, timeout time.Duration) SemInterface {
-	return &semaphore{
-		sem:     make(chan struct{}, tickets),
-		timeout: timeout,
 	}
 }

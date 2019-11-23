@@ -32,7 +32,7 @@
     ├── rediscache                  redisgo操作库封装
     ├── redislock                   redis+lua脚步实现redis分布式锁TryLock,Unlock
     ├── runner                      runner按照顺序，执行任务操作，可作为cron作业或定时任务
-    ├── sem                         采用空结构体struct{}和chan实现信号量互斥锁
+    ├── sem                         指定数量的空结构体缓存通道，实现信息号实现互斥锁
     ├── work                        利用无缓冲chan创建goroutine池来控制一组task的执行
     ├── workpool                    workerPool工作池，实现百万级的并发,一般用于持续不断的大规模作业
     ├── xerrors                     error错误处理拓展包，支持错误堆栈信息
