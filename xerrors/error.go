@@ -4,9 +4,7 @@
 */
 package xerrors
 
-import (
-	"runtime"
-)
+import "runtime/debug"
 
 type ErrorString struct {
 	s     string
@@ -25,7 +23,7 @@ func MakeError(text string, code int, isStack bool) *ErrorString {
 	}
 
 	if isStack {
-		err.frame = stack()
+		err.frame = debug.Stack()
 	}
 
 	return err
@@ -39,20 +37,4 @@ func (e *ErrorString) Error() string {
 //打印完整的错误堆栈信息
 func (e *ErrorString) Stack() []byte {
 	return e.frame
-}
-
-//获取完整的堆栈信息
-//捕获指定stack信息,一般在处理panic/recover中处理
-// Stack returns a formatted stack trace of the goroutine that calls it.
-// It calls runtime.Stack with a large enough buffer to capture the entire trace.
-func stack() []byte {
-	buf := make([]byte, 1024)
-	for {
-		n := runtime.Stack(buf, false) //当第二个参数为true，一次获取所有的堆栈信息
-		if n < len(buf) {
-			return buf[:n]
-		}
-
-		buf = make([]byte, 2*len(buf))
-	}
 }

@@ -1,12 +1,11 @@
 package logger
 
 import (
-	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
@@ -18,7 +17,7 @@ var fLogger *zap.Logger
 
 var core zapcore.Core
 
-//日志级别定义，从低到高
+// levelMap 日志级别定义，从低到高
 var levelMap = map[string]zapcore.Level{
 	"debug":  zapcore.DebugLevel,
 	"info":   zapcore.InfoLevel,
@@ -30,36 +29,41 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge   = 7            //默认日志保留天数
-	logMaxSize  = 512          //默认日志大小，单位为Mb
-	logCompress = false        //默认日志不压缩
-	logLevel    = "debug"      //最低日志级别
-	logFileName = "go-zap.log" //默认日志文件，不包含全路径
-	logDir      = ""           //日志文件存放目录
+	logMaxAge    = 7            //默认日志保留天数
+	logMaxSize   = 512          //默认日志大小，单位为Mb
+	logCompress  = false        //默认日志不压缩
+	logLevel     = "debug"      //最低日志级别
+	logFileName  = "go-zap.log" //默认日志文件，不包含全路径
+	logDir       = ""           //日志文件存放目录
+	logTraceFile = true         //默认需要文件名和行号
 )
 
+// MaxAge 日志保留时间
 func MaxAge(n int) {
 	logMaxAge = n
 }
 
+// MaxSize 日志大小 mb
 func MaxSize(n int) {
 	logMaxSize = n
 }
 
+// LogCompress日志是否压缩
 func LogCompress(b bool) {
 	logCompress = b
 }
 
+// LogLevel 日志级别
 func LogLevel(lvl string) {
 	logLevel = lvl
 }
 
-//设置日志文件路径，如果日志文件不存在zap会自动创建文件
+// SetLogFile 设置日志文件路径，如果日志文件不存在zap会自动创建文件
 func SetLogFile(fileName string) {
 	logFileName = fileName
 }
 
-//获得日志级别
+// getLevel 获得日志级别
 func getLevel(lvl string) zapcore.Level {
 	if level, ok := levelMap[lvl]; ok {
 		return level
@@ -68,7 +72,7 @@ func getLevel(lvl string) zapcore.Level {
 	return zapcore.InfoLevel
 }
 
-//check file or path exist
+// checkPathExist check file or path exist
 func checkPathExist(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -82,7 +86,12 @@ func checkPathExist(path string) bool {
 	return false
 }
 
-//日志存放目录
+// SetLogTraceFile 日志是否需要文件名和行数
+func SetLogTraceFile(b bool) {
+	logTraceFile = b
+}
+
+// SetLogDir 日志存放目录
 func SetLogDir(dir string) {
 	if dir == "" {
 		logDir = os.TempDir()
@@ -98,6 +107,7 @@ func SetLogDir(dir string) {
 	}
 }
 
+// initCore 初始化zap core
 func initCore() {
 	if logDir == "" {
 		logFileName = filepath.Join(os.TempDir(), logFileName) //默认日志文件名称
@@ -118,9 +128,7 @@ func initCore() {
 	encoderConf := zapcore.EncoderConfig{
 		TimeKey:        "time_local", //本地时间
 		LevelKey:       "level",
-		CallerKey:      "line",
 		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder, // 小写编码器
 		EncodeTime:     zapcore.ISO8601TimeEncoder,    // ISO8601 UTC 时间格式
@@ -137,10 +145,12 @@ func InitLogger() {
 		initCore()
 	}
 
-	fLogger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	// fLogger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+
+	fLogger = zap.New(core)
 }
 
-//sugar语法糖，支持简单的msg信息打印
+// LogSugar sugar语法糖，支持简单的msg信息打印
 //支持Debug,Info,Error,Panic,Warn,Fatal等方法
 func LogSugar() *zap.SugaredLogger {
 	if core == nil {
@@ -152,7 +162,7 @@ func LogSugar() *zap.SugaredLogger {
 	return logger.Sugar()
 }
 
-//debug日志直接输出到终端
+// Debug debug日志直接输出到终端
 func Debug(msg string, options map[string]interface{}) {
 	log.Println("msg: ", msg)
 	log.Println("log fields: ", options)
@@ -173,20 +183,20 @@ func Error(msg string, options map[string]interface{}) {
 	fLogger.Error(msg, fields...)
 }
 
-//调试模式下的panic，程序不退出，继续运行
+// DPanic 调试模式下的panic，程序不退出，继续运行
 func DPanic(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.DPanic(msg, fields...)
 }
 
-//下面的panic,fatal一般不建议使用，除非不可恢复的panic或致命错误程序必须退出
+// Panic 下面的panic,fatal一般不建议使用，除非不可恢复的panic或致命错误程序必须退出
 //抛出panic的时候，先记录日志，然后执行panic,退出当前goroutine
 func Panic(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Panic(msg, fields...)
 }
 
-//抛出致命错误，然后退出程序
+// Fatal 抛出致命错误，然后退出程序
 func Fatal(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Fatal(msg, fields...)
@@ -198,53 +208,10 @@ func Recover() {
 		if err := recover(); err != nil {
 			DPanic("exec panic", map[string]interface{}{
 				"error":       err,
-				"error_trace": string(catchFullStack()),
+				"error_trace": string(debug.Stack()),
 			})
 		}
 	}()
-}
-
-// Stack 获取完整的堆栈信息
-// Stack returns a formatted stack trace of the goroutine that calls it.
-// It calls runtime.Stack with a large enough buffer to capture the entire trace.
-func Stack() []byte {
-	buf := make([]byte, 1024)
-	for {
-		n := runtime.Stack(buf, false) //当第二个参数为true，一次获取所有的堆栈信息
-		if n < len(buf) {
-			return buf[:n]
-		}
-
-		buf = make([]byte, 2*len(buf))
-	}
-}
-
-// catchFullStack 捕获指定stack信息,一般在处理panic/recover中处理
-//返回完整的堆栈信息和函数调用信息
-func catchFullStack() []byte {
-	buf := &bytes.Buffer{}
-
-	//完整的堆栈信息
-	stack := Stack()
-	buf.WriteString("full stack:\n")
-	buf.WriteString(string(stack))
-
-	//完整的函数调用信息
-	buf.WriteString("full fn call info:\n")
-
-	// skip为0时，打印当前调用文件及行数。
-	// 为1时，打印上级调用的文件及行数，依次类推
-	for i := 1; ; i++ {
-		pc, file, line, ok := runtime.Caller(i)
-		if !ok {
-			break
-		}
-
-		fn := runtime.FuncForPC(pc).Name()
-		buf.WriteString(fmt.Sprintf("error Stack file: %s:%d call func:%s\n", file, line, fn))
-	}
-
-	return buf.Bytes()
 }
 
 // parseFields 解析map[string]interface{}中的字段到zap.Field
@@ -252,11 +219,13 @@ func parseFields(fields map[string]interface{}) []zap.Field {
 	fLen := len(fields)
 	f := make([]zap.Field, 0, fLen+2) //至少2个元素包含trace_file,trace_line
 
-	//当前函数调用的位置和行数
-	if _, ok := fields["trace_line"]; !ok {
-		_, file, line, _ := runtime.Caller(2)
-		f = append(f, zap.String("trace_file", file))
-		f = append(f, zap.Int("trace_line", line))
+	if logTraceFile {
+		//调用日志函数的当前函数调用的位置和行数
+		if _, ok := fields["trace_line"]; !ok {
+			_, file, line, _ := runtime.Caller(2)
+			f = append(f, zap.String("trace_file", file))
+			f = append(f, zap.Int("trace_line", line))
+		}
 	}
 
 	if fLen == 0 {
