@@ -3,7 +3,7 @@ package mytest
 import (
 	"testing"
 
-	"github.com/daheige/thinkgo/common"
+	"github.com/daheige/thinkgo/gutils"
 )
 
 /**
@@ -18,9 +18,9 @@ PASS
 ok      mytest  0.006s
 */
 func TestKrand(t *testing.T) {
-	s := common.Krand(6, 0)
+	s := gutils.Krand(6, 0)
 	t.Log("纯数字:", s)
-	t.Log("纯小写字母", common.Krand(6, 1))
-	t.Log("纯大写字母", common.Krand(6, 2))
-	t.Log("数字大小写混合", common.Krand(12, 3))
+	t.Log("纯小写字母", gutils.Krand(6, 1))
+	t.Log("纯大写字母", gutils.Krand(6, 2))
+	t.Log("数字大小写混合", gutils.Krand(12, 3))
 }

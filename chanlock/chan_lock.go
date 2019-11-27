@@ -1,5 +1,5 @@
 //chan实现trylock乐观锁
-package common
+package chanlock
 
 import (
 	"time"

@@ -18,7 +18,7 @@ type Queue struct {
 	wg                sync.WaitGroup          //保证goroutine同步执行的信号计数器
 }
 
-//创建一个任务队列实例
+// New 创建一个任务队列实例
 func New(number, total int) *Queue {
 	if total < 1 {
 		panic("task total number must gt 1")
@@ -35,7 +35,7 @@ func New(number, total int) *Queue {
 	}
 }
 
-//开始执行任务
+// Start 开始执行任务
 func (this *Queue) Start() {
 	defer close(this.tasks) //任务执行完毕后,关闭通道
 
@@ -57,7 +57,7 @@ func (this *Queue) Start() {
 	}
 }
 
-//执行任务
+// work 执行任务
 func (this *Queue) work() {
 	for {
 		//不断取出任务,直到chan关闭
@@ -77,19 +77,19 @@ func (this *Queue) work() {
 	}
 }
 
-//添加任务
+// Add 添加任务
 func (this *Queue) Add(task func() interface{}) {
 	if len(this.tasks) <= this.taskTotal-1 { //防止缓冲通道个数超出边界个数total
 		this.tasks <- task
 	}
 }
 
-//设置单个任务执行后的回调函数
+// SetTaskCallback 设置单个任务执行后的回调函数
 func (this *Queue) SetTaskCallback(callback func(res interface{})) {
 	this.task_callback = callback
 }
 
-//所有任务完成后,回调函数
+// SetFinishedCallback 所有任务完成后,回调函数
 func (this *Queue) SetFinishedCallback(callback func()) {
 	this.finished_callback = callback
 }

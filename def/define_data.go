@@ -1,4 +1,4 @@
-package common
+package def
 
 // EmptyStruct zero size, empty struct
 type EmptyStruct struct{}

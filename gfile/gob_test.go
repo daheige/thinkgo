@@ -1,4 +1,4 @@
-package common
+package gfile
 
 import (
 	"fmt"
@@ -40,3 +40,16 @@ func TestGobStoreLoad(t *testing.T) {
 
 	t.Log("success")
 }
+
+/**
+$ go test -v
+=== RUN   TestGobStoreLoad
+gob文件读写
+{1 heige313 goer php}
+1 heige313
+fefefe
+--- PASS: TestGobStoreLoad (0.02s)
+    gob_test.go:41: success
+PASS
+ok      github.com/daheige/thinkgo/gfile        0.022s
+*/

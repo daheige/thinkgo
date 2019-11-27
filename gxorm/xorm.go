@@ -11,6 +11,7 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
+// DbBaseConf 数据库基本配置
 type DbBaseConf struct {
 	Ip        string
 	Port      int
@@ -186,11 +187,14 @@ type EngineGroupConf struct {
 	ShowExecTime bool //是否打印sql执行时间
 
 	// sets the maximum amount of time a connection may be reused.
+	// Expired connections may be closed lazily before reuse.
+	// If d <= 0, connections are reused forever.
 	MaxLifetime time.Duration
 }
 
-// NewEngineGroupWithOption 创建读写分离的引擎组，附带一些拓展配置
+// NewEngineGroup 创建读写分离的引擎组，附带一些拓展配置
 // 这里可以采用功能模式，方便后面对引擎组句柄进行拓展
+// 默认采用连接池方式建立连接
 func (conf *EngineGroupConf) NewEngineGroup() (*xorm.EngineGroup, error) {
 	master, err := conf.Master.InitDbEngine()
 	if err != nil {
@@ -226,8 +230,10 @@ func (conf *EngineGroupConf) NewEngineGroup() (*xorm.EngineGroup, error) {
 		return nil, err
 	}
 
-	eg.ShowSQL(conf.SqlCmd)               //当为true时则会在控制台打印出生成的SQL语句；
-	eg.ShowExecTime(conf.ShowExecTime)    //显示SQL语句执行时间
+	eg.ShowSQL(conf.SqlCmd)            //当为true时则会在控制台打印出生成的SQL语句；
+	eg.ShowExecTime(conf.ShowExecTime) //显示SQL语句执行时间
+
+	// 采用连接池方式建立连接
 	eg.SetMaxIdleConns(conf.MaxIdleConns) //最大db空闲数
 	eg.SetMaxOpenConns(conf.MaxOpenConns) //db最大连接数,小于数据库配置的最大连接
 

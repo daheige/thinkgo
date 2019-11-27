@@ -1,5 +1,4 @@
-// str 字符串相关的辅助函数，实现方式参考php str字符串函数实现
-package common
+package gutils
 
 import (
 	"bytes"
@@ -25,6 +24,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/daheige/thinkgo/crypto"
+	"github.com/daheige/thinkgo/gnum"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -188,7 +188,7 @@ func NewUUID() string {
 	rand.Seed(ns)
 	_, err := rand.Read(u[0:])
 	if err != nil {
-		rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(RandInt64(1000, 9999), 10)
+		rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(gnum.RandInt64(1000, 9999), 10)
 		s := crypto.Md5(rndStr)
 		return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
 	}
@@ -211,7 +211,7 @@ func RndUuid() string {
 // RndUuidMd5 uuid
 func RndUuidMd5() string {
 	ns := time.Now().UnixNano()
-	rndStr := StrJoin("", strconv.FormatInt(ns, 10), strconv.FormatInt(RandInt64(1000, 9999), 10))
+	rndStr := StrJoin("", strconv.FormatInt(ns, 10), strconv.FormatInt(gnum.RandInt64(1000, 9999), 10))
 	return crypto.Md5(rndStr)
 }
 
@@ -538,7 +538,6 @@ func Empty(val interface{}) bool {
 
 //========================ip convert===========
 // IP2long ip2long()
-// IPv4
 func IP2long(ipAddress string) uint32 {
 	ip := net.ParseIP(ipAddress)
 	if ip == nil {
@@ -548,7 +547,6 @@ func IP2long(ipAddress string) uint32 {
 }
 
 // Long2ip long2ip()
-// IPv4
 func Long2ip(properAddress uint32) string {
 	ipByte := make([]byte, 4)
 	binary.BigEndian.PutUint32(ipByte, properAddress)
@@ -556,7 +554,7 @@ func Long2ip(properAddress uint32) string {
 	return ip.String()
 }
 
-// This function compares whether the two version numbers are equal and whether they are greater or less than the relationship.
+// Compare this function compares whether the two version numbers are equal and whether they are greater or less than the relationship.
 // Return value: 0 means v1 is equal to v2; 1 means v1 is greater than v2; 2 means v1 is less than v2
 func Compare(v1, v2 string) int {
 	// 替换一些常见的版本符号

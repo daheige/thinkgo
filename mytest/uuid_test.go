@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/daheige/thinkgo/common"
+	"github.com/daheige/thinkgo/gutils"
 )
 
 func TestUuid(t *testing.T) {
@@ -20,7 +20,7 @@ func TestUuid(t *testing.T) {
 	var strList []string
 
 	for i := 0; i < nums; i++ {
-		uuid := strings.Replace(common.NewUUID(), "-", "", -1)
+		uuid := strings.Replace(gutils.NewUUID(), "-", "", -1)
 		if checkExist(uuid, strList) {
 			continue
 		}

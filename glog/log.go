@@ -6,7 +6,7 @@
  * 日志切割机制参考lumberjack包实现
  * json encode采用jsoniter库快速json encode处理
  */
-package common
+package glog
 
 import (
 	"fmt"
@@ -17,6 +17,10 @@ import (
 	"time"
 
 	"encoding/json"
+
+	"github.com/daheige/thinkgo/gfile"
+	"github.com/daheige/thinkgo/grecover"
+	"github.com/daheige/thinkgo/mutexlock"
 )
 
 /* 日志级别 从上到下，由高到低 */
@@ -43,11 +47,11 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logDir                = ""              //日志文件存放目录
-	logFile               = ""              //日志文件
-	logLock               = NewMutexLock()  //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	logDay                = 0               //当前日期
-	logTimeZone           = "Asia/Shanghai" //time zone default Local "Asia/Shanghai"
+	logDir                = ""                       //日志文件存放目录
+	logFile               = ""                       //日志文件
+	logLock               = mutexlock.NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
+	logDay                = 0                        //当前日期
+	logTimeZone           = "Asia/Shanghai"          //time zone default Local "Asia/Shanghai"
 	logtmFmtWithMS        = "2006-01-02 15:04:05.999"
 	logtmFmtMissMS        = "2006-01-02 15:04:05"
 	logtmFmtTime          = "2006-01-02"
@@ -86,7 +90,7 @@ func SetLogDir(dir string) {
 	if dir == "" {
 		logDir = os.TempDir()
 	} else {
-		if !CheckPathExist(dir) {
+		if !gfile.CheckPathExist(dir) {
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				log.Println(err)
 				return
@@ -166,7 +170,7 @@ func splitLog() {
 		}
 
 		// this is a no-op anywhere but linux
-		if err := Chown(logFile, fileInfo); err != nil {
+		if err := gfile.Chown(logFile, fileInfo); err != nil {
 			log.Printf("can't chown log file: %s\n", err)
 			return
 		}
@@ -278,7 +282,7 @@ func RecoverLog() {
 		if err := recover(); err != nil {
 			EmergLog("exec panic", map[string]interface{}{
 				"error":       err,
-				"error_trace": string(CatchStack()),
+				"error_trace": string(grecover.CatchStack()),
 			})
 		}
 	}()

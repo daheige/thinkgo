@@ -1,10 +1,12 @@
-package common
+package strlist
 
 //StringList helper
 
 import (
 	"reflect"
 	"sort"
+
+	"github.com/daheige/thinkgo/grecover"
 )
 
 // StringList: str list
@@ -72,7 +74,7 @@ func (this StringList) Count() int {
 }
 
 func StringMapKeys(m interface{}) (res []string) {
-	defer CheckPanic()
+	defer grecover.CheckPanic()
 
 	keys := reflect.ValueOf(m).MapKeys()
 	for _, v := range keys {

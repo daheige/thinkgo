@@ -1,4 +1,4 @@
-package common
+package gfile
 
 import "os/exec"
 

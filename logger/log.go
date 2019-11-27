@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"runtime/debug"
 
 	"github.com/natefinch/lumberjack"
@@ -29,13 +28,12 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge    = 7            //默认日志保留天数
-	logMaxSize   = 512          //默认日志大小，单位为Mb
-	logCompress  = false        //默认日志不压缩
-	logLevel     = "debug"      //最低日志级别
-	logFileName  = "go-zap.log" //默认日志文件，不包含全路径
-	logDir       = ""           //日志文件存放目录
-	logTraceFile = true         //默认需要文件名和行号
+	logMaxAge   = 7            //默认日志保留天数
+	logMaxSize  = 512          //默认日志大小，单位为Mb
+	logCompress = false        //默认日志不压缩
+	logLevel    = "debug"      //最低日志级别
+	logFileName = "go-zap.log" //默认日志文件，不包含全路径
+	logDir      = ""           //日志文件存放目录
 )
 
 // MaxAge 日志保留时间
@@ -86,11 +84,6 @@ func checkPathExist(path string) bool {
 	return false
 }
 
-// SetLogTraceFile 日志是否需要文件名和行数
-func SetLogTraceFile(b bool) {
-	logTraceFile = b
-}
-
 // SetLogDir 日志存放目录
 func SetLogDir(dir string) {
 	if dir == "" {
@@ -129,6 +122,7 @@ func initCore() {
 		TimeKey:        "time_local", //本地时间
 		LevelKey:       "level",
 		MessageKey:     "msg",
+		CallerKey:      "caller_line",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder, // 小写编码器
 		EncodeTime:     zapcore.ISO8601TimeEncoder,    // ISO8601 UTC 时间格式
@@ -140,12 +134,21 @@ func initCore() {
 	core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderConf), syncWriter, zap.NewAtomicLevelAt(level))
 }
 
-func InitLogger() {
+// InitLogger 初始化fLogger句柄，skip指定显示文件名和行号的层级
+// skip 大于0会调用zap.AddCallerSkip
+// Caller(skip int)函数可以返回当前goroutine调用栈中的文件名，行号，函数信息等
+// 参数skip表示表示返回的栈帧的层次，0表示runtime.Caller的调用者，依次往上推导
+// 1表示调用者这一层，如果基于这个logger库封装的话，skip = 2
+// 而runtime.Caller(2) 返回当前goroutine调用栈中的文件名，行号，函数信息
+func InitLogger(skip ...int) {
 	if core == nil {
 		initCore()
 	}
 
-	// fLogger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	if len(skip) > 0 {
+		fLogger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(skip[0]))
+		return
+	}
 
 	fLogger = zap.New(core)
 }
@@ -168,16 +171,19 @@ func Debug(msg string, options map[string]interface{}) {
 	log.Println("log fields: ", options)
 }
 
+// Info info级别日志
 func Info(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Info(msg, fields...)
 }
 
+// Warn 警告类型的日志
 func Warn(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Warn(msg, fields...)
 }
 
+// Error 错误类型的日志
 func Error(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Error(msg, fields...)
@@ -211,6 +217,7 @@ func Recover() {
 				"error_trace": string(debug.Stack()),
 			})
 		}
+
 	}()
 }
 
@@ -218,15 +225,6 @@ func Recover() {
 func parseFields(fields map[string]interface{}) []zap.Field {
 	fLen := len(fields)
 	f := make([]zap.Field, 0, fLen+2) //至少2个元素包含trace_file,trace_line
-
-	if logTraceFile {
-		//调用日志函数的当前函数调用的位置和行数
-		if _, ok := fields["trace_line"]; !ok {
-			_, file, line, _ := runtime.Caller(2)
-			f = append(f, zap.String("trace_file", file))
-			f = append(f, zap.Int("trace_line", line))
-		}
-	}
 
 	if fLen == 0 {
 		return f

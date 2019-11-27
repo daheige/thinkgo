@@ -1,4 +1,4 @@
-package common
+package chanlock
 
 import (
 	"log"
@@ -9,14 +9,14 @@ import (
 
 var count = 1
 
-func Test_chanLock(t *testing.T) {
+func TestChanLock(t *testing.T) {
 	log.Println("fefe")
 
 	var wg sync.WaitGroup
 
 	//抢占式的更新count，需要对count进行枷锁保护
 	//如果不加锁，count每次执行后，值都不一样
-	lock := NewChanLock()
+	chLock := NewChanLock()
 
 	nums := 1000
 	wg.Add(nums) //建议一次性实现计数
@@ -25,8 +25,8 @@ func Test_chanLock(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			lock.Lock()
-			defer lock.Unlock()
+			chLock.Lock()
+			defer chLock.Unlock()
 
 			v := count
 			log.Println("current count: ", v)
@@ -41,8 +41,10 @@ func Test_chanLock(t *testing.T) {
 	log.Println("count: ", count)
 }
 
-/**$ go test -v -test.run Test_chanLock
- * --- PASS: Test_chanLock (0.02s)
+/**$ go test -v -test.run TestChanLock
+2019/11/27 21:59:50 current count:  1000
+2019/11/27 21:59:50 count:  1001
+--- PASS: Test_chanLock (0.03s)
 PASS
-ok  	github.com/daheige/thinkgo/common	0.027s
+ok      github.com/daheige/thinkgo/chanlock     0.034s
 */

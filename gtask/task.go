@@ -1,4 +1,4 @@
-package common
+package gtask
 
 // do task with timeout or context cancel
 // it will catch panic stack info when func exec panic
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// dotask返回的结果
+//  TaskRes task返回的结果
 type TaskRes struct {
 	Err      error
 	Result   chan interface{}
@@ -213,5 +213,6 @@ func DoTaskWithContextArgs(ctx context.Context, fn func(args ...interface{}) int
 	}
 
 	res.CostTime = time.Now().Sub(t).Seconds()
+
 	return res
 }

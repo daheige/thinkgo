@@ -1,4 +1,4 @@
-package common
+package gutils
 
 import (
 	"log"
@@ -24,9 +24,11 @@ func TestRndUuid(t *testing.T) {
 }
 
 /**
-$ go test -v -test.run TestRndUuid
---- PASS: TestRndUuid (25.18s)
+go test -v
+2019/11/27 22:28:53 current rnd uuid 9ddf1430-deb8-ef32-dfea-4a3f71f45404
+2019/11/27 22:28:53 current rnd uuid aa32b47a-02f6-714b-a593-fdb407838330
+2019/11/27 22:28:53 current rnd uuid 9076963a-cbb5-d6c4-789d-1c7eb6751966
+--- PASS: TestRndUuid (36.11s)
 PASS
-ok      github.com/daheige/thinkgo/common  25.184s
-
+ok      github.com/daheige/thinkgo/gutils       75.358s
 */

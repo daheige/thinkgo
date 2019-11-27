@@ -1,7 +1,7 @@
 /**
 在sync.Mutex基础上，实现乐观锁TryLock
 */
-package common
+package mutexlock
 
 import (
 	"sync"

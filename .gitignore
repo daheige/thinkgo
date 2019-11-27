@@ -1,6 +1,6 @@
-common/*.md
+gutils/*.md
 *.log
-common/**/*.log
+gfile/*.md
 .idea/
 vendor/*
 logs

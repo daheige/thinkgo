@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/daheige/thinkgo/common"
+	"github.com/daheige/thinkgo/chanlock"
 	"github.com/go-redis/redis"
 )
 
@@ -135,7 +135,7 @@ func TestRedis3(t *testing.T) {
 	defer client.Close()
 
 	// 通道乐观锁
-	lock := common.NewChanLock()
+	lock := chanlock.NewChanLock()
 
 	var wg sync.WaitGroup
 	for i := 0; i < 5000; i++ {
@@ -168,7 +168,7 @@ func setData(client *redis.Client, wg *sync.WaitGroup) {
 	client.Do("setEx", key, 10, "1111")
 }
 
-func setData2(client *redis.Client, wg *sync.WaitGroup, lock *common.ChanLock) {
+func setData2(client *redis.Client, wg *sync.WaitGroup, lock *chanlock.ChanLock) {
 	defer wg.Done()
 
 	key := "mytest"

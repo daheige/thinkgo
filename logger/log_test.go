@@ -10,7 +10,7 @@ func TestLog(t *testing.T) {
 	SetLogFile("mytest.log")
 	MaxSize(20)
 
-	InitLogger()
+	InitLogger(1)
 
 	logSugar := LogSugar()
 	logSugar.Debug(111)
@@ -23,7 +23,7 @@ func TestLog(t *testing.T) {
 	})
 
 	//测试60w日志输出到文件
-	nums := 30 * 10000
+	nums := 30 * 10
 	var wg sync.WaitGroup
 	wg.Add(nums)
 	for i := 0; i < nums; i++ {
