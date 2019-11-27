@@ -1,5 +1,5 @@
 // str_convert 字符串，数字相互转换的一些辅助函数
-package gconvert
+package gutils
 
 import "strconv"
 

@@ -8,12 +8,17 @@ import (
 
 /**json解析和反解析效率
 $ time go test -v -test.run TestJson
+2019/11/27 23:21:31 {"code":"200","count":49975004,"data":["golang","php","nodejs"],"message":"ok"}
+2019/11/27 23:21:31 {"code":"200","count":49985002,"data":["golang","php","nodejs"],"message":"ok"}
+2019/11/27 23:21:31 {"code":"200","count":49995001,"data":["golang","php","nodejs"],"message":"ok"}
+--- PASS: TestJson (0.31s)
+    json_test.go:19: start test json
 PASS
-ok      github.com/daheige/thinkgo/mytest       0.718s
+ok  	github.com/daheige/thinkgo/mytest	0.317s
 
-real    0m1.798s
-user    0m1.492s
-sys     0m0.208s
+real	0m5.080s
+user	0m1.373s
+sys	0m0.422s
 */
 func TestJson(t *testing.T) {
 	t.Log("start test json")
