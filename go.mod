@@ -14,6 +14,6 @@ require (
 	github.com/nsqio/go-nsq v1.0.7
 	github.com/prometheus/client_golang v1.2.1
 	github.com/satori/go.uuid v1.2.0
-	go.uber.org/zap v1.12.0
+	go.uber.org/zap v1.13.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
