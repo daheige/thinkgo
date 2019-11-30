@@ -7,10 +7,25 @@ import (
 	"net/http/pprof"
 )
 
-// PProfHandler PProf性能监控
+// New 创建一个http ServeMux实例
+func New() *http.ServeMux {
+	httpMux := http.NewServeMux()
+	httpMux.HandleFunc("/debug/pprof/", pprof.Index)
+	httpMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	httpMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	httpMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	httpMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	httpMux.HandleFunc("/check", Check)
+
+	return httpMux
+}
+
+// Run 运行PProf性能监控服务
 // 性能监控的端口port只能在内网访问
 // 一般在程序启动init或main函数中执行
-func PProfHandler(port int) {
+// httpMux 表示*http.ServeMux
+// port表示pprof运行的端口
+func Run(httpMux *http.ServeMux, port int) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -20,14 +35,6 @@ func PProfHandler(port int) {
 
 		log.Println("server PProf run on: ", port)
 
-		//创建一个http ServeMux实例
-		httpMux := http.NewServeMux()
-		httpMux.HandleFunc("/debug/pprof/", pprof.Index)
-		httpMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-		httpMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-		httpMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-		httpMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-		httpMux.HandleFunc("/check", Check)
 		if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), httpMux); err != nil {
 			log.Println("PProf listen error: ", err)
 		}

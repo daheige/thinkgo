@@ -5,8 +5,6 @@
     1、在init()方法中添加如下代码
     //注册监控指标
     
-    monitor.IsWebRequest = true
-    
     //web程序的性能监控，如果是job/rpc服务就不需要这两行
     prometheus.MustRegister(WebRequestTotal)
     prometheus.MustRegister(WebRequestDuration)
