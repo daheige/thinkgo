@@ -9,6 +9,7 @@ func TestLog(t *testing.T) {
 	SetLogDir("./logs/") //设置日志文件目录
 	SetLogFile("mytest.log")
 	MaxSize(20)
+	TraceFileLine(false) //关闭文件名和行数追踪
 
 	InitLogger(1)
 
@@ -23,7 +24,7 @@ func TestLog(t *testing.T) {
 	})
 
 	//测试60w日志输出到文件
-	nums := 30 * 10
+	nums := 30 * 10000
 	var wg sync.WaitGroup
 	wg.Add(nums)
 	for i := 0; i < nums; i++ {
@@ -48,11 +49,31 @@ func TestLog(t *testing.T) {
 }
 
 /**
-$ go test -v
+$ time go test -v
 === RUN   TestLog
-2019/06/29 11:50:01 msg:  hello
-2019/06/29 11:50:01 log fields:  map[]
---- PASS: TestLog (12.76s)
+2019/12/01 11:47:07 msg:  hello
+2019/12/01 11:47:07 log fields:  map[]
+--- PASS: TestLog (10.75s)
 PASS
-ok  	github.com/daheige/thinkgo/logger	12.917s
+ok  	github.com/daheige/thinkgo/logger	10.905s
+
+real	0m31.969s
+user	0m32.712s
+sys	0m5.386s
+qps: 55814 个/s
+
+关闭记录日志文件名称和行号
+$ time go test -v
+=== RUN   TestLog
+2019/12/01 11:49:06 msg:  hello
+2019/12/01 11:49:06 log fields:  map[]
+--- PASS: TestLog (10.14s)
+PASS
+ok  	github.com/daheige/thinkgo/logger	10.311s
+
+real	0m11.933s
+user	0m30.173s
+sys	0m4.584s
+
+qps: 59171 个/s
 */

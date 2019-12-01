@@ -1,3 +1,5 @@
+// logger 基于zap日志库，进行封装的logger库
+// 支持日志自动切割
 package logger
 
 import (
@@ -28,12 +30,16 @@ var levelMap = map[string]zapcore.Level{
 }
 
 var (
-	logMaxAge   = 7            //默认日志保留天数
-	logMaxSize  = 512          //默认日志大小，单位为Mb
-	logCompress = false        //默认日志不压缩
-	logLevel    = "debug"      //最低日志级别
-	logFileName = "go-zap.log" //默认日志文件，不包含全路径
-	logDir      = ""           //日志文件存放目录
+	logMaxAge   = 7     // 默认日志保留天数
+	logMaxSize  = 512   // 默认日志大小，单位为Mb
+	logCompress = false // 默认日志不压缩
+
+	// 记录文件名和行数到日志文件中,调用CallerLine可以关闭
+	// 只有当logTraceFileLine = true并且 InitLogger的skip参数大于0,才会记录文件名和行号
+	logTraceFileLine = true         // 是否开启记录文件名和行数
+	logLevel         = "debug"      // 最低日志级别
+	logFileName      = "go-zap.log" // 默认日志文件，不包含全路径
+	logDir           = ""           // 日志文件存放目录
 )
 
 // MaxAge 日志保留时间
@@ -46,9 +52,14 @@ func MaxSize(n int) {
 	logMaxSize = n
 }
 
-// LogCompress日志是否压缩
-func LogCompress(b bool) {
+// Compress 日志是否压缩
+func Compress(b bool) {
 	logCompress = b
+}
+
+// TraceFileLine 是否开启记录文件名和行数
+func TraceFileLine(b bool) {
+	logTraceFileLine = b
 }
 
 // LogLevel 日志级别
@@ -57,8 +68,12 @@ func LogLevel(lvl string) {
 }
 
 // SetLogFile 设置日志文件路径，如果日志文件不存在zap会自动创建文件
-func SetLogFile(fileName string) {
-	logFileName = fileName
+func SetLogFile(name string) {
+	if name == "" { //当name为空的时候，采用默认的logFileName文件名
+		return
+	}
+
+	logFileName = name
 }
 
 // getLevel 获得日志级别
@@ -138,15 +153,18 @@ func initCore() {
 // skip 大于0会调用zap.AddCallerSkip
 // Caller(skip int)函数可以返回当前goroutine调用栈中的文件名，行号，函数信息等
 // 参数skip表示表示返回的栈帧的层次，0表示runtime.Caller的调用者，依次往上推导
-// 1表示调用者这一层，如果基于这个logger库封装的话，skip = 2
-// 而runtime.Caller(2) 返回当前goroutine调用栈中的文件名，行号，函数信息
+// 而golang 标准库中runtime.Caller(2) 返回当前goroutine调用栈中的文件名，行号，函数信息
+// 如果直接调用这个logger库中的Info,Error等方法，这里skip=1
+// 如果基于logger进行日志再进行封装，这个skip=2,依次类推
 func InitLogger(skip ...int) {
 	if core == nil {
 		initCore()
 	}
 
-	if len(skip) > 0 {
+	// 当logTraceFileLine = true并且 InitLogger的skip参数大于0,才会记录文件名和行号
+	if logTraceFileLine && len(skip) > 0 && skip[0] > 0 {
 		fLogger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(skip[0]))
+
 		return
 	}
 
@@ -155,13 +173,18 @@ func InitLogger(skip ...int) {
 
 // LogSugar sugar语法糖，支持简单的msg信息打印
 //支持Debug,Info,Error,Panic,Warn,Fatal等方法
-func LogSugar() *zap.SugaredLogger {
+func LogSugar(skip ...int) *zap.SugaredLogger {
 	if core == nil {
 		initCore()
 	}
 
 	//基于zapcore创建sugar
-	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0))
+	if logTraceFileLine && len(skip) > 0 && skip[0] > 0 {
+		logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(skip[0]))
+		return logger.Sugar()
+	}
+
+	logger := zap.New(core)
 	return logger.Sugar()
 }
 
@@ -224,12 +247,11 @@ func Recover() {
 // parseFields 解析map[string]interface{}中的字段到zap.Field
 func parseFields(fields map[string]interface{}) []zap.Field {
 	fLen := len(fields)
-	f := make([]zap.Field, 0, fLen+2) //至少2个元素包含trace_file,trace_line
-
 	if fLen == 0 {
-		return f
+		return nil
 	}
 
+	f := make([]zap.Field, 0, fLen)
 	for k, _ := range fields {
 		f = append(f, zap.Any(k, fields[k]))
 	}
