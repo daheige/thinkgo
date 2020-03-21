@@ -13,6 +13,10 @@
     golang1.11+版本，可采用go mod机制管理包,需设置goproxy
     golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
 
+# go mod incompatible package
+    
+    go.mod中一些不兼容的版本，后续会陆续进行升级替换
+
 # About package
     
     .

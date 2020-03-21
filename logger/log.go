@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
-	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 // logger句柄，支持zap logger上的Debug,Info,Error,Panic,Warn,Fatal等方法
