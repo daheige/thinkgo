@@ -5,4 +5,3 @@ gfile/*.md
 vendor/*
 logs
 settings.json
-go.sum
