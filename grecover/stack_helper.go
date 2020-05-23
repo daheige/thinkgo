@@ -1,15 +1,30 @@
+// Package grecover catch exec panic.
 package grecover
 
 import (
 	"log"
+	"os"
 	"runtime/debug"
+)
+
+// Logger log interface
+type Logger interface {
+	Println(msg ...interface{})
+}
+
+// LogEntry log entry.
+var (
+	LogEntry   Logger = log.New(os.Stderr, "", log.LstdFlags)
+	TracePanic        = false // trace panic stack
 )
 
 // CheckPanic check panic when exit
 func CheckPanic() {
 	if err := recover(); err != nil {
-		log.Println("panic error: ", err)
-		log.Println(string(CatchStack()))
+		LogEntry.Println("panic error: ", err)
+		if TracePanic {
+			LogEntry.Println(string(CatchStack()))
+		}
 	}
 }
 

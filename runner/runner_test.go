@@ -43,14 +43,16 @@ func createTask(id int) func() error {
 }
 
 /**
-[runner] 2020/01/11 12:55:17 current run task id:  2050
-2020/01/11 12:55:17 正在执行任务2050
-[runner] 2020/01/11 12:55:17 received signal:  interrupt
-[runner] 2020/01/11 12:55:17 task complete status:  received interrupt signal
-2020/01/11 12:55:17 error:  received interrupt signal
-2020/01/11 12:55:17 last_id:  2051
-2020/01/11 12:55:17 all error:  map[]
---- PASS: TestRunner (1.16s)
+2020/05/23 20:30:05 正在执行任务19997
+[runner] 2020/05/23 20:30:05 current run task id:  19998
+2020/05/23 20:30:05 正在执行任务19998
+[runner] 2020/05/23 20:30:05 current run task id:  19999
+2020/05/23 20:30:05 正在执行任务19999
+[runner] 2020/05/23 20:30:05 task complete status:  <nil>
+2020/05/23 20:30:05 error:  <nil>
+2020/05/23 20:30:05 last_id:  19999
+2020/05/23 20:30:05 all error:  map[]
+--- PASS: TestRunner (1.19s)
 PASS
-ok      github.com/daheige/thinkgo/runner       2.680s
+ok      github.com/daheige/thinkgo/runner       1.201s
 */

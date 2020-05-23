@@ -27,7 +27,8 @@ var (
 	ErrInterrupt = errors.New("received interrupt signal")
 )
 
-type logger interface {
+// Logger log interface
+type Logger interface {
 	Println(msg ...interface{})
 }
 
@@ -37,7 +38,7 @@ type Runner struct {
 	tasks      []func() error   // 执行的任务func,如果func没有错误返回，可以返回nil
 	timeout    time.Duration    // 所有的任务超时时间
 	timeCh     <-chan time.Time // 任务超时通道
-	logger     logger           // 日志输出实例
+	logger     Logger           // 日志输出实例
 	interrupt  chan os.Signal   // 可以控制强制终止的信号
 	allErrors  map[int]error    // 发生错误的task index对应的错误
 	lastTaskId int              // 最后一次完成的任务id
@@ -74,7 +75,7 @@ func WithTimeout(t time.Duration) Option {
 }
 
 // WithLogger 设置r.logger打印日志的句柄
-func WithLogger(l logger) Option {
+func WithLogger(l Logger) Option {
 	return func(r *Runner) {
 		r.logger = l
 	}
