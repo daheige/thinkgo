@@ -34,13 +34,13 @@ func TestRedisPool(t *testing.T) {
 			ok, err := client.Do("set", "myname", "daheige")
 			fmt.Println(ok, err)
 
-			value, err := redis.String(client.Do("get", "myname"))
+			value, _ := redis.String(client.Do("get", "myname"))
 			fmt.Println("myname:", value)
 
 			//切换到database 1上面操作
 			v, err := client.Do("Select", 1)
 			fmt.Println(v, err)
-			client.Do("lpush", "myList", 123)
+			_, _ = client.Do("lpush", "myList", 123)
 		}()
 	}
 

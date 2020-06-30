@@ -16,8 +16,8 @@ type Data struct {
 
 func TestYaml(t *testing.T) {
 	conf := NewConf()
-	conf.LoadConf("test.yaml")
-	log.Println(conf.data)
+	err := conf.LoadConf("test.yaml")
+	log.Println(conf.data, err)
 
 	log.Println("RedisCommon: ", conf.data["RedisCommon"])
 

@@ -33,7 +33,9 @@ func TestGobStoreLoad(t *testing.T) {
 	fmt.Println(postData.Id, postData.Name)
 
 	//实现字符串的存取
-	StoreGobData("fefefe", "test_gob.md")
+	err = StoreGobData("fefefe", "test_gob.md")
+	log.Println("err: ", err)
+
 	var str string
 	LoadGobData(&str, "test_gob.md")
 	fmt.Println(str)

@@ -9,7 +9,7 @@ func TestLog(t *testing.T) {
 	SetLogDir("./logs/") //设置日志文件目录
 	SetLogFile("mytest.log")
 	MaxSize(20)
-	TraceFileLine(false) //关闭文件名和行数追踪
+	TraceFileLine(true) //关闭文件名和行数追踪
 
 	InitLogger(1)
 
@@ -24,19 +24,19 @@ func TestLog(t *testing.T) {
 	})
 
 	//测试60w日志输出到文件
-	nums := 30 * 10000
+	nums := 30
 	var wg sync.WaitGroup
 	wg.Add(nums)
 	for i := 0; i < nums; i++ {
 		go func() {
 			defer wg.Done()
 
-			Info("hello,world", map[string]interface{}{
+			Error("hello,world", map[string]interface{}{
 				"a": 1,
 				"b": "free",
 			})
 
-			Warn("haha", nil)
+			//Warn("haha", nil)
 		}()
 	}
 

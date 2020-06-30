@@ -43,8 +43,11 @@ func TestGorm(t *testing.T) {
 	}
 
 	//设置db engine name
-	dbconf.SetDbPool()              //建立db连接池
-	dbconf.SetEngineName("default") //为每个db设置一个engine name
+	err := dbconf.SetDbPool() //建立db连接池
+	log.Fatalln("err: ", err)
+
+	err = dbconf.SetEngineName("default") //为每个db设置一个engine name
+	log.Fatalln("err: ", err)
 
 	//defer dbconf.Close() //关闭当前连接
 	defer CloseAllDb() //关闭所有的连接句柄

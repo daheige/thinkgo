@@ -36,6 +36,7 @@ func CopyFile(distName, srcName string) (w int64, err error) {
 	return io.Copy(dist, src)
 }
 
+// StoreGobData store gob data
 func StoreGobData(data interface{}, fileName string) error {
 	buf := new(bytes.Buffer) //创建写入缓冲区
 	//创建gob编码器
@@ -236,19 +237,15 @@ func Unlink(filename string) error {
 // IsReadable is_readable()
 func IsReadable(filename string) bool {
 	_, err := syscall.Open(filename, syscall.O_RDONLY, 0)
-	if err != nil {
-		return false
-	}
-	return true
+
+	return err == nil
 }
 
 // IsWriteable is_writeable()
 func IsWriteable(filename string) bool {
 	_, err := syscall.Open(filename, syscall.O_WRONLY, 0)
-	if err != nil {
-		return false
-	}
-	return true
+
+	return err == nil
 }
 
 // Rename rename()
@@ -262,6 +259,7 @@ func Touch(filename string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	fd.Close()
 	return true, nil
 }

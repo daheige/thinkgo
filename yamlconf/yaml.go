@@ -12,24 +12,24 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-//配置文件结构体
+// ConfigEngine 配置文件结构体
 type ConfigEngine struct {
 	data map[string]interface{}
 }
 
+// NewConf new an entry
 func NewConf() *ConfigEngine {
 	return &ConfigEngine{}
 }
 
+// GetData get data
 func (c *ConfigEngine) GetData() map[string]interface{} {
 	return c.data
 }
 
-// 加载yaml,yml内容到c.Data
+// LoadConf 加载yaml,yml内容到c.Data
 func (c *ConfigEngine) LoadConf(path string) error {
-	ext := filepath.Ext(path)
-
-	switch ext {
+	switch filepath.Ext(path) {
 	case ".yaml", ".yml":
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -46,11 +46,9 @@ func (c *ConfigEngine) LoadConf(path string) error {
 	default:
 		panic("error path ext")
 	}
-
-	return nil
 }
 
-// 从配置文件中获取值
+// Get 从配置文件中获取值
 func (c *ConfigEngine) Get(name string) interface{} {
 	path := strings.Split(name, ".")
 	data := c.data
@@ -72,7 +70,7 @@ func (c *ConfigEngine) Get(name string) interface{} {
 	return nil
 }
 
-// 从配置文件中获取string类型的值
+// GetString 从配置文件中获取string类型的值
 func (c *ConfigEngine) GetString(name string, defaultValue string) string {
 	return setString(c.Get(name), defaultValue)
 }
@@ -89,7 +87,7 @@ func setString(value interface{}, defaultValue string) string {
 	return defaultValue
 }
 
-// 从配置文件中获取int类型的值,defaultValue是默认值的
+// GetInt 从配置文件中获取int类型的值,defaultValue是默认值的
 func (c *ConfigEngine) GetInt(name string, defaultValue int) int {
 	return setInt(c.Get(name), defaultValue)
 }
@@ -119,6 +117,7 @@ func setInt(v interface{}, defaultValue int) int {
 	}
 }
 
+// GetInt64 get int64
 func (c *ConfigEngine) GetInt64(name string, defaultValue int64) int64 {
 	return setInt64(c.Get(name), defaultValue)
 }
@@ -150,7 +149,7 @@ func setInt64(v interface{}, defaultValue int64) int64 {
 	}
 }
 
-// 从配置文件中获取bool类型的值
+// GetBool 从配置文件中获取bool类型的值
 func (c *ConfigEngine) GetBool(name string, defaultValue bool) bool {
 	return setBool(c.Get(name), defaultValue)
 }
@@ -181,7 +180,7 @@ func setBool(v interface{}, defaultValue bool) bool {
 	}
 }
 
-// 从配置文件中获取Float64类型的值
+// GetFloat64 从配置文件中获取Float64类型的值
 func (c *ConfigEngine) GetFloat64(name string, defaultValue float64) float64 {
 	return setFloat64(c.Get(name), defaultValue)
 }
@@ -209,7 +208,7 @@ func setFloat64(v interface{}, defaultValue float64) float64 {
 	}
 }
 
-// 从配置文件中获取Struct类型的值
+// GetStruct 从配置文件中获取Struct类型的值
 // 这里的struct是你自己定义的根据配置文件
 // s必须是传递结构体的指针
 // name是yaml定义的结构体名称
@@ -217,18 +216,18 @@ func (c *ConfigEngine) GetStruct(name string, s interface{}) interface{} {
 	d := c.Get(name)
 	// log.Printf("%T", d)
 
-	switch d.(type) {
+	switch v := d.(type) {
 	case string:
-		SetField(s, name, d)
+		_ = SetField(s, name, v)
 	case map[interface{}]interface{}:
-		//log.Println("s", s)
-		mapToStruct(d.(map[interface{}]interface{}), s)
+		// log.Println("s", s)
+		_ = mapToStruct(v, s)
 	}
 
 	return s
 }
 
-// 将map转换为struct
+// mapToStruct 将map转换为struct
 // obj必须是一个结构体的指针
 // 用data(map类型)填充结构obj
 func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
@@ -255,7 +254,7 @@ func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
 	return nil
 }
 
-//设置obj结构体的k/v值
+// SetField 设置obj结构体的k/v值
 func SetField(obj interface{}, name string, value interface{}) error {
 	// reflect.Indirect 返回value对应的值
 	structValue := reflect.Indirect(reflect.ValueOf(obj))
@@ -281,11 +280,11 @@ func SetField(obj interface{}, name string, value interface{}) error {
 		switch v := vint.(type) {
 		case map[interface{}]interface{}:
 			for key, value := range v {
-				SetField(structFieldValue.Addr().Interface(), key.(string), value)
+				_ = SetField(structFieldValue.Addr().Interface(), key.(string), value)
 			}
 		case map[string]interface{}:
 			for key, value := range v {
-				SetField(structFieldValue.Addr().Interface(), key, value)
+				_ = SetField(structFieldValue.Addr().Interface(), key, value)
 			}
 		}
 	} else if structFieldType.Kind() == reflect.Slice && val.Kind() == reflect.Slice {
