@@ -26,5 +26,6 @@ func Gunzip(in []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ioutil.ReadAll(rd)
 }

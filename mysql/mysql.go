@@ -1,4 +1,4 @@
-/**
+/** Package mysql of gorm library.
 * gorm mysql封装，支持多个数据库实例化为连接池对象
 * 结合了xorm思想，将每个数据库对象作为一个数据库引擎句柄
 * xorm设计思想：在xorm里面，可以同时存在多个Orm引擎
@@ -29,32 +29,32 @@ import (
 var engineMap = map[string]*gorm.DB{}
 
 // DbConf mysql连接信息
-//parseTime=true changes the output type of DATE and DATETIME
-//values to time.Time instead of []byte / string
-//The date or datetime like 0000-00-00 00:00:00 is converted
-//into zero value of time.Time.
+// parseTime=true changes the output type of DATE and DATETIME
+// values to time.Time instead of []byte / string
+// The date or datetime like 0000-00-00 00:00:00 is converted
+// into zero value of time.Time.
 type DbConf struct {
 	Ip           string
-	Port         int //默认3306
+	Port         int // 默认3306
 	User         string
 	Password     string
 	Database     string
-	Charset      string //字符集 utf8mb4 支持表情符号
-	Collation    string //整理字符集 utf8mb4_unicode_ci
-	MaxIdleConns int    //空闲pool个数
-	MaxOpenConns int    //最大open connection个数
+	Charset      string // 字符集 utf8mb4 支持表情符号
+	Collation    string // 整理字符集 utf8mb4_unicode_ci
+	MaxIdleConns int    // 空闲pool个数
+	MaxOpenConns int    // 最大open connection个数
 
 	// sets the maximum amount of time a connection may be reused.
 	// 设置连接可以重用的最大时间
 	// 给db设置一个超时时间，时间小于数据库的超时时间
-	MaxLifetime int64 //数据库超时时间，单位s
+	MaxLifetime int64 // 数据库超时时间，单位s
 
 	ParseTime  bool
-	Loc        string   //时区字符串 Local,PRC
-	engineName string   //当前数据库连接句柄标识
-	dbObj      *gorm.DB //当前数据库连接句柄
-	SqlCmd     bool     //sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
-	UsePool    bool     //当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	Loc        string   // 时区字符串 Local,PRC
+	engineName string   // 当前数据库连接句柄标识
+	dbObj      *gorm.DB // 当前数据库连接句柄
+	SqlCmd     bool     // sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
+	UsePool    bool     // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
 }
 
 // SetEngineName 给当前数据库指定engineName
@@ -74,7 +74,7 @@ func (conf *DbConf) SetEngineName(name string) error {
 }
 
 // SetDbObj 创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
-//为兼容之前的版本，这里新增SetDb创建db对象
+// 为兼容之前的版本，这里新增SetDb创建db对象
 func (conf *DbConf) SetDbObj() error {
 	err := conf.initDb()
 	if err != nil {
@@ -115,10 +115,8 @@ func (conf *DbConf) Close() error {
 		return err
 	}
 
-	//如果设置了engineName就需要把连接句柄对象从map中删除
-	if _, ok := engineMap[conf.engineName]; ok {
-		delete(engineMap, conf.engineName)
-	}
+	// 把连接句柄对象从map中删除
+	delete(engineMap, conf.engineName)
 
 	return nil
 }
@@ -150,22 +148,22 @@ func (conf *DbConf) initDb() error {
 		conf.Loc = "Local"
 	}
 
-	//对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
-	//但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
-	//具体可以看gorm/main.go源码85行
+	// 对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
+	// 但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
+	// 具体可以看gorm/main.go源码85行
 	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
 		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
 		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
-	if err != nil { //数据库连接错误
+	if err != nil { // 数据库连接错误
 		return err
 	}
 
-	//将sql打印到终端
+	// 将sql打印到终端
 	if conf.SqlCmd {
 		db.LogMode(true)
 	}
 
-	//设置连接池
+	// 设置连接池
 	if conf.UsePool {
 		db.DB().SetMaxIdleConns(conf.MaxIdleConns)
 		db.DB().SetMaxOpenConns(conf.MaxOpenConns)
@@ -186,7 +184,7 @@ func (conf *DbConf) initDb() error {
 
 // ========================辅助函数===============
 // GetDbObj 从db pool获取一个数据库连接句柄
-//根据数据库连接句柄name获取指定的连接句柄
+// 根据数据库连接句柄name获取指定的连接句柄
 func GetDbObj(name string) (*gorm.DB, error) {
 	if _, ok := engineMap[name]; ok {
 		return engineMap[name], nil
@@ -203,7 +201,7 @@ func CloseAllDb() {
 			continue
 		}
 
-		delete(engineMap, name) //销毁连接句柄标识
+		delete(engineMap, name) // 销毁连接句柄标识
 	}
 }
 
@@ -215,7 +213,7 @@ func CloseDbByName(name string) error {
 			return err
 		}
 
-		delete(engineMap, name) //销毁连接句柄标识
+		delete(engineMap, name) // 销毁连接句柄标识
 	}
 
 	return errors.New("current dbObj not exist")

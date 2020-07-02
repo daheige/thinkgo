@@ -85,51 +85,55 @@ func Min(nums ...float64) float64 {
 // Numeric strings consist of optional sign, any number of digits, optional decimal part and optional exponential part.
 // Thus +0123.45e6 is a valid numeric value.
 // In PHP hexadecimal (e.g. 0xf4c3b00c) is not supported, but IsNumeric is supported.
-func IsNumeric(val interface{}) bool {
-	switch val.(type) {
+func IsNumeric(v interface{}) bool {
+	switch val := v.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true
 	case float32, float64, complex64, complex128:
 		return true
 	case string:
-		str := val.(string)
-		if str == "" {
+		if val == "" {
 			return false
 		}
+
 		// Trim any whitespace
-		str = strings.TrimSpace(str)
-		if str[0] == '-' || str[0] == '+' {
-			if len(str) == 1 {
+		val = strings.TrimSpace(val)
+		if val[0] == '-' || val[0] == '+' {
+			if len(val) == 1 {
 				return false
 			}
-			str = str[1:]
+			val = val[1:]
 		}
+
 		// hex
-		if len(str) > 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X') {
-			for _, h := range str[2:] {
+		if len(val) > 2 && val[0] == '0' && (val[1] == 'x' || val[1] == 'X') {
+			for _, h := range val[2:] {
 				if !((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f') || (h >= 'A' && h <= 'F')) {
 					return false
 				}
 			}
 			return true
 		}
+
 		// 0-9, Point, Scientific
-		p, s, l := 0, 0, len(str)
-		for i, v := range str {
-			if v == '.' { // Point
+		p, s, l := 0, 0, len(val)
+		for i, v1 := range val {
+			if v1 == '.' { // Point
 				if p > 0 || s > 0 || i+1 == l {
 					return false
 				}
 				p = i
-			} else if v == 'e' || v == 'E' { // Scientific
+			} else if v1 == 'e' || v1 == 'E' { // Scientific
 				if i == 0 || s > 0 || i+1 == l {
 					return false
 				}
+
 				s = i
-			} else if v < '0' || v > '9' {
+			} else if v1 < '0' || v1 > '9' {
 				return false
 			}
 		}
+
 		return true
 	}
 

@@ -13,21 +13,10 @@ type myName struct {
 	index int
 }
 
-//实现了Worker接口
-func (this *myName) Task() {
-	log.Println("current index", this.index)
-	log.Println("your name is ", this.name)
-}
-
-type NamePrinter struct {
-	name  string
-	index int
-}
-
-//实现了worker接口
-func (this *NamePrinter) Task() {
-	log.Printf("执行第%d次", this.index)
-	log.Println("current name:", this.name)
+// Task 实现了Worker接口
+func (n *myName) Task() {
+	log.Println("current index", n.index)
+	log.Println("your name is ", n.name)
 }
 
 /**$ go test -v -test.run=TestPool

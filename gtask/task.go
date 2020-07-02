@@ -32,7 +32,7 @@ func DoTask(fn func() interface{}) *TaskRes {
 			close(done)
 			if err := recover(); err != nil {
 				log.Println("task exec panic error: ", err)
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -42,7 +42,7 @@ func DoTask(fn func() interface{}) *TaskRes {
 
 	<-done
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 	return res
 }
 
@@ -60,7 +60,7 @@ func DoTaskWithArgs(fn func(args ...interface{}) interface{}, args ...interface{
 			close(done)
 			if err := recover(); err != nil {
 				log.Println("task exec panic error: ", err)
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -70,7 +70,7 @@ func DoTaskWithArgs(fn func(args ...interface{}) interface{}, args ...interface{
 
 	<-done
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 	return res
 }
 
@@ -87,7 +87,7 @@ func DoTaskWithTimeout(fn func() interface{}, timeout time.Duration) *TaskRes {
 			close(res.Result)
 			close(done)
 			if err := recover(); err != nil {
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -104,7 +104,7 @@ func DoTaskWithTimeout(fn func() interface{}, timeout time.Duration) *TaskRes {
 		}
 	}
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 	return res
 }
 
@@ -124,7 +124,7 @@ func DoTaskWithContext(ctx context.Context, fn func() interface{}, timeout time.
 			close(res.Result)
 			close(done)
 			if err := recover(); err != nil {
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -141,7 +141,7 @@ func DoTaskWithContext(ctx context.Context, fn func() interface{}, timeout time.
 		}
 	}
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 	return res
 }
 
@@ -158,7 +158,7 @@ func DoTaskWithTimeoutArgs(fn func(args ...interface{}) interface{}, timeout tim
 			close(res.Result)
 			close(done)
 			if err := recover(); err != nil {
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -175,7 +175,7 @@ func DoTaskWithTimeoutArgs(fn func(args ...interface{}) interface{}, timeout tim
 		}
 	}
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 	return res
 }
 
@@ -195,7 +195,7 @@ func DoTaskWithContextArgs(ctx context.Context, fn func(args ...interface{}) int
 			close(res.Result)
 			close(done)
 			if err := recover(); err != nil {
-				res.Err = errors.New(fmt.Sprintf("%v", err))
+				res.Err = fmt.Errorf("%v", err)
 			}
 		}()
 
@@ -212,7 +212,7 @@ func DoTaskWithContextArgs(ctx context.Context, fn func(args ...interface{}) int
 		}
 	}
 
-	res.CostTime = time.Now().Sub(t).Seconds()
+	res.CostTime = time.Since(t).Seconds()
 
 	return res
 }

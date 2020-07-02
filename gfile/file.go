@@ -148,22 +148,28 @@ func Pathinfo(path string, options int) map[string]string {
 	if options == -1 {
 		options = 1 | 2 | 4 | 8
 	}
+
 	info := make(map[string]string)
 	if (options & 1) == 1 {
 		info["dirname"] = filepath.Dir(path)
 	}
+
 	if (options & 2) == 2 {
 		info["basename"] = filepath.Base(path)
 	}
+
 	if ((options & 4) == 4) || ((options & 8) == 8) {
-		basename := ""
+		var basename string
 		if (options & 2) == 2 {
-			basename, _ = info["basename"]
+			basename = info["basename"]
 		} else {
 			basename = filepath.Base(path)
 		}
+
 		p := strings.LastIndex(basename, ".")
-		filename, extension := "", ""
+
+		var filename string
+		var extension string
 		if p > 0 {
 			filename, extension = basename[:p], basename[p+1:]
 		} else if p == -1 {
@@ -171,13 +177,16 @@ func Pathinfo(path string, options int) map[string]string {
 		} else if p == 0 {
 			extension = basename[p+1:]
 		}
+
 		if (options & 4) == 4 {
 			info["extension"] = extension
 		}
+
 		if (options & 8) == 8 {
 			info["filename"] = filename
 		}
 	}
+
 	return info
 }
 
@@ -196,6 +205,7 @@ func IsFile(filename string) bool {
 	if err != nil && os.IsNotExist(err) {
 		return false
 	}
+
 	return true
 }
 
@@ -205,8 +215,8 @@ func IsDir(filename string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fm := fd.Mode()
-	return fm.IsDir(), nil
+
+	return fd.Mode().IsDir(), nil
 }
 
 // FileSize filesize()
@@ -215,6 +225,7 @@ func FileSize(filename string) (int64, error) {
 	if err != nil && os.IsNotExist(err) {
 		return 0, err
 	}
+
 	return info.Size(), nil
 }
 
@@ -226,6 +237,7 @@ func FilePutContents(filename string, data string, mode os.FileMode) error {
 // FileGetContents file_get_contents()
 func FileGetContents(filename string) (string, error) {
 	data, err := ioutil.ReadFile(filename)
+
 	return string(data), err
 }
 
@@ -261,6 +273,7 @@ func Touch(filename string) (bool, error) {
 	}
 
 	fd.Close()
+
 	return true, nil
 }
 
@@ -271,8 +284,7 @@ func Mkdir(filename string, mode os.FileMode) error {
 
 // Getcwd getcwd()
 func Getcwd() (string, error) {
-	dir, err := os.Getwd()
-	return dir, err
+	return os.Getwd()
 }
 
 // Realpath realpath()
@@ -306,11 +318,14 @@ func Filemtime(filename string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	defer fd.Close()
+
 	fileinfo, err := fd.Stat()
 	if err != nil {
 		return 0, err
 	}
+
 	return fileinfo.ModTime().Unix(), nil
 }
 
@@ -318,6 +333,7 @@ func Filemtime(filename string) (int64, error) {
 func Fgetcsv(handle *os.File, length int, delimiter rune) ([][]string, error) {
 	reader := csv.NewReader(handle)
 	reader.Comma = delimiter
+
 	// TODO length limit
 	return reader.ReadAll()
 }

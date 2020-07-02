@@ -18,17 +18,20 @@ import (
 	"time"
 )
 
+// Md5 md5 string
 func Md5(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// Sha1 sha1 string
 func Sha1(s string) string {
 	r := sha1.Sum([]byte(s))
 	return hex.EncodeToString(r[:])
 }
 
+// Sha1File sha1 file
 func Sha1File(fName string) (string, error) {
 	f, e := os.Open(fName)
 	if e != nil {
@@ -46,7 +49,7 @@ func Sha1File(fName string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-//hmac256算法
+// Hmac256 hmac256算法
 func Hmac256(data, key string) string {
 	if len(key) != 16 {
 		key = GetIteratorStr(16)
@@ -57,14 +60,14 @@ func Hmac256(data, key string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-//实现php hmac_sha1
+// HmacSha1 实现php hmac_sha1
 func HmacSha1(str string, key string) string {
 	mac := hmac.New(sha1.New, []byte(key))
 	mac.Write([]byte(str))
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-//得到指定16进制的数字
+// GetIteratorStr 得到指定16进制的数字
 func GetIteratorStr(length int) string {
 	str := "0123456789abcdef"
 	bytes := []byte(str)
@@ -77,14 +80,14 @@ func GetIteratorStr(length int) string {
 	return string(result)
 }
 
-//sha256得到的值是一个固定值
+// Sha256 sha256得到的值是一个固定值
 func Sha256(s string) string {
 	h := sha256.New()
 	h.Write([]byte(s))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-//ECB加密
+// EncryptEcb ECB加密
 func EncryptEcb(src, key string) (string, error) {
 	data := []byte(src)
 	keyByte := []byte(key)
@@ -120,7 +123,7 @@ ECB（电子密本方式）就是将数据按照8个字节一段进行DES加密�
 不能隐藏明文的模式；在密文中出现明文消息的重复
 可能对明文进行主动攻击；加密消息块相互独立成为被攻击的弱点
 */
-//ECB解密 key必须是8位
+// DecryptEcb ECB解密 key必须是8位
 func DecryptEcb(src, key string) (string, error) {
 	data, err := hex.DecodeString(src)
 	if err != nil {

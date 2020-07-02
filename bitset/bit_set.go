@@ -25,16 +25,17 @@ import (
 	"fmt"
 )
 
-// An IntSet is a set of small non-negative integers.
+// IntSet An IntSet is a set of small non-negative integers.
 // Its zero value represents the empty set.
 type IntSet struct {
 	words []uint
 }
 
 const (
-	bitNum = (32 << (^uint(0) >> 63)) //根据平台自动判断决定是32位还是64位
+	bitNum = (32 << (^uint(0) >> 63))
 )
 
+// New new an entry
 func New() *IntSet {
 	return &IntSet{}
 }
@@ -54,7 +55,7 @@ func (s *IntSet) Add(x int) {
 	s.words[word] |= 1 << bit
 }
 
-//A与B的交集，合并A与B
+// UnionWith A与B的交集，合并A与B
 // UnionWith sets s to the union of s and t.
 func (s *IntSet) UnionWith(t *IntSet) {
 	for i, tword := range t.words {
@@ -89,6 +90,7 @@ func (s *IntSet) String() string {
 	return buf.String()
 }
 
+// Len len
 func (s *IntSet) Len() int {
 	var len int
 	for _, word := range s.words {
@@ -101,7 +103,7 @@ func (s *IntSet) Len() int {
 	return len
 }
 
-//移除元素
+// Remove 移除元素
 func (s *IntSet) Remove(x int) {
 	word, bit := x/bitNum, uint(x%bitNum)
 	if s.Has(x) {
@@ -109,31 +111,30 @@ func (s *IntSet) Remove(x int) {
 	}
 }
 
-//清空
+// Clear清空
 func (s *IntSet) Clear() {
 	s.words = []uint{}
 }
 
+// Copy copy value
 func (s *IntSet) Copy() *IntSet {
 	IntSet := &IntSet{
 		words: []uint{},
 	}
 
-	for _, value := range s.words {
-		IntSet.words = append(IntSet.words, value)
-	}
+	IntSet.words = append(IntSet.words, s.words...)
 
 	return IntSet
 }
 
-//一次性添加多个int
+// AddAll 一次性添加多个int
 func (s *IntSet) AddAll(args ...int) {
 	for _, x := range args {
 		s.Add(x)
 	}
 }
 
-//A与B的并集，A与B中均出现
+// IntersectWith A与B的并集，A与B中均出现
 func (s *IntSet) IntersectWith(t *IntSet) {
 	for i, tword := range t.words {
 		if i >= len(s.words) {
@@ -143,7 +144,7 @@ func (s *IntSet) IntersectWith(t *IntSet) {
 	}
 }
 
-//A与B的差集，元素出现在A未出现在B
+// DifferenceWith A与B的差集，元素出现在A未出现在B
 func (s *IntSet) DifferenceWith(t *IntSet) {
 	t1 := t.Copy() //为了不改变传参t，拷贝一份
 	t1.IntersectWith(s)
@@ -154,7 +155,7 @@ func (s *IntSet) DifferenceWith(t *IntSet) {
 	}
 }
 
-//A与B的并差集，元素出现在A没有出现在B，或出现在B没有出现在A
+// SymmetricDifference A与B的并差集，元素出现在A没有出现在B，或出现在B没有出现在A
 func (s *IntSet) SymmetricDifference(t *IntSet) {
 	for i, tword := range t.words {
 		if i < len(s.words) {
@@ -165,7 +166,7 @@ func (s *IntSet) SymmetricDifference(t *IntSet) {
 	}
 }
 
-//获取比特数组中的所有元素的slice集合
+// Elems 获取比特数组中的所有元素的slice集合
 func (s *IntSet) Elems() []int {
 	var elems []int
 	for i, word := range s.words {

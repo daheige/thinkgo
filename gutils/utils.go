@@ -59,7 +59,7 @@ func Stripslashes(str string) string {
 	return buf.String()
 }
 
-//===================str join func========================
+// ===================str join func========================
 // StrJoin 多个字符串按照指定的分隔符进行拼接
 func StrJoin(sep string, str ...string) string {
 	return strings.Join(str, sep)
@@ -79,7 +79,7 @@ func StrJoinByBuf(str ...string) string {
 	return buf.String()
 }
 
-//==============str md5,md5File,sha1,crc32,bin2hex,hex2bin,hash func=======
+// ==============str md5,md5File,sha1,crc32,bin2hex,hex2bin,hash func=======
 // Other advanced functions, please see the thinkgo/crypto package.
 // md5 func
 func Md5(str string) string {
@@ -152,7 +152,7 @@ func Hash(mem []byte) uint64 {
 	return hash
 }
 
-//=================str aes/des func==========================
+// =================str aes/des func==========================
 // key = "abcdefghijklmnopqrstuvwxyz123456"
 // iv = "0123456789ABCDEF"
 func EnAES(in, key, iv []byte) ([]byte, error) {
@@ -177,11 +177,11 @@ func DeAES(in, key, iv []byte) ([]byte, error) {
 	return out, nil
 }
 
-//=================uuid,rnduuid,uniqid func====================
+// =================uuid,rnduuid,uniqid func====================
 // NewUUID 通过随机数的方式生成uuid
-//如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
-//该方式生成的uuid有可能存在重复值
-//返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
+// 如果rand.Read失败,就按照当前时间戳+随机数进行md5方式生成
+// 该方式生成的uuid有可能存在重复值
+// 返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
 func NewUUID() string {
 	u := [16]byte{}
 	ns := time.Now().UnixNano()
@@ -199,10 +199,10 @@ func NewUUID() string {
 }
 
 // RndUuid 基于时间ns和随机数实现唯一的uuid
-//在单台机器上是不会出现重复的uuid
-//如果要在分布式的架构上生成不重复的uuid
+// 在单台机器上是不会出现重复的uuid
+// 如果要在分布式的架构上生成不重复的uuid
 // 只需要在rndStr的前面加一些自定义的字符串
-//返回格式:eba1e8cd-0460-4910-49c6-44bdf3cf024d
+// 返回格式:eba1e8cd-0460-4910-49c6-44bdf3cf024d
 func RndUuid() string {
 	s := RndUuidMd5()
 	return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
@@ -225,7 +225,7 @@ func Uniqid(prefix string) string {
 	return fmt.Sprintf("%s%08x%05x", prefix, now.Unix(), now.UnixNano()%0x100000)
 }
 
-//=====================html special characters================
+// =====================html special characters================
 // HTMLSpecialchars converts special characters to HTML entities
 func HTMLSpecialchars(str string) string {
 	return html.EscapeString(str)
@@ -236,7 +236,7 @@ func HTMLSpecialcharsDecode(str string) string {
 	return html.UnescapeString(str)
 }
 
-//=====================str xss,XssUnescape func=============
+// =====================str xss,XssUnescape func=============
 // Xss 防止xss攻击
 func Xss(str string) string {
 	if len(str) == 0 {
@@ -250,14 +250,14 @@ func XssUnescape(str string) string {
 	return html.UnescapeString(str)
 }
 
-//================str krand func===========
+// ================str krand func===========
 // Krand 根据kind生成不同风格的指定区间随机字符串
 // 纯数字kind=0,小写字母kind=1
 // 大写字母kind=2,数字+大小写字母kind=3
 func Krand(size int, kind int) string {
 	ikind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
 	is_all := kind > 2 || kind < 0
-	rand.Seed(time.Now().UnixNano()) //随机种子
+	rand.Seed(time.Now().UnixNano()) // 随机种子
 	for i := 0; i < size; i++ {
 		if is_all { // random ikind
 			ikind = rand.Intn(3)
@@ -285,7 +285,7 @@ func Ord(character string) rune {
 	return []rune(character)[0]
 }
 
-//=================str explode,implode,strlen================
+// =================str explode,implode,strlen================
 // Explode returns an slice of strings, each of which is a substring of str
 // formed by splitting it on boundaries formed by the string delimiter.
 func Explode(delimiter, str string) []string {
@@ -304,7 +304,7 @@ func Strlen(str string) int {
 	return len([]rune(str))
 }
 
-//=================str strpos,Strrpos,stripos,Strripos func====================
+// =================str strpos,Strrpos,stripos,Strripos func====================
 // Strpos find position of first occurrence of string in a string
 // It's multi-byte safe. return -1 if can not find the substring
 func Strpos(haystack, needle string) int {
@@ -366,19 +366,22 @@ func Strstr(haystack string, needle string) string {
 
 // Substr substr()
 func Substr(str string, start uint, length int) string {
-	if start < 0 || length < -1 {
+	if length < -1 {
 		return str
 	}
+
 	switch {
 	case length == -1:
 		return str[start:]
 	case length == 0:
 		return ""
 	}
+
 	end := int(start) + length
 	if end > len(str) {
 		end = len(str)
 	}
+
 	return str[start:end]
 }
 
@@ -387,7 +390,7 @@ func MbStrlen(str string) int {
 	return utf8.RuneCountInString(str)
 }
 
-//==================str upper/lower==============================
+// ==================str upper/lower==============================
 
 // Strtoupper strtoupper()
 func Strtoupper(str string) string {
@@ -434,7 +437,7 @@ func Rtrim(str string, characterMask ...string) string {
 	return strings.TrimRight(str, characterMask[0])
 }
 
-//=======================str Ucfirst/Lcfirst/Ucwords==================
+// =======================str Ucfirst/Lcfirst/Ucwords==================
 
 // UcFirst ucfirst()
 func UcFirst(str string) string {
@@ -459,7 +462,7 @@ func Ucwords(str string) string {
 	return strings.Title(str)
 }
 
-//======================url encode/decode=======================
+// ======================url encode/decode=======================
 
 // URLEncode urlencode()
 func URLEncode(str string) string {
@@ -486,7 +489,7 @@ func HTTPBuildQuery(queryData url.Values) string {
 	return queryData.Encode()
 }
 
-//=================base64 encode/decode=========================
+// =================base64 encode/decode=========================
 
 // Base64Encode base64_encode()
 func Base64Encode(str string) string {
@@ -536,7 +539,7 @@ func Empty(val interface{}) bool {
 	return reflect.DeepEqual(val, reflect.Zero(v.Type()).Interface())
 }
 
-//========================ip convert===========
+// ========================ip convert===========
 // IP2long ip2long()
 func IP2long(ipAddress string) uint32 {
 	ip := net.ParseIP(ipAddress)
@@ -552,79 +555,4 @@ func Long2ip(properAddress uint32) string {
 	binary.BigEndian.PutUint32(ipByte, properAddress)
 	ip := net.IP(ipByte)
 	return ip.String()
-}
-
-// Compare this function compares whether the two version numbers are equal and whether they are greater or less than the relationship.
-// Return value: 0 means v1 is equal to v2; 1 means v1 is greater than v2; 2 means v1 is less than v2
-func Compare(v1, v2 string) int {
-	// 替换一些常见的版本符号
-	replaceMap := map[string]string{"V": "", "v": "", "-": "."}
-	//keywords := {"alpha,beta,rc,p"}
-	for k, v := range replaceMap {
-		if strings.Contains(v1, k) {
-			strings.Replace(v1, k, v, -1)
-		}
-		if strings.Contains(v2, k) {
-			strings.Replace(v2, k, v, -1)
-		}
-	}
-	ver1 := strings.Split(v1, ".")
-	ver2 := strings.Split(v2, ".")
-	// 找出v1和v2哪一个最短
-	var shorter int
-	if len(ver1) > len(ver2) {
-		shorter = len(ver2)
-	} else {
-		shorter = len(ver1)
-	}
-	// 循环比较
-	for i := 0; i < shorter; i++ {
-		if ver1[i] == ver2[i] {
-			if shorter-1 == i {
-				if len(ver1) == len(ver2) {
-					return 0
-				} else {
-					// @todo check for keywords
-					if len(ver1) > len(ver2) {
-						return 1
-					} else {
-						return 2
-					}
-				}
-			}
-		} else if ver1[i] > ver2[i] {
-			return 1
-		} else {
-			return 2
-		}
-	}
-	return -1
-}
-
-// VersionCompare compare str1,str2 eg 1.2.1 >= 1.2.0
-func VersionCompare(v1, v2, operator string) bool {
-	com := Compare(v1, v2)
-	switch operator {
-	case "==":
-		if com == 0 {
-			return true
-		}
-	case "<":
-		if com == 2 {
-			return true
-		}
-	case ">":
-		if com == 1 {
-			return true
-		}
-	case "<=":
-		if com == 0 || com == 2 {
-			return true
-		}
-	case ">=":
-		if com == 0 || com == 1 {
-			return true
-		}
-	}
-	return false
 }

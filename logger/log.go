@@ -252,7 +252,7 @@ func parseFields(fields map[string]interface{}) []zap.Field {
 	}
 
 	f := make([]zap.Field, 0, fLen)
-	for k, _ := range fields {
+	for k := range fields {
 		f = append(f, zap.Any(k, fields[k]))
 	}
 

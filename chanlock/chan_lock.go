@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// ChanLock chan lock
 type ChanLock struct {
 	ch chan struct{} //空结构体
 }

@@ -36,60 +36,59 @@ func New(number, total int) *Queue {
 }
 
 // Start 开始执行任务
-func (this *Queue) Start() {
-	defer close(this.tasks) //任务执行完毕后,关闭通道
+func (q *Queue) Start() {
+	defer close(q.tasks) //任务执行完毕后,关闭通道
 
 	//设置计数信号个数
-	this.wg.Add(this.taskTotal)
+	q.wg.Add(q.taskTotal)
 
 	//通过goroutineNumber个goroutine来执行task
-	for i := 0; i < this.goroutineNumber; i++ {
+	for i := 0; i < q.goroutineNumber; i++ {
 		runtime.Gosched() //让出cpu给其他goroutine
-		go this.work()    //对每个任务开启独立goroutine执行
+		go q.work()       //对每个任务开启独立goroutine执行
 	}
 
 	//等待goroutine执行完毕
-	this.wg.Wait()
+	q.wg.Wait()
 
 	//当所有的任务执行完毕后回调
-	if this.finished_callback != nil {
-		this.finished_callback()
+	if q.finished_callback != nil {
+		q.finished_callback()
 	}
 }
 
 // work 执行任务
-func (this *Queue) work() {
+func (q *Queue) work() {
 	for {
 		//不断取出任务,直到chan关闭
-		task, ok := <-this.tasks
+		task, ok := <-q.tasks
 		if !ok {
 			break
 		}
 
 		res := task()
 		//完成一个task立即回调
-		if this.task_callback != nil {
-			this.task_callback(res)
+		if q.task_callback != nil {
+			q.task_callback(res)
 		}
 
-		res = nil //释放资源
-		this.wg.Done()
+		q.wg.Done()
 	}
 }
 
 // Add 添加任务
-func (this *Queue) Add(task func() interface{}) {
-	if len(this.tasks) <= this.taskTotal-1 { //防止缓冲通道个数超出边界个数total
-		this.tasks <- task
+func (q *Queue) Add(task func() interface{}) {
+	if len(q.tasks) <= q.taskTotal-1 { //防止缓冲通道个数超出边界个数total
+		q.tasks <- task
 	}
 }
 
 // SetTaskCallback 设置单个任务执行后的回调函数
-func (this *Queue) SetTaskCallback(callback func(res interface{})) {
-	this.task_callback = callback
+func (q *Queue) SetTaskCallback(callback func(res interface{})) {
+	q.task_callback = callback
 }
 
 // SetFinishedCallback 所有任务完成后,回调函数
-func (this *Queue) SetFinishedCallback(callback func()) {
-	this.finished_callback = callback
+func (q *Queue) SetFinishedCallback(callback func()) {
+	q.finished_callback = callback
 }

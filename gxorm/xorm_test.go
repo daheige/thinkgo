@@ -21,7 +21,7 @@ import (
 */
 
 type myUser struct {
-	Id   int    `xorm:"pk autoincr"` //定义的字段属性，要用空格隔开
+	Id   int    `xorm:"pk autoincr"` // 定义的字段属性，要用空格隔开
 	Name string `xorm:"varchar(200)"`
 	Age  int    `xorm:"tinyint(3)"`
 }
@@ -50,7 +50,7 @@ func TestGxorm(t *testing.T) {
 		ShowExecTime: true,
 	}
 
-	db, err := dbConf.NewEngine() //设置数据库连接对象，并非真正连接，只有在用的时候才会建立连接
+	db, err := dbConf.NewEngine() // 设置数据库连接对象，并非真正连接，只有在用的时候才会建立连接
 	if db == nil || err != nil {
 		log.Println("db error")
 		return
@@ -64,7 +64,7 @@ func TestGxorm(t *testing.T) {
 	log.Println(has, err)
 	log.Println("user info: ", user.Id, user.Name)
 
-	//测试读写分离
+	// 测试读写分离
 	rwConf := &EngineGroupConf{
 		Master: DbBaseConf{
 			Ip:        "127.0.0.1",
@@ -115,13 +115,14 @@ func TestGxorm(t *testing.T) {
 	log.Println(has, err)
 	log.Println(user2)
 
-	//采用读写分离实现数据插入
+	// 采用读写分离实现数据插入
 	user4 := &myUser{
 		Name: "xiaoxiao",
 		Age:  12,
 	}
 
-	affectedNum, err := eg.InsertOne(user4) //插入单条数据，多条数据请用Insert(user3,user4,user5)
+	// 插入单条数据，多条数据请用Insert(user3,user4,user5)
+	affectedNum, err := eg.InsertOne(user4)
 	log.Println("affected num: ", affectedNum)
 	log.Println("insert id: ", user4.Id)
 	log.Println("err: ", err)

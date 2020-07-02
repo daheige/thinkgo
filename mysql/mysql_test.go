@@ -62,14 +62,8 @@ func TestGorm(t *testing.T) {
 	db.Where("name = ?", "hello").First(user)
 	log.Println("user: ", user)
 
+	nums := 100
 	var wg sync.WaitGroup
-	testFind(&wg, 1000)
-
-	wg.Wait()
-	log.Println("test success")
-}
-
-func testFind(wg *sync.WaitGroup, nums int) {
 	for i := 0; i < nums; i++ {
 		wg.Add(1)
 		go func() {
@@ -87,6 +81,9 @@ func testFind(wg *sync.WaitGroup, nums int) {
 			log.Println(user)
 		}()
 	}
+
+	wg.Wait()
+	log.Println("test success")
 }
 
 func TestShortConnect(t *testing.T) {

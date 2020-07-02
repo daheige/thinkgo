@@ -12,50 +12,56 @@ import (
 // StringList: str list
 type StringList []string
 
-func (this StringList) Len() int {
-	return len(this)
+// Len len
+func (sl StringList) Len() int {
+	return len(sl)
 }
 
-func (this StringList) Less(i, j int) bool {
-	if len(this[i]) == len(this[j]) {
-		return this[i] < this[j]
+// Less less
+func (sl StringList) Less(i, j int) bool {
+	if len(sl[i]) == len(sl[j]) {
+		return sl[i] < sl[j]
 	}
-	return len(this[i]) < len(this[j])
+	return len(sl[i]) < len(sl[j])
 }
 
-func (this StringList) Swap(i, j int) {
-	this[i], this[j] = this[j], this[i]
+// Swap swap
+func (sl StringList) Swap(i, j int) {
+	sl[i], sl[j] = sl[j], sl[i]
 }
 
-func (this StringList) UniqueAdd(token string) StringList {
-	for _, v := range this {
+// UniqueAdd unique add a string
+func (sl StringList) UniqueAdd(token string) StringList {
+	for _, v := range sl {
 		if v == token {
-			return this
+			return sl
 		}
 	}
 
-	for i, v := range this {
+	for i, v := range sl {
 		if v == "" {
-			this[i] = token
-			return this
+			sl[i] = token
+			return sl
 		}
 	}
-	return append(this, token)
+	return append(sl, token)
 }
 
-func (this StringList) Delete(token string) int {
+// Delete del string
+func (sl StringList) Delete(token string) int {
 	count := 0
-	for i, v := range this {
+	for i, v := range sl {
 		if v == token {
-			this[i] = ""
+			sl[i] = ""
 			count++
 		}
 	}
 	return count
 }
 
-func (this StringList) IsEmpty() bool {
-	for _, v := range this {
+// IsEmpty is empty
+func (sl StringList) IsEmpty() bool {
+	for _, v := range sl {
 		if v != "" {
 			return false
 		}
@@ -63,9 +69,10 @@ func (this StringList) IsEmpty() bool {
 	return true
 }
 
-func (this StringList) Count() int {
+// Count return sl count
+func (sl StringList) Count() int {
 	count := 0
-	for _, v := range this {
+	for _, v := range sl {
 		if v != "" {
 			count++
 		}
@@ -73,6 +80,7 @@ func (this StringList) Count() int {
 	return count
 }
 
+// StringMapKeys string map sort
 func StringMapKeys(m interface{}) (res []string) {
 	defer grecover.CheckPanic()
 

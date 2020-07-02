@@ -37,8 +37,8 @@ func AddRedisPool(name string, conf *RedisConf) {
 }
 
 // SetRedisPool 设置redis连接池
-func (this *RedisConf) SetRedisPool(name string) {
-	AddRedisPool(name, this)
+func (r *RedisConf) SetRedisPool(name string) {
+	AddRedisPool(name, r)
 }
 
 // NewRedisPool 创建redis pool连接池
