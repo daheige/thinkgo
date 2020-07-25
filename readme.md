@@ -43,7 +43,7 @@
     ├── mutexlock           基于sync.Mutex基础上拓展的乐观锁
     ├── mysql               基于go gorm库封装而成的mysql客户端的一些辅助函数
     ├── mytest              thinkgo 一些单元测试
-    ├── rediscache          基于redigo封装而成的go redis辅助函数，方便快速接入redis操作
+    ├── gredigo             基于redigo封装而成的go redis辅助函数，方便快速接入redis操作
     ├── redislock           基于redigo实现的redis+lua分布式锁实现
     ├── runner              runner用于按照顺序，执行程序任务操作，可作为cron作业或定时任务
     ├── sem                 指定数量的空结构体缓存通道，实现信息号实现互斥锁

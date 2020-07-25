@@ -6,13 +6,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/daheige/thinkgo/rediscache"
+	"github.com/daheige/thinkgo/gredigo"
 
 	"github.com/gomodule/redigo/redis"
 )
 
 func TestRedisPool(t *testing.T) {
-	conf := &rediscache.RedisConf{
+	conf := &gredigo.RedisConf{
 		Host:        "127.0.0.1",
 		Port:        6379,
 		MaxIdle:     100,
@@ -28,7 +28,7 @@ func TestRedisPool(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			client := rediscache.GetRedisClient("default")
+			client := gredigo.GetRedisClient("default")
 			defer client.Close()
 
 			ok, err := client.Do("set", "myname", "daheige")

@@ -11,7 +11,7 @@ import (
 // a redis client list
 var RedisClientList = map[string]*redis.Client{}
 
-var HashDefaultExpire int64 = 300 //默认过期时间300s
+var HashDefaultExpire int64 = 300 // 默认过期时间300s
 
 // redis client config
 type RedisClientConf struct {
@@ -60,6 +60,10 @@ type RedisClientConf struct {
 	// Should be less than server's timeout.
 	// Default is 5 minutes. -1 disables idle timeout check.
 	IdleTimeout time.Duration
+
+	// Connection age at which client retires (closes) the connection.
+	// Default is to not close aged connections.
+	MaxConnAge time.Duration
 }
 
 // redis cluster config
@@ -93,10 +97,18 @@ type RedisClusterConf struct {
 	// Should be less than server's timeout.
 	// Default is 5 minutes. -1 disables idle timeout check.
 	IdleTimeout time.Duration
+
+	// Connection age at which client retires (closes) the connection.
+	// Default is to not close aged connections.
+	MaxConnAge time.Duration
 }
 
 // GetClient return redis client
 func (conf *RedisClientConf) GetClient() *redis.Client {
+	if conf.MaxConnAge == 0 {
+		conf.MaxConnAge = 30 * 60 * time.Second
+	}
+
 	opt := &redis.Options{
 		Addr:         conf.Address,
 		Password:     conf.Password,
@@ -109,6 +121,7 @@ func (conf *RedisClientConf) GetClient() *redis.Client {
 		PoolTimeout:  conf.PoolTimeout,
 		MinIdleConns: conf.MinIdleConns,
 		IdleTimeout:  conf.IdleTimeout,
+		MaxConnAge:   conf.MaxConnAge,
 	}
 
 	return redis.NewClient(opt)
@@ -166,6 +179,10 @@ func GetJson(client *redis.Client, key string, data interface{}) error {
 
 // GetCluster return redis cluster client
 func (conf *RedisClusterConf) GetCluster() *redis.ClusterClient {
+	if conf.MaxConnAge == 0 {
+		conf.MaxConnAge = 30 * 60 * time.Second
+	}
+
 	cluster := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:        conf.AddressNodes,
 		Password:     conf.Password,
@@ -177,6 +194,7 @@ func (conf *RedisClusterConf) GetCluster() *redis.ClusterClient {
 		PoolTimeout:  conf.PoolTimeout,
 		MinIdleConns: conf.MinIdleConns,
 		IdleTimeout:  conf.IdleTimeout,
+		MaxConnAge:   conf.MaxConnAge,
 	})
 
 	return cluster

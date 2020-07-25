@@ -13,7 +13,7 @@ var WebRequestTotal = prometheus.NewCounterVec(
 		Name: "web_reqeust_total",
 		Help: "Number of hello requests in total",
 	},
-	[]string{"method", "endpoint"}, //设置两个标签 请求方法和 路径 对请求总次数在两个
+	[]string{"method", "endpoint"}, // 设置两个标签 请求方法和 路径 对请求总次数在两个
 )
 
 // web_request_duration_seconds，Histogram类型指标，bucket代表duration的分布区间
@@ -40,7 +40,7 @@ var HdFailures = prometheus.NewCounterVec(
 )
 
 // MonitorHandlerFunc 对于http原始的处理器函数，包装 handler function,不侵入业务逻辑
-//可以对单个接口做metrics监控
+// 可以对单个接口做metrics监控
 func MonitorHandlerFunc(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
