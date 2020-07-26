@@ -10,13 +10,23 @@ import (
 // RedisConf redis连接信息
 // redigo实现集群参考： go get github.com/chasex/redis-go-cluster
 type RedisConf struct {
-	Host            string
-	Port            int
-	Password        string
-	Database        int
-	MaxIdle         int // 空闲pool个数
-	MaxActive       int // 最大激活数量
-	IdleTimeout     int // 最大连接超时,单位s
+	Host           string
+	Port           int
+	Password       string
+	Database       int
+	MaxIdle        int // 空闲pool个数
+	MaxActive      int // 最大激活数量
+	ConnectTimeout int // 连接超时，单位s
+	ReadTimeout    int // 读取超时
+	WriteTimeout   int // 写入超时
+
+	// Close connections after remaining idle for this duration. If the value
+	// is zero, then idle connections are not closed. Applications should set
+	// the timeout to a value less than the server's timeout.
+	IdleTimeout int // 空闲连接超时,单位s
+
+	// Close connections older than this duration. If the value is zero, then
+	// the pool does not close connections based on age.
 	MaxConnLifetime int // 连接最大生命周期,单位s，默认1800s
 }
 
@@ -46,7 +56,19 @@ func (r *RedisConf) SetRedisPool(name string) {
 // for a connection to be returned to the pool before returning.
 func NewRedisPool(conf *RedisConf) *redis.Pool {
 	if conf.MaxConnLifetime == 0 {
-		conf.MaxConnLifetime = 30 * 60
+		conf.MaxConnLifetime = 1800
+	}
+
+	if conf.ConnectTimeout == 0 {
+		conf.ConnectTimeout = 5
+	}
+
+	if conf.WriteTimeout == 0 {
+		conf.WriteTimeout = 3
+	}
+
+	if conf.ReadTimeout == 0 {
+		conf.ReadTimeout = 3
 	}
 
 	return &redis.Pool{
@@ -56,7 +78,12 @@ func NewRedisPool(conf *RedisConf) *redis.Pool {
 		MaxActive:       conf.MaxActive,
 		MaxConnLifetime: time.Duration(conf.MaxConnLifetime) * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", conf.Host, conf.Port))
+			c, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", conf.Host, conf.Port),
+				redis.DialReadTimeout(time.Duration(conf.ReadTimeout)*time.Second),
+				redis.DialWriteTimeout(time.Duration(conf.WriteTimeout)*time.Second),
+				redis.DialConnectTimeout(time.Duration(conf.ConnectTimeout)*time.Second),
+			)
+
 			if err != nil {
 				return nil, err
 			}

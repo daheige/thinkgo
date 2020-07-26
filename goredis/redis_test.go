@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/daheige/thinkgo/chanlock"
 	"github.com/go-redis/redis"
+
+	"github.com/daheige/thinkgo/chanlock"
 )
 
 func TestRedis(t *testing.T) {
@@ -41,7 +42,7 @@ func TestRedis(t *testing.T) {
 		panic(err)
 	}
 
-	//redis cluster test
+	// redis cluster test
 	clusterConf := RedisClusterConf{
 		AddressNodes: []string{
 			"127.0.0.1:6391",
@@ -52,9 +53,9 @@ func TestRedis(t *testing.T) {
 			"127.0.0.1:6396",
 		},
 		PoolSize:     10, // PoolSize applies per cluster node and not for the whole cluster.
-		MaxRetries:   2,  //重试次数
+		MaxRetries:   2,  // 重试次数
 		DialTimeout:  10 * time.Second,
-		ReadTimeout:  30 * time.Second, //底层默认3s
+		ReadTimeout:  30 * time.Second, // 底层默认3s
 		WriteTimeout: 30 * time.Second,
 		PoolTimeout:  30 * time.Second,
 		MinIdleConns: 10,
@@ -71,7 +72,7 @@ func TestRedis(t *testing.T) {
 	str, err = cluster.Set("myname", "daheige2", 1000*time.Second).Result()
 	log.Println(str, err)
 
-	log.Println(cluster.Get("username").Result()) //2019/09/26 21:42:18 daheige <nil>
+	log.Println(cluster.Get("username").Result()) // 2019/09/26 21:42:18 daheige <nil>
 }
 
 /**
@@ -181,7 +182,7 @@ func setData2(client *redis.Client, wg *sync.WaitGroup, lock *chanlock.ChanLock)
 		return
 	}
 
-	//采用乐观锁实现，但这种方式只在单机上才可以，如果是多个机器，就需要用分布式锁
+	// 采用乐观锁实现，但这种方式只在单机上才可以，如果是多个机器，就需要用分布式锁
 	if lock.TryLock() {
 		log.Println("start set redis data")
 
@@ -287,11 +288,11 @@ func TestRedisHScan(t *testing.T) {
 
 	defer client.Close()
 
-	//通过hscan 游标方式获取hash中的key对应的val
+	// 通过hscan 游标方式获取hash中的key对应的val
 	uLen := client.HLen("mykey").Val()
 	log.Println("hash len: ", uLen)
 
-	var nextCursor uint64 //下一次的游标
+	var nextCursor uint64 // 下一次的游标
 
 	for {
 		res, cursor, err := client.HScan("mykey", nextCursor, "*", 10).Result()
@@ -324,7 +325,7 @@ func TestRedisHScan(t *testing.T) {
 			})
 		}
 
-		//模拟db插入
+		// 模拟db插入
 		log.Println("user: ", userInfo)
 		log.Println("ids: ", ids)
 		client.HDel("mykey", ids...)

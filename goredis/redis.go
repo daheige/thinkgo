@@ -109,6 +109,18 @@ func (conf *RedisClientConf) GetClient() *redis.Client {
 		conf.MaxConnAge = 30 * 60 * time.Second
 	}
 
+	if conf.DialTimeout == 0 {
+		conf.DialTimeout = 5 * time.Second
+	}
+
+	if conf.WriteTimeout == 0 {
+		conf.WriteTimeout = 3 * time.Second
+	}
+
+	if conf.ReadTimeout == 0 {
+		conf.ReadTimeout = 3 * time.Second
+	}
+
 	opt := &redis.Options{
 		Addr:         conf.Address,
 		Password:     conf.Password,
@@ -181,6 +193,18 @@ func GetJson(client *redis.Client, key string, data interface{}) error {
 func (conf *RedisClusterConf) GetCluster() *redis.ClusterClient {
 	if conf.MaxConnAge == 0 {
 		conf.MaxConnAge = 30 * 60 * time.Second
+	}
+
+	if conf.DialTimeout == 0 {
+		conf.DialTimeout = 5 * time.Second
+	}
+
+	if conf.WriteTimeout == 0 {
+		conf.WriteTimeout = 3 * time.Second
+	}
+
+	if conf.ReadTimeout == 0 {
+		conf.ReadTimeout = 3 * time.Second
 	}
 
 	cluster := redis.NewClusterClient(&redis.ClusterOptions{
