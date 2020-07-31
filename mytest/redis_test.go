@@ -20,7 +20,7 @@ func TestRedisPool(t *testing.T) {
 		IdleTimeout: 240,
 	}
 
-	//建立连接
+	// 建立连接
 	conf.SetRedisPool("default")
 	var wg sync.WaitGroup
 
@@ -37,7 +37,7 @@ func TestRedisPool(t *testing.T) {
 			value, _ := redis.String(client.Do("get", "myname"))
 			fmt.Println("myname:", value)
 
-			//切换到database 1上面操作
+			// 切换到database 1上面操作
 			v, err := client.Do("Select", 1)
 			fmt.Println(v, err)
 			_, _ = client.Do("lpush", "myList", 123)

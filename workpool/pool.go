@@ -3,7 +3,6 @@ package workpool
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,7 +33,10 @@ func (t *Task) run(logEntry Logger) {
 		}
 	}()
 
-	t.fn()
+	err := t.fn()
+	if err != nil {
+		logEntry.Println("exec task error: ", err)
+	}
 }
 
 // Logger log record interface
@@ -44,14 +46,19 @@ type Logger interface {
 
 // Pool task work pool
 type Pool struct {
-	entryChan    chan *Task     // task entry chan
-	jobChan      chan *Task     // job chan
-	workerNum    int            // worker num
-	logEntry     Logger         // logger interface
-	stop         chan struct{}  // stop sem
-	interrupt    chan os.Signal // interrupt signal
-	wait         time.Duration  // close entry chan wait time,default 5s
-	shutdownWait time.Duration  // work pool shutdown wait time,default 3s
+	// execInterval interval time after each task is executed
+	// interval default 10ms
+	execInterval   time.Duration
+	entryChan      chan *Task     // task entry chan
+	entryCap       int            // entry chan num
+	jobChan        chan *Task     // job chan
+	jobCap         int            // job chan num
+	workerCap      int            // worker chan num
+	logEntry       Logger         // logger interface
+	stop           chan struct{}  // stop sem
+	interrupt      chan os.Signal // interrupt signal
+	entryCloseWait time.Duration  // close entry chan wait time,default 5s
+	shutdownWait   time.Duration  // work pool shutdown wait time,default 3s
 }
 
 var (
@@ -63,64 +70,53 @@ var (
 
 	// defaultMaxWorker default max worker num
 	// the number of workers depends on the specific business.
-	defaultMaxWorker = 100
+	defaultMaxWorker = 10000
 
+	// defaultMinWorker default min worker.
+	defaultMinWorker = 3
+
+	// empty struct
 	est = struct{}{}
 
-	// LogDebug log task run in which worker.
-	LogDebug = false
+	// dummy logger writes nothing.
+	dummyLogger = LoggerFunc(func(...interface{}) {})
 )
 
-// Option func Option to change pool
+// LoggerFunc is a bridge between Logger and any third party logger.
+type LoggerFunc func(...interface{})
+
+// Println implements Logger interface.
+func (f LoggerFunc) Println(args ...interface{}) { f(args...) }
+
+// Option func Option to change pool.
 type Option func(p *Pool)
 
-// NewPool returns a pool.
-func NewPool(num int, ec int, jc ...int) *Pool {
-	if num < 0 || num >= defaultMaxWorker {
-		num = defaultMaxWorker
+// WithExecInterval interval time after each task is executed.
+func WithExecInterval(t time.Duration) Option {
+	return func(p *Pool) {
+		p.execInterval = t
 	}
+}
 
-	if ec < 0 || ec >= defaultMaxEntryCap {
-		ec = defaultMaxEntryCap
+// WithEntryNum task entry chan number.
+func WithEntryCap(n int) Option {
+	return func(p *Pool) {
+		p.entryCap = n
 	}
+}
 
-	// jobChan buf num
-	var jobChanCap int
-	if len(jc) > 0 && jc[0] > 0 {
-		jobChanCap = jc[0]
+// WithJobCap job chan number.
+func WithJobCap(n int) Option {
+	return func(p *Pool) {
+		p.jobCap = n
 	}
+}
 
-	if jobChanCap < 0 || jobChanCap >= defaultMaxJobCap {
-		jobChanCap = defaultMaxJobCap
+// WithWorkerCap change worker num.
+func WithWorkerCap(num int) Option {
+	return func(p *Pool) {
+		p.workerCap = num
 	}
-
-	p := &Pool{
-		workerNum:    num,
-		stop:         make(chan struct{}, 1),
-		wait:         5 * time.Second,
-		shutdownWait: 3 * time.Second,
-		interrupt:    make(chan os.Signal, 1),
-	}
-
-	if jobChanCap == 0 {
-		// no buf for jobChan.
-		p.jobChan = make(chan *Task)
-	} else {
-		p.jobChan = make(chan *Task, ec)
-	}
-
-	if ec == 0 {
-		// no buf for entryChan.
-		p.entryChan = make(chan *Task)
-	} else {
-		p.entryChan = make(chan *Task, ec)
-	}
-
-	if p.logEntry == nil {
-		p.logEntry = log.New(os.Stderr, "", log.LstdFlags)
-	}
-
-	return p
 }
 
 // WithLogger change logger entry.
@@ -130,24 +126,67 @@ func WithLogger(logEntry Logger) Option {
 	}
 }
 
-// WithWaitTime close entry chan wait time.
-func WithWaitTime(d time.Duration) Option {
+// WithEntryCloseWait close entry chan entryCloseWait time.
+func WithEntryCloseWait(d time.Duration) Option {
 	return func(p *Pool) {
-		p.wait = d
+		p.entryCloseWait = d
 	}
 }
 
-// WithWorkerNum change worker num.
-func WithWorkerNum(num int) Option {
-	return func(p *Pool) {
-		p.workerNum = num
-	}
-}
-
-// WithShutdownWait change shutdown wait time.
+// WithShutdownWait change shutdown entryCloseWait time.
 func WithShutdownWait(d time.Duration) Option {
 	return func(p *Pool) {
 		p.shutdownWait = d
+	}
+}
+
+// NewPool returns a pool.
+func NewPool(opts ...Option) *Pool {
+	p := &Pool{
+		execInterval:   10 * time.Millisecond,
+		workerCap:      defaultMinWorker,
+		stop:           make(chan struct{}, 1),
+		entryCloseWait: 5 * time.Second,
+		shutdownWait:   3 * time.Second,
+		interrupt:      make(chan os.Signal, 1),
+		logEntry:       dummyLogger, // default logger entry.
+	}
+
+	// option functions.
+	p.apply(opts...)
+
+	if p.workerCap >= defaultMaxWorker {
+		p.workerCap = defaultMaxWorker
+	}
+
+	if p.jobCap == 0 {
+		// no buf for jobChan.
+		p.jobChan = make(chan *Task)
+	} else {
+		if p.jobCap >= defaultMaxJobCap {
+			p.jobCap = defaultMaxJobCap
+		}
+
+		p.jobChan = make(chan *Task, p.jobCap)
+	}
+
+	if p.entryCap == 0 {
+		// no buf for entryChan.
+		p.entryChan = make(chan *Task)
+	} else {
+		if p.entryCap >= defaultMaxEntryCap {
+			p.entryCap = defaultMaxEntryCap
+		}
+
+		p.entryChan = make(chan *Task, p.entryCap)
+	}
+
+	return p
+}
+
+func (p *Pool) apply(opts ...Option) {
+	for _, opt := range opts {
+		opt(p)
 	}
 }
 
@@ -197,21 +236,23 @@ func (p *Pool) exec(id int, done chan struct{}) {
 	// get task from JobChan to run.
 	for task := range p.jobChan {
 		task.run(p.logEntry)
-		if LogDebug {
-			p.logEntry.Println("current worker id: ", id)
+		p.logEntry.Println("current worker id: ", id)
+
+		// interval time after each task is executed.
+		if p.execInterval > 0 {
+			time.Sleep(p.execInterval)
 		}
 	}
 }
 
-// Run create workerNum goroutine to exec task.
+// Run create workerCap goroutine to exec task.
 func (p *Pool) Run() {
 	p.logEntry.Println("exec task begin...")
 	signal.Notify(p.interrupt, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 
-	doneBuf := make(chan struct{}, p.workerNum)
-
-	// create p.workerNum goroutine to do task
-	for i := 0; i < p.workerNum; i++ {
+	doneBuf := make(chan struct{}, p.workerCap)
+	// create p.workerCap goroutine to do task
+	for i := 0; i < p.workerCap; i++ {
 		go p.exec(i+1, doneBuf)
 	}
 
@@ -232,9 +273,9 @@ func (p *Pool) Run() {
 		p.logEntry.Println("recv signal: ", sig.String())
 		close(p.stop)
 
-		// Here you need to wait for the task that has been sent to the entry chan
+		// Here you need to entryCloseWait for the task that has been sent to the entry chan
 		// to ensure that it can be sent successfully
-		ctx, cancel := context.WithTimeout(context.Background(), p.wait)
+		ctx, cancel := context.WithTimeout(context.Background(), p.entryCloseWait)
 		defer cancel()
 
 		<-ctx.Done()
@@ -242,8 +283,8 @@ func (p *Pool) Run() {
 		close(p.entryChan)
 	}()
 
-	// wait all job chan task to finish.
-	for i := 0; i < p.workerNum; i++ {
+	// entryCloseWait all job chan task to finish.
+	for i := 0; i < p.workerCap; i++ {
 		<-doneBuf
 	}
 
@@ -252,11 +293,11 @@ func (p *Pool) Run() {
 
 // Shutdown If all task are sent to the task entry chan, you can call this method to exit smoothly.
 func (p *Pool) Shutdown() {
-	// Create a deadline to manual exit wait time.
-	ctx, cancel := context.WithTimeout(context.Background(), p.wait)
+	// Create a deadline to manual exit entryCloseWait time.
+	ctx, cancel := context.WithTimeout(context.Background(), p.entryCloseWait)
 	defer cancel()
 
-	// Doesn't block if no task, but will otherwise wait
+	// Doesn't block if no task, but will otherwise entryCloseWait
 	// until the timeout deadline.
 	<-ctx.Done()
 

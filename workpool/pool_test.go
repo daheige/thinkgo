@@ -2,7 +2,9 @@ package workpool
 
 import (
 	"log"
+	"os"
 	"testing"
+	"time"
 )
 
 func TestPool(t *testing.T) {
@@ -11,20 +13,23 @@ func TestPool(t *testing.T) {
 		return nil
 	})
 
-	// p := NewPool(3, 0)
-	// p := NewPool(3, 0, 100)
-	// p := NewPool(3, 100)
-	p := NewPool(3, 100, 100)
+	p := NewPool(
+		WithExecInterval(100*time.Millisecond),
+		WithEntryCap(10), WithJobCap(10), WithWorkerCap(10),
+		WithLogger(log.New(os.Stderr, "", log.LstdFlags)),
+	)
+
+	// p := NewPool(WithEntryCap(3), WithWorkerCap(10))
 
 	go func() {
 		i := 0
 		for {
-			//if i > 100000 {
+			// if i > 100000 {
 			//	break
-			//}
+			// }
 
 			p.AddTask(task)
-			//log.Println("i = ", i)
+			// log.Println("i = ", i)
 			i++
 		}
 	}()
@@ -38,7 +43,13 @@ func TestShutdown(t *testing.T) {
 		return nil
 	})
 
-	p := NewPool(10, 10000, 10000)
+	p := NewPool(
+		WithExecInterval(100*time.Millisecond),
+		WithEntryCap(10), WithJobCap(1000),
+		WithWorkerCap(1000), WithLogger(log.New(os.Stderr, "", log.LstdFlags)),
+		WithEntryCloseWait(2*time.Second),
+		WithShutdownWait(3*time.Second),
+	)
 
 	go func() {
 		i := 0
@@ -59,43 +70,49 @@ func TestShutdown(t *testing.T) {
 
 /**
 go test -v  -test.run TestPool
-020/05/23 19:41:41 hello
-2020/05/23 19:41:41 hello
-2020/05/23 19:41:41 hello
-2020/05/23 19:41:41 hello
-2020/05/23 19:41:41 hello
-2020/05/23 19:41:46 current worker id:  3 will exit...
-2020/05/23 19:41:46 current worker id:  1 will exit...
-2020/05/23 19:41:46 work pool shutdown success
-2020/05/23 19:41:46 current worker id:  2 will exit...
---- PASS: TestPool (9.31s)
+2020/07/04 11:33:01 i =  937710
+2020/07/04 11:33:01 current worker id:  68 will exit...
+2020/07/04 11:33:01 current worker id:  40 will exit...
+2020/07/04 11:33:01 current worker id:  447 will exit...
+2020/07/04 11:33:01 current worker id:  734 will exit...
+2020/07/04 11:33:01 current worker id:  579 will exit...
+2020/07/04 11:33:01 current worker id:  737 will exit...
+2020/07/04 11:33:01 current worker id:  20 will exit...
+2020/07/04 11:33:01 i =  937711
+2020/07/04 11:33:01 i =  937712
+2020/07/04 11:33:01 i =  937713
+2020/07/04 11:33:01 current worker id:  995 will exit...
+2020/07/04 11:33:01 work pool shutdown success
+2020/07/04 11:33:01 i =  937719
+2020/07/04 11:33:01 i =  937720
+2020/07/04 11:33:01 i =  937721
+--- PASS: TestShutdown (4.58s)
+2020/07/04 11:33:01 i =  937731
 PASS
-ok  	github.com/daheige/workpool	9.317s
+ok  	github.com/daheige/workpool	4.586s
 
 go test -v  -test.run TestShutdown
-2020/05/23 19:47:15 i =  1199999
-2020/05/23 19:47:15 i =  1200000
-2020/05/23 19:47:15 hello
-2020/05/23 19:47:15 hello
-2020/05/23 19:47:15 hello
-2020/05/23 19:47:15 hello
-2020/05/23 19:47:15 hello
-2020/05/23 19:47:20 work pool will shutdown...
-2020/05/23 19:47:20 recv signal:  terminated
-2020/05/23 19:47:25 current worker id:  1 will exit...
-2020/05/23 19:47:25 current worker id:  8 will exit...
-2020/05/23 19:47:25 current worker id:  9 will exit...
-2020/05/23 19:47:25 work pool shutdown success
-2020/05/23 19:47:25 current worker id:  3 will exit...
---- PASS: TestShutdown (15.67s)
-2020/05/23 19:47:25 current worker id:  5 will exit...
-2020/05/23 19:47:25 current worker id:  2 will exit...
-2020/05/23 19:47:25 current worker id:  10 will exit...
-2020/05/23 19:47:25 current worker id:  6 will exit...
-2020/05/23 19:47:25 current worker id:  7 will exit...
-2020/05/23 19:47:25 current worker id:  4 will exit...
-PASS
-ok  	github.com/daheige/workpool	15.681s
-PASS
-ok  	github.com/daheige/workpool	15.354s
+2020/07/04 11:16:07 hello
+2020/07/04 11:16:07 current worker id:  457
+2020/07/04 11:16:07 hello
+2020/07/04 11:16:07 current worker id:  245
+2020/07/04 11:16:09 work pool will shutdown...
+2020/07/04 11:16:09 recv signal:  terminated
+2020/07/04 11:16:11 current worker id:  740 will exit...
+2020/07/04 11:16:11 current worker id:  245 will exit...
+2020/07/04 11:16:11 current worker id:  1000 will exit...
+2020/07/04 11:16:11 current worker id:  6 will exit...
+2020/07/04 11:16:11 current worker id:  723 will exit...
+2020/07/04 11:16:11 current worker id:  334 will exit...
+2020/07/04 11:16:11 current worker id:  754 will exit...
+2020/07/04 11:16:11 work pool shutdown success
+2020/07/04 11:16:11 current worker id:  324 will exit...
+2020/07/04 11:16:11 current worker id:  423 will exit...
+--- PASS: TestShutdown (127.41s)
+2020/07/04 11:16:11 current worker id:  830 will exit...
+2020/07/04 11:1PASS
+6:11 current worker id:  693 will exit...
+2020/07/04 11:16:11 current worker id:  552 will exit...
+2020/07/04 11:16:11 current worker id:  394 will exit...
+2020/07/04 11:16:11 current worker id:  14 will exit...
 */

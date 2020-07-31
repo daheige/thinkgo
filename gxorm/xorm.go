@@ -6,8 +6,7 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
+	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 )
 
@@ -22,6 +21,10 @@ type DbBaseConf struct {
 	Collation string // 整理字符集 utf8mb4_unicode_ci
 	ParseTime bool
 	Loc       string // 时区字符串 Local,PRC
+
+	Timeout      time.Duration // Dial timeout
+	ReadTimeout  time.Duration // I/O read timeout
+	WriteTimeout time.Duration // I/O write timeout
 }
 
 // DbConf mysql连接信息
@@ -70,10 +73,46 @@ func (conf *DbBaseConf) InitDbEngine() (*xorm.Engine, error) {
 		conf.Loc = "Local"
 	}
 
+	if conf.Timeout == 0 {
+		conf.Timeout = 10 * time.Second
+	}
+
+	if conf.WriteTimeout == 0 {
+		conf.WriteTimeout = 5 * time.Second
+	}
+
+	if conf.ReadTimeout == 0 {
+		conf.ReadTimeout = 5 * time.Second
+	}
+
+	// mysql connection time loc.
+	loc, err := time.LoadLocation(conf.Loc)
+	if err != nil {
+		return nil, err
+	}
+
+	// mysql config
+	mysqlConf := mysql.Config{
+		User:   conf.User,
+		Passwd: conf.Password,
+		Net:    "tcp",
+		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
+		DBName: conf.Database,
+		// Connection parameters
+		Params: map[string]string{
+			"charset": conf.Charset,
+		},
+		Collation:            conf.Collation,
+		Loc:                  loc,               // Location for time.Time values
+		Timeout:              conf.Timeout,      // Dial timeout
+		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
+		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
+		AllowNativePasswords: true,              // Allows the native password authentication method
+		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
+	}
+
 	// 连接实例对象，并非立即连接db,用的时候才会真正的建立连接
-	db, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
-		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
-		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
+	db, err := xorm.NewEngine("mysql", mysqlConf.FormatDSN())
 	if err != nil {
 		return nil, err
 	}
