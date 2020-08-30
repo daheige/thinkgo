@@ -30,7 +30,7 @@ func (myUser) TableName() string {
 	return "user"
 }
 
-func TestGxorm(t *testing.T) {
+func TestGXORM(t *testing.T) {
 	var e *xorm.Engine
 	log.Println(e == nil)
 
@@ -46,8 +46,7 @@ func TestGxorm(t *testing.T) {
 
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
-		SqlCmd:       true,
-		ShowExecTime: true,
+		ShowSql:      true,
 	}
 
 	db, err := dbConf.NewEngine() // 设置数据库连接对象，并非真正连接，只有在用的时候才会建立连接
@@ -94,8 +93,7 @@ func TestGxorm(t *testing.T) {
 		},
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
-		SqlCmd:       true,
-		ShowExecTime: true,
+		ShowSql:      true,
 		MaxLifetime:  200 * time.Second,
 	}
 
@@ -134,7 +132,7 @@ func TestGxorm(t *testing.T) {
 
 /**
 $ go test -v
-=== RUN   TestGxorm
+=== RUN   TestGXORM
 2019/11/12 21:45:29 true
 2019/11/12 21:45:29 ====master db===
 [xorm] [info]  2019/11/12 21:45:29.633242 [SQL] SELECT `id`, `name`, `age` FROM `user` WHERE (id = ?) LIMIT 1 []interface {}{1} - took: 49.72224ms

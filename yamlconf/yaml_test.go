@@ -37,7 +37,7 @@ func TestYaml(t *testing.T) {
  * TestYaml
 $ go test -v
 === RUN   TestYaml
-2019/11/05 23:19:31 map[AppEnv:local AppName:hg-mux DbDefault:map[Database:test Ip:127.0.0.1 MaxIdleConns:10 MaxOpenConns:100 ParseTime:true Password:root Port:3306 SqlCmd:true UsePool:true User:root] RedisCommon:map[Database:0 Host:127.0.0.1 IdleTimeout:120 Ip:[11.12.1.1 11.12.1.2 11.12.1.3] MaxActive:10 MaxIdle:3 Password:<nil> Port:6379]]
+2019/11/05 23:19:31 map[AppEnv:local AppName:hg-mux DbDefault:map[Database:test Ip:127.0.0.1 MaxIdleConns:10 MaxOpenConns:100 ParseTime:true Password:root Port:3306 ShowSql:true UsePool:true User:root] RedisCommon:map[Database:0 Host:127.0.0.1 IdleTimeout:120 Ip:[11.12.1.1 11.12.1.2 11.12.1.3] MaxActive:10 MaxIdle:3 Password:<nil> Port:6379]]
 2019/11/05 23:19:31 RedisCommon:  map[Database:0 Host:127.0.0.1 IdleTimeout:120 Ip:[11.12.1.1 11.12.1.2 11.12.1.3] MaxActive:10 MaxIdle:3 Password:<nil> Port:6379]
 2019/11/05 23:19:31 &{{127.0.0.1 6379  0 3 10 120} [11.12.1.1 11.12.1.2 11.12.1.3]}
 2019/11/05 23:19:31 Ip: [11.12.1.1 11.12.1.2 11.12.1.3]

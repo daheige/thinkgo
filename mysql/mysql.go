@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -34,31 +35,35 @@ var engineMap = map[string]*gorm.DB{}
 // The date or datetime like 0000-00-00 00:00:00 is converted
 // into zero value of time.Time.
 type DbConf struct {
-	Ip           string
-	Port         int // 默认3306
-	User         string
-	Password     string
-	Database     string
-	Charset      string // 字符集 utf8mb4 支持表情符号
-	Collation    string // 整理字符集 utf8mb4_unicode_ci
-	MaxIdleConns int    // 空闲pool个数
-	MaxOpenConns int    // 最大open connection个数
+	Ip        string
+	Port      int // 默认3306
+	User      string
+	Password  string
+	Database  string
+	Charset   string // 字符集 utf8mb4 支持表情符号
+	Collation string // 整理字符集 utf8mb4_unicode_ci
 
-	Timeout      time.Duration // Dial timeout
-	ReadTimeout  time.Duration // I/O read timeout
-	WriteTimeout time.Duration // I/O write timeout
+	UsePool      bool // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	MaxIdleConns int  // 空闲pool个数
+	MaxOpenConns int  // 最大open connection个数
 
 	// sets the maximum amount of time a connection may be reused.
 	// 设置连接可以重用的最大时间
 	// 给db设置一个超时时间，时间小于数据库的超时时间
 	MaxLifetime int64 // 数据库超时时间，单位s
 
-	ParseTime  bool
+	// 连接超时/读取超时/写入超时设置
+	Timeout      time.Duration // Dial timeout
+	ReadTimeout  time.Duration // I/O read timeout
+	WriteTimeout time.Duration // I/O write timeout
+
+	ParseTime  bool     // 格式化时间类型
 	Loc        string   // 时区字符串 Local,PRC
 	engineName string   // 当前数据库连接句柄标识
 	dbObj      *gorm.DB // 当前数据库连接句柄
-	SqlCmd     bool     // sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
-	UsePool    bool     // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+
+	ShowSql bool           // sql语句是否输出
+	Logger  gorm.LogWriter // sql输出logger句柄接口
 }
 
 // SetEngineName 给当前数据库指定engineName
@@ -195,12 +200,20 @@ func (conf *DbConf) initDb() error {
 	// 具体可以看gorm/main.go源码Open方法
 	db, err := gorm.Open("mysql", mysqlConf.FormatDSN())
 	if err != nil { // 数据库连接错误
+		log.Println("open mysql connection error: ", err)
+
 		return err
 	}
 
-	// 将sql打印到终端
-	if conf.SqlCmd {
+	if conf.ShowSql {
 		db.LogMode(true)
+		if conf.Logger == nil {
+			conf.Logger = log.New(os.Stdout, "\r\n", 0)
+		}
+
+		db.SetLogger(gorm.Logger{
+			LogWriter: conf.Logger,
+		})
 	}
 
 	// 设置连接池
