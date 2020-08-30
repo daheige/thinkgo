@@ -13,10 +13,6 @@
     golang1.11+版本，可采用go mod机制管理包,需设置goproxy
     golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
 
-# go mod incompatible package
-    
-    go.mod中一些不兼容的版本，后续会陆续进行升级替换
-
 # About package
     
     .
@@ -53,6 +49,15 @@
     ├── xerrors             自定义错误类型，一般用在api/微服务等业务逻辑中，处理错误
     ├── xsort               基于sort标准库封装的sort操作函数
     └── yamlconf            基于yaml+reflect实现yaml文件的读取，一般用在web/job/rpc应用中
+
+# Upgrade log
+    
+    2020.08.30
+        1）对xorm从v0.8.2升级到v1.0.3，支持mysql5.6-mysql8.0+版本
+        2）对gxorm/gorm mysql sql日志输出采用接口方式设计
+        3）废弃gxorm/gorm mysql SqlCmd参数，改为ShowSql
+        4）删除gxorm ShowExecTime参数配置
+        如果需要使用原来的版本，请使用thinkgo v1.10.x版本
 
 # usage
 

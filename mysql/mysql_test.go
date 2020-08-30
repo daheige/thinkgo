@@ -39,7 +39,7 @@ func TestGorm(t *testing.T) {
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
 		ParseTime:    true,
-		SqlCmd:       true,
+		ShowSql:      true,
 	}
 
 	//设置db engine name
@@ -94,7 +94,7 @@ func TestShortConnect(t *testing.T) {
 			Password:  "root1234",
 			Database:  "test",
 			ParseTime: true,
-			SqlCmd:    true,
+			ShowSql:   true,
 		}
 
 		//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接

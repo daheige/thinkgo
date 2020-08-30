@@ -1,6 +1,6 @@
 #配置文件
 AppEnv: "local"
-AppName: hg-mux
+AppName: hg-app
 
 #redis配置
 RedisCommon:
@@ -25,6 +25,6 @@ DbDefault:
   MaxIdleConns: 10
   MaxOpenConns: 100
   ParseTime: true
-  SqlCmd: true
+  ShowSql: true
   UsePool: true
 
