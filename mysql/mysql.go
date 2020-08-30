@@ -34,31 +34,35 @@ var engineMap = map[string]*gorm.DB{}
 // The date or datetime like 0000-00-00 00:00:00 is converted
 // into zero value of time.Time.
 type DbConf struct {
-	Ip           string
-	Port         int // 默认3306
-	User         string
-	Password     string
-	Database     string
-	Charset      string // 字符集 utf8mb4 支持表情符号
-	Collation    string // 整理字符集 utf8mb4_unicode_ci
-	MaxIdleConns int    // 空闲pool个数
-	MaxOpenConns int    // 最大open connection个数
+	Ip        string
+	Port      int // 默认3306
+	User      string
+	Password  string
+	Database  string
+	Charset   string // 字符集 utf8mb4 支持表情符号
+	Collation string // 整理字符集 utf8mb4_unicode_ci
 
-	Timeout      time.Duration // Dial timeout
-	ReadTimeout  time.Duration // I/O read timeout
-	WriteTimeout time.Duration // I/O write timeout
+	UsePool      bool // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	MaxIdleConns int  // 空闲pool个数
+	MaxOpenConns int  // 最大open connection个数
 
 	// sets the maximum amount of time a connection may be reused.
 	// 设置连接可以重用的最大时间
 	// 给db设置一个超时时间，时间小于数据库的超时时间
 	MaxLifetime int64 // 数据库超时时间，单位s
 
-	ParseTime  bool
+	// db 连接超时/读取超时/写入超时配置
+	Timeout      time.Duration // Dial timeout
+	ReadTimeout  time.Duration // I/O read timeout
+	WriteTimeout time.Duration // I/O write timeout
+
+	ParseTime  bool     // 格式化时间配置
 	Loc        string   // 时区字符串 Local,PRC
 	engineName string   // 当前数据库连接句柄标识
 	dbObj      *gorm.DB // 当前数据库连接句柄
-	SqlCmd     bool     // sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
-	UsePool    bool     // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+
+	// sql语句是否输出到终端,true输出到终端，生产环境建议关闭，因为log会加锁
+	SqlCmd bool
 }
 
 // SetEngineName 给当前数据库指定engineName
@@ -193,8 +197,11 @@ func (conf *DbConf) initDb() error {
 	// 对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
 	// 但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
 	// 具体可以看gorm/main.go源码Open方法
-	db, err := gorm.Open("mysql", mysqlConf.FormatDSN())
+	var db *gorm.DB
+	db, err = gorm.Open("mysql", mysqlConf.FormatDSN())
 	if err != nil { // 数据库连接错误
+		log.Println("mysql connection error: ", err)
+
 		return err
 	}
 

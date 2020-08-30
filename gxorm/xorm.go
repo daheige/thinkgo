@@ -35,8 +35,9 @@ type DbBaseConf struct {
 type DbConf struct {
 	DbBaseConf
 
-	MaxIdleConns int // 设置连接池的空闲数大小
-	MaxOpenConns int // 最大open connection个数
+	UsePool      bool // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
+	MaxIdleConns int  // 设置连接池的空闲数大小
+	MaxOpenConns int  // 最大open connection个数
 
 	// sets the maximum amount of time a connection may be reused.
 	// 设置连接可以重用的最大时间
@@ -44,7 +45,6 @@ type DbConf struct {
 	MaxLifetime time.Duration
 
 	SqlCmd       bool // sql语句是否输出到终端,true输出到终端
-	UsePool      bool // 当前db实例是否采用db连接池,默认不采用，如采用请求配置该参数
 	ShowExecTime bool // 是否打印sql执行时间
 }
 
@@ -112,7 +112,8 @@ func (conf *DbBaseConf) InitDbEngine() (*xorm.Engine, error) {
 	}
 
 	// 连接实例对象，并非立即连接db,用的时候才会真正的建立连接
-	db, err := xorm.NewEngine("mysql", mysqlConf.FormatDSN())
+	var db *xorm.Engine
+	db, err = xorm.NewEngine("mysql", mysqlConf.FormatDSN())
 	if err != nil {
 		return nil, err
 	}
@@ -217,18 +218,19 @@ type EngineGroupConf struct {
 	Master DbBaseConf
 	Slaves []DbBaseConf
 
+	UsePool bool // 是否采用连接池
 	// the following configuration is for the configuration on each instance of master and slave
 	// not the overall configuration of the engine group.
 	// 下面的配置对于每个实例的配置，并非整个引擎组的配置
-	MaxIdleConns int  // 设置连接池的空闲数大小
-	MaxOpenConns int  // 最大open connection个数
-	SqlCmd       bool // sql语句是否输出到终端,true输出到终端
-	ShowExecTime bool // 是否打印sql执行时间
-
+	MaxIdleConns int // 设置连接池的空闲数大小
+	MaxOpenConns int // 最大open connection个数
 	// sets the maximum amount of time a connection may be reused.
 	// Expired connections may be closed lazily before reuse.
 	// If d <= 0, connections are reused forever.
 	MaxLifetime time.Duration
+
+	SqlCmd       bool // sql语句是否输出到终端,true输出到终端
+	ShowExecTime bool // 是否打印sql执行时间
 }
 
 // NewEngineGroup 创建读写分离的引擎组，附带一些拓展配置
@@ -265,17 +267,26 @@ func (conf *EngineGroupConf) NewEngineGroup() (*xorm.EngineGroup, error) {
 		return nil, errors.New("init slaves fail")
 	}
 
-	eg, err := xorm.NewEngineGroup(master, slaves)
+	var eg *xorm.EngineGroup
+	eg, err = xorm.NewEngineGroup(master, slaves)
 	if err != nil {
+		log.Println("init engine group error: ", err)
+
 		return nil, err
 	}
 
-	eg.ShowSQL(conf.SqlCmd)            // 当为true时则会在控制台打印出生成的SQL语句；
-	eg.ShowExecTime(conf.ShowExecTime) // 显示SQL语句执行时间
+	if conf.SqlCmd {
+		eg.ShowSQL(conf.SqlCmd)
+	}
 
-	// 采用连接池方式建立连接
-	eg.SetMaxIdleConns(conf.MaxIdleConns) // 最大db空闲数
-	eg.SetMaxOpenConns(conf.MaxOpenConns) // db最大连接数,小于数据库配置的最大连接
+	if conf.ShowExecTime {
+		eg.ShowExecTime(conf.ShowExecTime)
+	}
+
+	if conf.UsePool {
+		eg.SetMaxIdleConns(conf.MaxIdleConns) // 最大db空闲数
+		eg.SetMaxOpenConns(conf.MaxOpenConns) // db最大连接数,小于数据库配置的最大连接
+	}
 
 	// 设置连接可以重用的最大时间
 	// 给db设置一个超时时间，时间小于数据库的超时时间
