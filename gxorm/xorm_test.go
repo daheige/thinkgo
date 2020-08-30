@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 /**
@@ -39,7 +39,7 @@ func TestGxorm(t *testing.T) {
 			Ip:        "127.0.0.1",
 			Port:      3306,
 			User:      "root",
-			Password:  "root",
+			Password:  "root1234",
 			Database:  "test",
 			ParseTime: true,
 		},
@@ -70,7 +70,7 @@ func TestGxorm(t *testing.T) {
 			Ip:        "127.0.0.1",
 			Port:      3306,
 			User:      "root",
-			Password:  "root",
+			Password:  "root1234",
 			Database:  "test",
 			ParseTime: true,
 		},
@@ -79,7 +79,7 @@ func TestGxorm(t *testing.T) {
 				Ip:        "127.0.0.1",
 				Port:      3306,
 				User:      "test1",
-				Password:  "1234",
+				Password:  "root1234",
 				Database:  "test",
 				ParseTime: true,
 			},
@@ -87,7 +87,7 @@ func TestGxorm(t *testing.T) {
 				Ip:        "127.0.0.1",
 				Port:      3306,
 				User:      "test2",
-				Password:  "1234",
+				Password:  "root1234",
 				Database:  "test",
 				ParseTime: true,
 			},

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 // DbBaseConf 数据库基本配置
