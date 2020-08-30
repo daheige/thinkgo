@@ -11,10 +11,10 @@ import (
 
 func TestUuid(t *testing.T) {
 	t.Log("测试uuid")
-	fmt.Println(time.Now().UnixNano() / 1e6) //将纳秒转换为毫秒
-	fmt.Println(time.Now().UnixNano() / 1e9) //将纳秒转换为毫秒
-	fmt.Println(time.Now().Unix())           //当前时间戳
-	fmt.Println(1e3)                         //1000
+	fmt.Println(time.Now().UnixNano() / 1e6) // 将纳秒转换为毫秒
+	fmt.Println(time.Now().UnixNano() / 1e9) // 将纳秒转换为毫秒
+	fmt.Println(time.Now().Unix())           // 当前时间戳
+	fmt.Println(1e3)                         // 1000
 
 	var nums int = 1e3
 	var strList []string

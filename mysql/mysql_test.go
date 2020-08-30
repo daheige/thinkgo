@@ -34,7 +34,7 @@ func TestGorm(t *testing.T) {
 		Ip:           "127.0.0.1",
 		Port:         3306,
 		User:         "root",
-		Password:     "root",
+		Password:     "root1234",
 		Database:     "test",
 		MaxIdleConns: 10,
 		MaxOpenConns: 100,
@@ -44,10 +44,10 @@ func TestGorm(t *testing.T) {
 
 	//设置db engine name
 	err := dbconf.SetDbPool() //建立db连接池
-	log.Fatalln("err: ", err)
+	log.Println("err: ", err)
 
 	err = dbconf.SetEngineName("default") //为每个db设置一个engine name
-	log.Fatalln("err: ", err)
+	log.Println("err: ", err)
 
 	//defer dbconf.Close() //关闭当前连接
 	defer CloseAllDb() //关闭所有的连接句柄
@@ -59,8 +59,8 @@ func TestGorm(t *testing.T) {
 	}
 
 	user := &myUser{}
-	db.Where("name = ?", "hello").First(user)
-	log.Println("user: ", user)
+	err = db.Where("name = ?", "hello").First(user).Error
+	log.Println("user: ", user, err)
 
 	nums := 100
 	var wg sync.WaitGroup
@@ -70,7 +70,6 @@ func TestGorm(t *testing.T) {
 			defer wg.Done()
 
 			db, err := GetDbObj("default")
-
 			if err != nil {
 				log.Println("get db error: ", err.Error())
 				return
@@ -92,7 +91,7 @@ func TestShortConnect(t *testing.T) {
 			Ip:        "127.0.0.1",
 			Port:      3306,
 			User:      "root",
-			Password:  "root",
+			Password:  "root1234",
 			Database:  "test",
 			ParseTime: true,
 			SqlCmd:    true,
@@ -109,6 +108,7 @@ func TestShortConnect(t *testing.T) {
 
 	//这里我设置了db max_connections最大连接为1000
 	var wg sync.WaitGroup
+	// var maxConnections = 30
 	var maxConnections = 1000
 	// var maxConnections = 2000
 	for i := 0; i < maxConnections; i++ {

@@ -6,13 +6,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/daheige/thinkgo/rediscache"
+	"github.com/daheige/thinkgo/gredigo"
 
 	"github.com/gomodule/redigo/redis"
 )
 
 func TestRedisPool(t *testing.T) {
-	conf := &rediscache.RedisConf{
+	conf := &gredigo.RedisConf{
 		Host:        "127.0.0.1",
 		Port:        6379,
 		MaxIdle:     100,
@@ -20,7 +20,7 @@ func TestRedisPool(t *testing.T) {
 		IdleTimeout: 240,
 	}
 
-	//建立连接
+	// 建立连接
 	conf.SetRedisPool("default")
 	var wg sync.WaitGroup
 
@@ -28,7 +28,7 @@ func TestRedisPool(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			client := rediscache.GetRedisClient("default")
+			client := gredigo.GetRedisClient("default")
 			defer client.Close()
 
 			ok, err := client.Do("set", "myname", "daheige")
@@ -37,7 +37,7 @@ func TestRedisPool(t *testing.T) {
 			value, _ := redis.String(client.Do("get", "myname"))
 			fmt.Println("myname:", value)
 
-			//切换到database 1上面操作
+			// 切换到database 1上面操作
 			v, err := client.Do("Select", 1)
 			fmt.Println(v, err)
 			_, _ = client.Do("lpush", "myList", 123)

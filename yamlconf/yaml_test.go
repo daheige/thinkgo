@@ -6,11 +6,11 @@ import (
 
 	"github.com/daheige/thinkgo/mysql"
 
-	"github.com/daheige/thinkgo/rediscache"
+	"github.com/daheige/thinkgo/gredigo"
 )
 
 type Data struct {
-	rediscache.RedisConf
+	gredigo.RedisConf
 	Ip []string
 }
 

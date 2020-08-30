@@ -21,7 +21,7 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
 
@@ -43,6 +43,10 @@ type DbConf struct {
 	Collation    string // 整理字符集 utf8mb4_unicode_ci
 	MaxIdleConns int    // 空闲pool个数
 	MaxOpenConns int    // 最大open connection个数
+
+	Timeout      time.Duration // Dial timeout
+	ReadTimeout  time.Duration // I/O read timeout
+	WriteTimeout time.Duration // I/O write timeout
 
 	// sets the maximum amount of time a connection may be reused.
 	// 设置连接可以重用的最大时间
@@ -148,12 +152,48 @@ func (conf *DbConf) initDb() error {
 		conf.Loc = "Local"
 	}
 
+	if conf.Timeout == 0 {
+		conf.Timeout = 10 * time.Second
+	}
+
+	if conf.WriteTimeout == 0 {
+		conf.WriteTimeout = 5 * time.Second
+	}
+
+	if conf.ReadTimeout == 0 {
+		conf.ReadTimeout = 5 * time.Second
+	}
+
+	// mysql connection time loc.
+	loc, err := time.LoadLocation(conf.Loc)
+	if err != nil {
+		return err
+	}
+
+	// mysql config
+	mysqlConf := mysql.Config{
+		User:   conf.User,
+		Passwd: conf.Password,
+		Net:    "tcp",
+		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
+		DBName: conf.Database,
+		// Connection parameters
+		Params: map[string]string{
+			"charset": conf.Charset,
+		},
+		Collation:            conf.Collation,
+		Loc:                  loc,               // Location for time.Time values
+		Timeout:              conf.Timeout,      // Dial timeout
+		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
+		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
+		AllowNativePasswords: true,              // Allows the native password authentication method
+		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
+	}
+
 	// 对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
 	// 但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
-	// 具体可以看gorm/main.go源码85行
-	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=%v&loc=%s",
-		conf.User, conf.Password, conf.Ip, conf.Port, conf.Database,
-		conf.Charset, conf.Collation, conf.ParseTime, conf.Loc))
+	// 具体可以看gorm/main.go源码Open方法
+	db, err := gorm.Open("mysql", mysqlConf.FormatDSN())
 	if err != nil { // 数据库连接错误
 		return err
 	}
@@ -176,8 +216,6 @@ func (conf *DbConf) initDb() error {
 	}
 
 	conf.dbObj = db
-
-	// log.Println("current dbObj: ",db)
 
 	return nil
 }
