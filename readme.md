@@ -58,6 +58,10 @@
         3）废弃gxorm/gorm mysql SqlCmd参数，改为ShowSql
         4）删除gxorm ShowExecTime参数配置
         如果需要使用原来的版本，请使用thinkgo v1.10.x版本
+    
+    2020.09.11
+        1) xorm升级到v1.0.5
+        2) gorm升级到v1.9.16
 
 # usage
 
