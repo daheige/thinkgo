@@ -51,17 +51,20 @@
     └── yamlconf            基于yaml+reflect实现yaml文件的读取，一般用在web/job/rpc应用中
 
 # Upgrade log
-    
+    2020.09.12
+        1) 升级gorm v1.9.x版本到v1.20.1 gorm2.0
+        对于gorm v1版本，请使用thinkgo v1.11.x版本的包
+        
+    2020.09.11
+        1) xorm升级到v1.0.5
+        2) gorm升级到v1.9.16
+            
     2020.08.30
         1）对xorm从v0.8.2升级到v1.0.3，支持mysql5.6-mysql8.0+版本
         2）对gxorm/gorm mysql sql日志输出采用接口方式设计
         3）废弃gxorm/gorm mysql SqlCmd参数，改为ShowSql
         4）删除gxorm ShowExecTime参数配置
         如果需要使用原来的版本，请使用thinkgo v1.10.x版本
-    
-    2020.09.11
-        1) xorm升级到v1.0.5
-        2) gorm升级到v1.9.16
 
 # usage
 
