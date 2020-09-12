@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 /**
@@ -30,7 +30,7 @@ func (myUser) TableName() string {
 }
 
 func TestGorm(t *testing.T) {
-	dbconf := &DbConf{
+	dbConf := &DbConf{
 		Ip:           "127.0.0.1",
 		Port:         3306,
 		User:         "root",
@@ -43,13 +43,13 @@ func TestGorm(t *testing.T) {
 	}
 
 	//设置db engine name
-	err := dbconf.SetDbPool() //建立db连接池
+	err := dbConf.SetDbPool() //建立db连接池
 	log.Println("err: ", err)
 
-	err = dbconf.SetEngineName("default") //为每个db设置一个engine name
+	err = dbConf.SetEngineName("default") //为每个db设置一个engine name
 	log.Println("err: ", err)
 
-	//defer dbconf.Close() //关闭当前连接
+	//defer dbConf.Close() //关闭当前连接
 	defer CloseAllDb() //关闭所有的连接句柄
 
 	db, err := GetDbObj("default")
@@ -122,7 +122,16 @@ func TestShortConnect(t *testing.T) {
 				return
 			}
 
-			defer db.Close()
+			// 关闭数据句柄
+			defer func() {
+				sqlDB, err := db.DB()
+				if err != nil {
+					log.Println("get db instance error: ", err.Error())
+					return
+				}
+
+				sqlDB.Close()
+			}()
 
 			user := &myUser{}
 			db.Where("name = ?", "hello").First(user)
@@ -160,4 +169,18 @@ panic: runtime error: invalid memory address or nil pointer dereference
 
 goroutine 1401 [running]:
 就会出现panic
+
+// 对github.com/jinzhu/gorm升级到gorm.io/gorm v1.20.1版本后，单元测试
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 &{5 hello}
+2020/09/12 14:02:29 test success
+--- PASS: TestGorm (0.03s)
+PASS
 */

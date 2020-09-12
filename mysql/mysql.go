@@ -12,18 +12,23 @@
 *	具体可以看gorm/main.go源码85行
 * 对于gorm实现读写分离:
 *	可以实例化master,slaves实例，对于curd用不同的句柄就可以
+* 由于gorm自己对mysql做了一次包裹，所以重命名处理
+* gMysql "gorm.io/driver/mysql"
+* gorm v2版本仓库地址：https://github.com/go-gorm/gorm
  */
 package mysql
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	gMysql "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // engineMap 每个数据库连接pool就是一个db引擎
@@ -62,8 +67,18 @@ type DbConf struct {
 	engineName string   // 当前数据库连接句柄标识
 	dbObj      *gorm.DB // 当前数据库连接句柄
 
-	ShowSql bool           // sql语句是否输出
-	Logger  gorm.LogWriter // sql输出logger句柄接口
+	ShowSql bool // sql语句是否输出
+
+	// sql输出logger句柄接口
+	// logger.Writer 接口需要实现Printf(string, ...interface{}) 方法
+	// 具体可以看gorm v2 logger包源码
+	// https://github.com/go-gorm/gorm
+	Logger logger.Writer
+
+	// gorm v2版本新增参数
+	gMysqlConfig gMysql.Config // gorm v2新增参数gMysql.Config
+	gormConfig   gorm.Config   // gorm v2新增参数gorm.Config
+	LoggerConfig logger.Config // gorm v2新增参数logger.Config
 }
 
 // SetEngineName 给当前数据库指定engineName
@@ -119,8 +134,15 @@ func (conf *DbConf) Close() error {
 		return nil
 	}
 
-	if err := conf.Db().Close(); err != nil {
-		log.Println("close db error: ", err.Error())
+	db, err := conf.Db().DB()
+	if err != nil {
+		log.Println("get db instance error: ", err.Error())
+		return err
+	}
+
+	err = db.Close()
+	if err != nil {
+		log.Println("close db instance error: ", err.Error())
 		return err
 	}
 
@@ -133,6 +155,37 @@ func (conf *DbConf) Close() error {
 // Db 返回当前db对象
 func (conf *DbConf) Db() *gorm.DB {
 	return conf.dbObj
+}
+
+// DSN 设置mysql dsn
+func (conf *DbConf) DSN() (string, error) {
+	// mysql connection time loc.
+	loc, err := time.LoadLocation(conf.Loc)
+	if err != nil {
+		return "", err
+	}
+
+	// mysql config
+	mysqlConf := mysql.Config{
+		User:   conf.User,
+		Passwd: conf.Password,
+		Net:    "tcp",
+		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
+		DBName: conf.Database,
+		// Connection parameters
+		Params: map[string]string{
+			"charset": conf.Charset,
+		},
+		Collation:            conf.Collation,
+		Loc:                  loc,               // Location for time.Time values
+		Timeout:              conf.Timeout,      // Dial timeout
+		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
+		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
+		AllowNativePasswords: true,              // Allows the native password authentication method
+		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
+	}
+
+	return mysqlConf.FormatDSN(), nil
 }
 
 // initDb 建立db连接句柄
@@ -169,63 +222,69 @@ func (conf *DbConf) initDb() error {
 		conf.ReadTimeout = 5 * time.Second
 	}
 
-	// mysql connection time loc.
-	loc, err := time.LoadLocation(conf.Loc)
-	if err != nil {
-		return err
+	// 是否输出sql日志
+	// 这里重写了之前的gorm v1版本的日志输出模式
+	if !conf.ShowSql {
+		if conf.LoggerConfig.LogLevel == 0 {
+			conf.LoggerConfig.LogLevel = logger.Info
+		}
+
+		// 日志对象接口
+		var dbLogger logger.Interface
+		if conf.Logger == nil {
+			dbLogger = logger.Default
+		} else {
+			dbLogger = logger.New(conf.Logger, conf.LoggerConfig)
+		}
+
+		// 设置gorm logger句柄对象
+		dbLogger = dbLogger.LogMode(conf.LoggerConfig.LogLevel)
+		conf.gormConfig.Logger = dbLogger
 	}
 
-	// mysql config
-	mysqlConf := mysql.Config{
-		User:   conf.User,
-		Passwd: conf.Password,
-		Net:    "tcp",
-		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
-		DBName: conf.Database,
-		// Connection parameters
-		Params: map[string]string{
-			"charset": conf.Charset,
-		},
-		Collation:            conf.Collation,
-		Loc:                  loc,               // Location for time.Time values
-		Timeout:              conf.Timeout,      // Dial timeout
-		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
-		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
-		AllowNativePasswords: true,              // Allows the native password authentication method
-		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
+	var db *gorm.DB
+	var err error
+	if conf.gMysqlConfig.DSN == "" {
+		dsn, err := conf.DSN()
+		if err != nil {
+			log.Println("mysql dsn format error: ", err)
+			return err
+		}
+
+		conf.gMysqlConfig.DSN = dsn
 	}
+
+	// 下面这种方式实例的gorm.DB 很多参数都没法正确设置，不推荐这么实例化
+	// db, err = gorm.Open(gMysql.Open(conf.gMysqlConfig.DSN), &gorm.Config{
+	// 	Logger: conf.Logger,
+	// })
 
 	// 对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
 	// 但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
 	// 具体可以看gorm/main.go源码Open方法
-	db, err := gorm.Open("mysql", mysqlConf.FormatDSN())
-	if err != nil { // 数据库连接错误
+	db, err = gorm.Open(gMysql.New(conf.gMysqlConfig), &conf.gormConfig)
+	if err != nil {
 		log.Println("open mysql connection error: ", err)
 
 		return err
 	}
 
-	if conf.ShowSql {
-		db.LogMode(true)
-		if conf.Logger == nil {
-			conf.Logger = log.New(os.Stdout, "\r\n", 0)
+	// 设置连接池
+	var sqlDB *sql.DB
+	if conf.UsePool {
+		sqlDB, err = db.DB()
+		if err != nil {
+			return err
 		}
 
-		db.SetLogger(gorm.Logger{
-			LogWriter: conf.Logger,
-		})
-	}
-
-	// 设置连接池
-	if conf.UsePool {
-		db.DB().SetMaxIdleConns(conf.MaxIdleConns)
-		db.DB().SetMaxOpenConns(conf.MaxOpenConns)
+		sqlDB.SetMaxIdleConns(conf.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(conf.MaxOpenConns)
 	}
 
 	// 设置连接可以重用的最大时间
 	// 给db设置一个超时时间，时间小于数据库的超时时间
 	if conf.MaxLifetime > 0 {
-		db.DB().SetConnMaxLifetime(time.Duration(conf.MaxLifetime) * time.Second)
+		sqlDB.SetConnMaxLifetime(time.Duration(conf.MaxLifetime) * time.Second)
 	}
 
 	conf.dbObj = db
@@ -247,23 +306,27 @@ func GetDbObj(name string) (*gorm.DB, error) {
 // CloseAllDb 由于gorm db.Close()是关闭当前连接，一般建议如下函数放在main/init关闭连接就可以
 func CloseAllDb() {
 	for name, db := range engineMap {
-		if err := db.Close(); err != nil {
-			log.Println("close db error: ", err.Error())
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Println("get db instance error: ", err.Error())
 			continue
 		}
 
+		sqlDB.Close()
 		delete(engineMap, name) // 销毁连接句柄标识
 	}
 }
 
 // CloseDbByName 关闭指定name的db engine
 func CloseDbByName(name string) error {
-	if _, ok := engineMap[name]; ok {
-		if err := engineMap[name].Close(); err != nil {
-			log.Println("close db error: ", err.Error())
+	if db, ok := engineMap[name]; ok {
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Println("get db instance error: ", err.Error())
 			return err
 		}
 
+		sqlDB.Close()
 		delete(engineMap, name) // 销毁连接句柄标识
 	}
 
