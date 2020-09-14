@@ -52,6 +52,11 @@
     └── yamlconf            基于yaml+reflect实现yaml文件的读取，一般用在web/job/rpc应用中
 
 # Upgrade log
+    
+    2020.09.14
+        1) fix gorm v2 mysql sql logger println
+        2) add viper config read
+        
     2020.09.12
         1) 升级gorm v1.9.x版本到v1.20.1 gorm2.0
         对于gorm v1版本，请使用thinkgo v1.11.x版本的包
