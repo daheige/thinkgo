@@ -224,7 +224,7 @@ func (conf *DbConf) initDb() error {
 
 	// 是否输出sql日志
 	// 这里重写了之前的gorm v1版本的日志输出模式
-	if !conf.ShowSql {
+	if conf.ShowSql {
 		if conf.LoggerConfig.LogLevel == 0 {
 			conf.LoggerConfig.LogLevel = logger.Info
 		}

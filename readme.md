@@ -43,6 +43,7 @@
     ├── redislock           基于redigo实现的redis+lua分布式锁实现
     ├── runner              runner用于按照顺序，执行程序任务操作，可作为cron作业或定时任务
     ├── sem                 指定数量的空结构体缓存通道，实现信息号实现互斥锁
+    ├── setting             通过viper+fsnotify实现配置文件读取，支持配置热更新
     ├── strlist             string list实现
     ├── work                利用无缓冲chan创建goroutine池来控制一组task的执行
     ├── workpool            workpool工作池实现，对于百万级并发的一些场景特别适用
