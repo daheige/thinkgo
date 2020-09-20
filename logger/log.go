@@ -10,7 +10,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // logger句柄，支持zap logger上的Debug,Info,Error,Panic,Warn,Fatal等方法
@@ -69,7 +69,7 @@ func LogLevel(lvl string) {
 
 // SetLogFile 设置日志文件路径，如果日志文件不存在zap会自动创建文件
 func SetLogFile(name string) {
-	if name == "" { //当name为空的时候，采用默认的logFileName文件名
+	if name == "" { // 当name为空的时候，采用默认的logFileName文件名
 		return
 	}
 
@@ -118,23 +118,23 @@ func SetLogDir(dir string) {
 // initCore 初始化zap core
 func initCore() {
 	if logDir == "" {
-		logFileName = filepath.Join(os.TempDir(), logFileName) //默认日志文件名称
+		logFileName = filepath.Join(os.TempDir(), logFileName) // 默认日志文件名称
 	} else {
 		logFileName = filepath.Join(logDir, logFileName)
 	}
 
-	//日志最低级别设置
+	// 日志最低级别设置
 	level := getLevel(logLevel)
 	syncWriter := zapcore.AddSync(&lumberjack.Logger{
-		Filename:  logFileName, //⽇志⽂件路径
-		MaxSize:   logMaxSize,  //单位为MB,默认为512MB
+		Filename:  logFileName, // ⽇志⽂件路径
+		MaxSize:   logMaxSize,  // 单位为MB,默认为512MB
 		MaxAge:    logMaxAge,   // 文件最多保存多少天
-		LocalTime: true,        //采用本地时间
-		Compress:  logCompress, //是否压缩日志
+		LocalTime: true,        // 采用本地时间
+		Compress:  logCompress, // 是否压缩日志
 	})
 
 	encoderConf := zapcore.EncoderConfig{
-		TimeKey:        "time_local", //本地时间
+		TimeKey:        "time_local", // 本地时间
 		LevelKey:       "level",
 		MessageKey:     "msg",
 		CallerKey:      "caller_line",
@@ -149,13 +149,20 @@ func initCore() {
 	core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderConf), syncWriter, zap.NewAtomicLevelAt(level))
 }
 
-// InitLogger 初始化fLogger句柄，skip指定显示文件名和行号的层级
-// skip 大于0会调用zap.AddCallerSkip
-// Caller(skip int)函数可以返回当前goroutine调用栈中的文件名，行号，函数信息等
-// 参数skip表示表示返回的栈帧的层次，0表示runtime.Caller的调用者，依次往上推导
-// 而golang 标准库中runtime.Caller(2) 返回当前goroutine调用栈中的文件名，行号，函数信息
-// 如果直接调用这个logger库中的Info,Error等方法，这里skip=1
-// 如果基于logger进行日志再进行封装，这个skip=2,依次类推
+/**
+InitLogger 初始化fLogger句柄，skip指定显示文件名和行号的层级
+skip 大于0会调用zap.AddCallerSkip
+Caller(skip int)函数可以返回当前goroutine调用栈中的文件名，行号，函数信息等
+参数skip表示表示返回的栈帧的层次，0表示runtime.Caller的调用者，依次往上推导
+而golang 标准库中runtime.Caller(2) 返回当前goroutine调用栈中的文件名，行号，函数信息
+如果直接调用这个logger库中的Info,Error等方法，这里skip=1
+如果基于logger进行日志再进行封装，这个skip=2,依次类推
+zap底层源码从v1.14版本之后，logger.go#260 check func
+check must always be called directly by a method in the Logger interface
+(e.g., Check, Info, Fatal).
+const callerSkipOffset = 2
+这里的callerSkipOffset默认是2，所以这里InitLogger skip需要初始化为1
+*/
 func InitLogger(skip ...int) {
 	if core == nil {
 		initCore()
@@ -172,13 +179,13 @@ func InitLogger(skip ...int) {
 }
 
 // LogSugar sugar语法糖，支持简单的msg信息打印
-//支持Debug,Info,Error,Panic,Warn,Fatal等方法
+// 支持Debug,Info,Error,Panic,Warn,Fatal等方法
 func LogSugar(skip ...int) *zap.SugaredLogger {
 	if core == nil {
 		initCore()
 	}
 
-	//基于zapcore创建sugar
+	// 基于zapcore创建sugar
 	if logTraceFileLine && len(skip) > 0 && skip[0] > 0 {
 		logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(skip[0]))
 		return logger.Sugar()
@@ -219,7 +226,7 @@ func DPanic(msg string, options map[string]interface{}) {
 }
 
 // Panic 下面的panic,fatal一般不建议使用，除非不可恢复的panic或致命错误程序必须退出
-//抛出panic的时候，先记录日志，然后执行panic,退出当前goroutine
+// 抛出panic的时候，先记录日志，然后执行panic,退出当前goroutine
 func Panic(msg string, options map[string]interface{}) {
 	fields := parseFields(options)
 	fLogger.Panic(msg, fields...)
@@ -233,15 +240,12 @@ func Fatal(msg string, options map[string]interface{}) {
 
 // Recover 异常捕获处理，对于异常或者panic进行捕获处理，记录到日志中，方便定位问题
 func Recover() {
-	defer func() {
-		if err := recover(); err != nil {
-			DPanic("exec panic", map[string]interface{}{
-				"error":       err,
-				"error_trace": string(debug.Stack()),
-			})
-		}
-
-	}()
+	if err := recover(); err != nil {
+		DPanic("exec panic", map[string]interface{}{
+			"error":       err,
+			"error_trace": string(debug.Stack()),
+		})
+	}
 }
 
 // parseFields 解析map[string]interface{}中的字段到zap.Field
