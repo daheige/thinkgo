@@ -1,6 +1,6 @@
 package gresty
 
-// go http client support get,post,delete,patch,put,head,file method
+// go http client support get,post,delete,patch,put,head,file method.
 // go-resty/resty: https:// github.com/go-resty/resty
 
 import (
@@ -10,17 +10,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 )
 
-// 默认请求超时
-var defaultTimeout = 3 * time.Second
+var (
+	// 默认请求超时
+	defaultTimeout = 3 * time.Second
 
-var defaultMaxRetries = 3 // 默认最大重试次数
+	// 默认最大重试次数
+	defaultMaxRetries = 3
+
+	// resp is nil
+	respEmpty = errors.New("resp is empty")
+)
 
 //  Service 请求句柄设置
 type Service struct {
@@ -32,8 +37,8 @@ type Service struct {
 
 // RequestOption 请求参数设置
 type RequestOption struct {
-	method     string // 请求的方法
-	requestUrl string // 请求url
+	Method string // 请求的方法
+	Url    string // 请求url
 
 	RetryCount       int                        // 重试次数
 	RetryWaitTime    time.Duration              // 重试间隔,默认100ms
@@ -62,9 +67,11 @@ type RequestOption struct {
 }
 
 // Reply 请求后的结果
+// statusCode,body,error.
 type Reply struct {
-	Err  error  // 请求过程中，发生的error
-	Body []byte // 返回的body内容
+	StatusCode int    // http request 返回status code
+	Err        error  // 请求过程中，发生的error
+	Body       []byte // 返回的body内容
 }
 
 // Text 返回Reply.Body文本格式
@@ -85,7 +92,7 @@ func (r *Reply) Json(data interface{}) error {
 	return nil
 }
 
-//  ApiStdRes 标准的api返回格式
+// ApiStdRes 标准的api返回格式
 type ApiStdRes struct {
 	Code    int
 	Message string
@@ -127,7 +134,7 @@ func (s *Service) NewRestyClient() *resty.Client {
 func (s *Service) Do(method string, reqUrl string, opt *RequestOption) *Reply {
 	if method == "" || reqUrl == "" {
 		return &Reply{
-			Err: errors.New("request method or request url is empty"),
+			Err: errors.New("request Method or request url is empty"),
 		}
 	}
 
@@ -136,8 +143,8 @@ func (s *Service) Do(method string, reqUrl string, opt *RequestOption) *Reply {
 		opt = &RequestOption{}
 	}
 
-	opt.method = method
-	opt.requestUrl = reqUrl
+	opt.Method = method
+	opt.Url = reqUrl
 	return s.Request(opt, client)
 }
 
@@ -151,13 +158,13 @@ func (s *Service) Do(method string, reqUrl string, opt *RequestOption) *Reply {
 // client.R().SetFormData method sets Form parameters and their values in the current request.
 // It's applicable only HTTP method `POST` and `PUT` and requests content type would be
 // set as `application/x-www-form-urlencoded`.
-func (s *Service) Request(req *RequestOption, client *resty.Client) *Reply {
+func (s *Service) Request(reqOpt *RequestOption, client *resty.Client) *Reply {
 	if client == nil {
 		client = s.NewRestyClient()
 	}
 
 	if s.BaseUri != "" {
-		req.requestUrl = strings.TrimRight(s.BaseUri, "/") + "/" + req.requestUrl
+		reqOpt.Url = strings.TrimRight(s.BaseUri, "/") + "/" + reqOpt.Url
 	}
 
 	if s.Timeout == 0 {
@@ -174,36 +181,35 @@ func (s *Service) Request(req *RequestOption, client *resty.Client) *Reply {
 	}
 
 	// 重试次数，重试间隔，最大重试超时时间
-	if req.RetryCount > 0 {
-		if req.RetryCount >= defaultMaxRetries {
-			req.RetryCount = defaultMaxRetries // 最大重试次数
+	if reqOpt.RetryCount > 0 {
+		if reqOpt.RetryCount >= defaultMaxRetries {
+			reqOpt.RetryCount = defaultMaxRetries // 最大重试次数
 		}
 
-		if len(req.RetryConditions) > 0 {
-			client.RetryConditions = req.RetryConditions
+		if len(reqOpt.RetryConditions) > 0 {
+			client.RetryConditions = reqOpt.RetryConditions
 		}
 
-		client = client.SetRetryCount(req.RetryCount)
-
-		if req.RetryWaitTime != 0 {
-			client = client.SetRetryWaitTime(req.RetryWaitTime)
+		client = client.SetRetryCount(reqOpt.RetryCount)
+		if reqOpt.RetryWaitTime != 0 {
+			client = client.SetRetryWaitTime(reqOpt.RetryWaitTime)
 		}
 
-		if req.RetryMaxWaitTime != 0 {
-			client = client.SetRetryMaxWaitTime(req.RetryMaxWaitTime)
+		if reqOpt.RetryMaxWaitTime != 0 {
+			client = client.SetRetryMaxWaitTime(reqOpt.RetryMaxWaitTime)
 		}
 	}
 
-	if cLen := len(req.Cookies); cLen > 0 {
+	if cLen := len(reqOpt.Cookies); cLen > 0 {
 		cookies := make([]*http.Cookie, cLen)
-		for k := range req.Cookies {
+		for k := range reqOpt.Cookies {
 			cookies = append(cookies, &http.Cookie{
 				Name:     k,
-				Value:    fmt.Sprintf("%v", req.Cookies[k]),
-				Path:     req.CookiePath,
-				Domain:   req.CookieDomain,
-				MaxAge:   req.CookieMaxAge,
-				HttpOnly: req.CookieHttpOnly,
+				Value:    fmt.Sprintf("%v", reqOpt.Cookies[k]),
+				Path:     reqOpt.CookiePath,
+				Domain:   reqOpt.CookieDomain,
+				MaxAge:   reqOpt.CookieMaxAge,
+				HttpOnly: reqOpt.CookieHttpOnly,
 			})
 		}
 
@@ -211,57 +217,56 @@ func (s *Service) Request(req *RequestOption, client *resty.Client) *Reply {
 	}
 
 	// 设置header头
-	if len(req.Headers) > 0 {
-		client = client.SetHeaders(s.ParseData(req.Headers))
+	if len(reqOpt.Headers) > 0 {
+		client = client.SetHeaders(s.ParseData(reqOpt.Headers))
 	}
 
 	var resp *resty.Response
 	var err error
-	method := strings.ToLower(req.method)
-
+	method := strings.ToLower(reqOpt.Method)
 	switch method {
 	case "get", "delete", "head":
-		client = client.SetQueryParams(s.ParseData(req.Params))
+		client = client.SetQueryParams(s.ParseData(reqOpt.Params))
 		if method == "get" {
-			resp, err = client.R().Get(req.requestUrl)
+			resp, err = client.R().Get(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 
 		if method == "delete" {
-			resp, err = client.R().Delete(req.requestUrl)
+			resp, err = client.R().Delete(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 
 		if method == "head" {
-			resp, err = client.R().Head(req.requestUrl)
+			resp, err = client.R().Head(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 	case "post", "put", "patch":
 		request := client.R()
-		if len(req.Data) > 0 {
-			request = request.SetFormData(s.ParseData(req.Data))
+		if len(reqOpt.Data) > 0 {
+			request = request.SetFormData(s.ParseData(reqOpt.Data))
 		}
 
-		if req.Json != nil {
-			request = request.SetBody(req.Json)
+		if reqOpt.Json != nil {
+			request = request.SetBody(reqOpt.Json)
 		}
 
 		if method == "post" {
-			resp, err = request.Post(req.requestUrl)
+			resp, err = request.Post(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 
 		if method == "put" {
-			resp, err = request.Put(req.requestUrl)
+			resp, err = request.Put(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 
 		if method == "patch" {
-			resp, err = request.Patch(req.requestUrl)
+			resp, err = request.Patch(reqOpt.Url)
 			return s.GetResult(resp, err)
 		}
 	case "file":
-		b, err := ioutil.ReadFile(req.FileName)
+		b, err := ioutil.ReadFile(reqOpt.FileName)
 		if err != nil {
 			return &Reply{
 				Err: errors.New("read file error: " + err.Error()),
@@ -270,14 +275,15 @@ func (s *Service) Request(req *RequestOption, client *resty.Client) *Reply {
 
 		// 文件上传
 		resp, err := client.R().
-			SetFileReader(req.FileParamName, req.FileName, bytes.NewReader(b)).
-			Post(req.requestUrl)
+			SetFileReader(reqOpt.FileParamName, reqOpt.FileName, bytes.NewReader(b)).
+			Post(reqOpt.Url)
 		return s.GetResult(resp, err)
 	default:
 	}
 
 	return &Reply{
-		Err: errors.New("request method not support"),
+		Err:        errors.New("request method not support"),
+		StatusCode: http.StatusServiceUnavailable,
 	}
 }
 
@@ -301,19 +307,30 @@ func (s *Service) ParseData(d map[string]interface{}) map[string]string {
 	return data
 }
 
-// GetResult 处理请求的结果
+// GetResult 处理请求的结果statusCode,body,error.
 func (s *Service) GetResult(resp *resty.Response, err error) *Reply {
-	res := &Reply{}
+	res := &Reply{
+		Err: err,
+	}
+
 	if err != nil {
-		res.Err = err
+		res.StatusCode = http.StatusInternalServerError
 		return res
 	}
 
+	if resp == nil {
+		res.StatusCode = http.StatusServiceUnavailable
+		res.Err = respEmpty
+	}
+
 	res.Body = resp.Body()
+	res.StatusCode = resp.StatusCode()
 	if !resp.IsSuccess() || resp.StatusCode() != 200 {
-		res.Err = errors.New("request error: " + fmt.Sprintf("%v",
-			resp.Error()) + "http StatusCode: " + strconv.Itoa(resp.StatusCode()) +
-			"status: " + resp.Status())
+		if err != nil {
+			res.Err = fmt.Errorf("request error: %v,resp error: %v", err.Error(), resp.Error())
+		} else {
+			res.Err = fmt.Errorf("resp error: %v", resp.Error())
+		}
 	}
 
 	return res
