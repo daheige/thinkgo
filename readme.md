@@ -52,7 +52,11 @@
     └── yamlconf            基于yaml+reflect实现yaml文件的读取，一般用在web/job/rpc应用中
 
 # Upgrade log
-    
+
+    2020.09.29
+        1) 重写gresty实现方式，支持指定resty.Client以及重试条件函数设置
+           备注：gresty低版本升级后无缝兼容，新增了Request方法
+        
     2020.09.14
         1) fix gorm v2 mysql sql logger println
         2) add viper config read

@@ -14,7 +14,7 @@
             Timeout: 2 * time.Second,
         }
 
-        opt := &gresty.ReqOpt{
+        opt := &gresty.RequestOption{
             Data: map[string]interface{}{
                 "id": "1234",
             },
