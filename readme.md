@@ -53,6 +53,9 @@
 
 # Upgrade log
     
+    2020.10.04
+        1) update go resty client.
+            
     2020.09.14
         1) add viper read config.
             
