@@ -2,21 +2,25 @@ package xsort
 
 import "sort"
 
-// int64类型的切片排序
+// Int64Slice int64类型的切片排序
 type Int64Slice []int64
 
+// NewInt64Slice 创建一个int64切片排序slice
 func NewInt64Slice(s []int64) Int64Slice {
 	return Int64Slice(s)
 }
 
+//Less less
 func (s Int64Slice) Less(i, j int) bool {
 	return s[i] < s[j]
 }
 
+// Len return len
 func (s Int64Slice) Len() int {
 	return len(s)
 }
 
+// Swap swap
 func (s Int64Slice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
@@ -37,6 +41,7 @@ func Int64StableSort(s []int64) {
 }
 
 // ============对[]Type类型的切片进行排序=========================
+
 // SliceStable 对切片类型的s进行稳定排序
 // SliceStable sorts the provided slice given the provided less
 // function while keeping the original order of equal elements.
@@ -46,8 +51,8 @@ func SliceStable(s interface{}, less func(i, j int) bool) {
 }
 
 // Slice 对s切片类型的数据进行排序,当出现相同元素的话，采用快速排序
-// The sort is not guaranteed to be stable. For a stable sort, use
-// SliceStable.
+// The sort is not guaranteed to be stable.
+// For a stable sort, use SliceStable.
 func Slice(s interface{}, less func(i, j int) bool) {
 	sort.Slice(s, less)
 }

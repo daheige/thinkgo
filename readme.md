@@ -53,6 +53,9 @@
 
 # Upgrade log
 
+	2020.10.04
+        1) update go resty client.
+        
     2020.09.29
         1) 重写gresty实现方式，支持指定resty.Client以及重试条件函数设置
            备注：gresty低版本升级后无缝兼容，新增了Request方法

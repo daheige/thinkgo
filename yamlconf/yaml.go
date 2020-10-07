@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // ConfigEngine 配置文件结构体
@@ -97,7 +97,7 @@ func setInt(v interface{}, defaultValue int) int {
 		return defaultValue
 	}
 
-	//类型断言
+	// 类型断言
 	switch value := v.(type) {
 	case string:
 		i, _ := strconv.Atoi(value)
@@ -127,7 +127,7 @@ func setInt64(v interface{}, defaultValue int64) int64 {
 		return defaultValue
 	}
 
-	//类型断言
+	// 类型断言
 	switch value := v.(type) {
 	case int64:
 		return value
@@ -232,17 +232,17 @@ func (c *ConfigEngine) GetStruct(name string, s interface{}) interface{} {
 // 用data(map类型)填充结构obj
 func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
 	for k, v := range data {
-		if v == nil { //当配置项的值是空，直接跳过
+		if v == nil { // 当配置项的值是空，直接跳过
 			continue
 		}
 
-		//打印k,v
-		//log.Println("k = ", k)
-		//log.Printf("k type = %T\n", k)
-		//log.Println("v = ", v)
+		// 打印k,v
+		// log.Println("k = ", k)
+		// log.Printf("k type = %T\n", k)
+		// log.Println("v = ", v)
 
 		if val, ok := k.(string); ok {
-			//log.Println("key:", val)
+			// log.Println("key:", val)
 
 			err := SetField(obj, val, v)
 			if err != nil {
@@ -258,7 +258,7 @@ func mapToStruct(data map[interface{}]interface{}, obj interface{}) error {
 func SetField(obj interface{}, name string, value interface{}) error {
 	// reflect.Indirect 返回value对应的值
 	structValue := reflect.Indirect(reflect.ValueOf(obj))
-	structFieldValue := structValue.FieldByName(name) //结构体的字段名
+	structFieldValue := structValue.FieldByName(name) // 结构体的字段名
 
 	// isValid 显示的测试一个空指针
 	if !structFieldValue.IsValid() {
@@ -276,7 +276,7 @@ func SetField(obj interface{}, name string, value interface{}) error {
 
 	if structFieldType.Kind() == reflect.Struct && val.Kind() == reflect.Map {
 		vint := val.Interface()
-		//类型断言,根据不同的类型设置k,v
+		// 类型断言,根据不同的类型设置k,v
 		switch v := vint.(type) {
 		case map[interface{}]interface{}:
 			for key, value := range v {
@@ -288,10 +288,10 @@ func SetField(obj interface{}, name string, value interface{}) error {
 			}
 		}
 	} else if structFieldType.Kind() == reflect.Slice && val.Kind() == reflect.Slice {
-		//log.Println("k:", name)
-		//log.Println("v", value)
-		//arr := getSlice(value.([]interface{}))
-		//log.Println("arr: ", arr)
+		// log.Println("k:", name)
+		// log.Println("v", value)
+		// arr := getSlice(value.([]interface{}))
+		// log.Println("arr: ", arr)
 		structFieldValue.Set(getSlice(value.([]interface{})))
 	} else {
 		if structFieldType != val.Type() {
@@ -310,21 +310,21 @@ func getSlice(v []interface{}) reflect.Value {
 	vLen := len(v)
 
 	switch vType {
-	case reflect.String: //字符串类型
+	case reflect.String: // 字符串类型
 		arr := make([]string, 0, vLen)
 		for _, _v := range v {
 			arr = append(arr, setString(_v, ""))
 		}
 
 		return reflect.ValueOf(arr)
-	case reflect.Int: //整数类型，这里不区分int32,int64统一用int类型
+	case reflect.Int: // 整数类型，这里不区分int32,int64统一用int类型
 		arr := make([]int, 0, vLen)
 		for _, _v := range v {
 			arr = append(arr, setInt(_v, 0))
 		}
 
 		return reflect.ValueOf(arr)
-	case reflect.Float64: //浮点类型统一用float64类型
+	case reflect.Float64: // 浮点类型统一用float64类型
 		arr := make([]float64, 0, vLen)
 		for _, _v := range v {
 			arr = append(arr, setFloat64(_v, 0))
@@ -334,6 +334,6 @@ func getSlice(v []interface{}) reflect.Value {
 	default:
 	}
 
-	//默认[]interface{}
+	// 默认[]interface{}
 	return reflect.ValueOf(v)
 }

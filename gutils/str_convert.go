@@ -3,7 +3,7 @@ package gutils
 
 import "strconv"
 
-//================str,int,int64,float64 conv func=======================
+// ================str,int,int64,float64 conv func=======================
 // IntToStr int-->string
 func IntToStr(n int) string {
 	return strconv.Itoa(n)

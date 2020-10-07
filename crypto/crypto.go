@@ -18,6 +18,9 @@ import (
 	"time"
 )
 
+// randStr 用于生成随机字符串
+var randStr = "0123456789abcdef"
+
 // Md5 md5 string
 func Md5(str string) string {
 	h := md5.New()
@@ -33,17 +36,17 @@ func Sha1(s string) string {
 
 // Sha1File sha1 file
 func Sha1File(fName string) (string, error) {
-	f, e := os.Open(fName)
-	if e != nil {
-		return "", e
+	f, err := os.Open(fName)
+	if err != nil {
+		return "", err
 	}
 
 	defer f.Close()
 
 	h := sha1.New()
-	_, e = io.Copy(h, f)
-	if e != nil {
-		return "", e
+	_, err = io.Copy(h, f)
+	if err != nil {
+		return "", err
 	}
 
 	return hex.EncodeToString(h.Sum(nil)), nil
@@ -69,15 +72,15 @@ func HmacSha1(str string, key string) string {
 
 // GetIteratorStr 得到指定16进制的数字
 func GetIteratorStr(length int) string {
-	str := "0123456789abcdef"
-	bytes := []byte(str)
-	result := []byte{}
+	b := []byte(randStr)
+	bLen := len(b)
+	res := make([]byte, 0, length+1)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < length; i++ {
-		result = append(result, bytes[r.Intn(len(bytes))])
+		res = append(res, b[r.Intn(bLen)])
 	}
 
-	return string(result)
+	return string(res)
 }
 
 // Sha256 sha256得到的值是一个固定值
@@ -97,17 +100,17 @@ func EncryptEcb(src, key string) (string, error) {
 	}
 
 	bs := block.BlockSize()
-	//对明文数据进行补码
+	// 对明文数据进行补码
 	data = PKCS5Padding(data, bs)
 	if len(data)%bs != 0 {
-		return "", errors.New("Need a multiple of the blocksize")
+		return "", errors.New("need a multiple of the block size")
 	}
 
 	out := make([]byte, len(data))
 	dst := out
 	for len(data) > 0 {
-		//对明文按照blocksize进行分块加密
-		//必要时可以使用go关键字进行并行加密
+		// 对明文按照blocksize进行分块加密
+		// 必要时可以使用go关键字进行并行加密
 		block.Encrypt(dst, data[:bs])
 		data = data[bs:]
 		dst = dst[bs:]
@@ -117,12 +120,15 @@ func EncryptEcb(src, key string) (string, error) {
 }
 
 /**
-ECB（电子密本方式）就是将数据按照8个字节一段进行DES加密或解密得到一段8个字节的密文或者明文，最后一段不足8个字节，按照需求补足8个字节进行计算，之后按照顺序将计算所得的数据连在一起即可，各段数据之间互不影响。
-特点
+ECB（电子密本方式）就是将数据按照8个字节一段进行DES加密或解密得到一段8个字节的密文或者明文，
+最后一段不足8个字节，按照需求补足8个字节进行计算，之后按照顺序将计算所得的数据连在一起即可，
+各段数据之间互不影响。
+特点：
 简单，有利于并行计算，误差不会被传送；
 不能隐藏明文的模式；在密文中出现明文消息的重复
 可能对明文进行主动攻击；加密消息块相互独立成为被攻击的弱点
 */
+
 // DecryptEcb ECB解密 key必须是8位
 func DecryptEcb(src, key string) (string, error) {
 	data, err := hex.DecodeString(src)
@@ -180,7 +186,7 @@ CBC（密文分组链接方式）有向量的概念, 它的实现机制使加密
 // 当key 24位的时候 相当于php base64_encode(openssl_encrypt($str, 'aes-192-cbc', $key, true, $iv));
 // 当key 32位的时候 相当于php base64_encode(openssl_encrypt($str, 'aes-256-cbc', $key, true, $iv));
 func AesEncrypt(encodeStr, key string, iv string) (string, error) {
-	//根据key 生成密文
+	// 根据key 生成密文
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
@@ -191,10 +197,10 @@ func AesEncrypt(encodeStr, key string, iv string) (string, error) {
 	encodeBytes = PKCS5Padding(encodeBytes, blockSize)
 
 	blockMode := cipher.NewCBCEncrypter(block, []byte(iv))
-	crypted := make([]byte, len(encodeBytes))
-	blockMode.CryptBlocks(crypted, encodeBytes)
+	c := make([]byte, len(encodeBytes))
+	blockMode.CryptBlocks(c, encodeBytes)
 
-	return base64.StdEncoding.EncodeToString(crypted), nil
+	return base64.StdEncoding.EncodeToString(c), nil
 }
 
 // AesDecrypt CBC解密key
@@ -204,12 +210,13 @@ func AesEncrypt(encodeStr, key string, iv string) (string, error) {
 // 当key 24位的时候 相当于php openssl_decrypt(base64_decode($strEncode), 'aes-192-cbc', $key, true, $iv)
 // 当key 32位的时候 相当于php openssl_decrypt(base64_decode($strEncode), 'aes-256-cbc', $key, true, $iv)
 func AesDecrypt(decodeStr, key, iv string) (string, error) {
-	decodeBytes, err := base64.StdEncoding.DecodeString(decodeStr) //先解密base64
+	decodeBytes, err := base64.StdEncoding.DecodeString(decodeStr) // 先解密base64
 	if err != nil {
 		return "", err
 	}
 
-	block, err := aes.NewCipher([]byte(key))
+	var block cipher.Block
+	block, err = aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
 	}
@@ -226,13 +233,13 @@ func AesDecrypt(decodeStr, key, iv string) (string, error) {
 // PKCS5Padding 明文补码算法
 func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(ciphertext, padtext...)
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padText...)
 }
 
 // PKCS5UnPadding 明文减码算法
 func PKCS5UnPadding(origData []byte) []byte {
-	length := len(origData)
-	unpadding := int(origData[length-1])
-	return origData[:(length - unpadding)]
+	oLen := len(origData)
+	unPadLen := int(origData[oLen-1])
+	return origData[:(oLen - unPadLen)]
 }
