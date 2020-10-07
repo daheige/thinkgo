@@ -270,34 +270,42 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 	}
 }
 
+// Debug debug log.
 func Debug(v interface{}, options map[string]interface{}) {
 	writeLog("debug", v, options)
 }
 
+// Info info log.
 func Info(v interface{}, options map[string]interface{}) {
 	writeLog("info", v, options)
 }
 
+// Notice notice log.
 func Notice(v interface{}, options map[string]interface{}) {
 	writeLog("notice", v, options)
 }
 
+// Warn warn log.
 func Warn(v interface{}, options map[string]interface{}) {
 	writeLog("warn", v, options)
 }
 
+// Error error log.
 func Error(v interface{}, options map[string]interface{}) {
 	writeLog("error", v, options)
 }
 
+// Critical critical log.
 func Critical(v interface{}, options map[string]interface{}) {
 	writeLog("critical", v, options)
 }
 
+// Alter alter log.
 func Alter(v interface{}, options map[string]interface{}) {
 	writeLog("alter", v, options)
 }
 
+// Emergency emergency log.
 func Emergency(v interface{}, options map[string]interface{}) {
 	writeLog("emergency", v, options)
 }
@@ -305,13 +313,10 @@ func Emergency(v interface{}, options map[string]interface{}) {
 // RecoverLog 异常捕获处理，对于异常或者panic进行捕获处理
 // 记录到日志中，方便定位问题
 func RecoverLog() {
-	defer func() {
-		if err := recover(); err != nil {
-			Emergency("exec panic", map[string]interface{}{
-				"error":       err,
-				"error_trace": string(grecover.CatchStack()),
-			})
-		}
-
-	}()
+	if err := recover(); err != nil {
+		Emergency("exec panic", map[string]interface{}{
+			"error":       err,
+			"error_trace": string(grecover.CatchStack()),
+		})
+	}
 }
