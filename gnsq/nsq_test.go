@@ -13,15 +13,15 @@ import (
 	"github.com/nsqio/go-nsq"
 )
 
-//通过直接连接到nsqd进行消费，速度快，但不方便拓展，建议通过lookupd查找节点进行消费
+// 通过直接连接到nsqd进行消费，速度快，但不方便拓展，建议通过lookupd查找节点进行消费
 var (
-	//nsqd的地址，使用了tcp监听的端口
-	tcpNsqdAddrr = "127.0.0.1:4152" //nsqd连接的tcp地址
-	lookupdAddrr = "127.0.0.1:4161" //lookupd http地址
+	// nsqd的地址，使用了tcp监听的端口
+	tcpNsqdAddrr = "127.0.0.1:4152" // nsqd连接的tcp地址
+	lookupdAddrr = "127.0.0.1:4161" // lookupd http地址
 )
 
-//go test -v -test.run TestProduction
-//查看消息发送的结果 http://localhost:4171/topics/test
+// go test -v -test.run TestProduction
+// 查看消息发送的结果 http://localhost:4171/topics/test
 /*
 send msg success
 2019/07/20 16:14:07 production will exit
@@ -35,50 +35,50 @@ func TestProduction(t *testing.T) {
 	conf := NewConfig()
 	conf.ReadTimeout = 10 * time.Second
 	conf.WriteTimeout = 10 * time.Second
-	conf.HeartbeatInterval = 5 * time.Second //心跳检查
+	conf.HeartbeatInterval = 5 * time.Second // 心跳检查
 
-	//创建生产者
+	// 创建生产者
 	tPro, err := InitProducer(tcpNsqdAddrr, conf)
 
 	if err != nil {
 		fmt.Println("new producer err:", err)
 	}
 
-	//平滑退出
+	// 平滑退出
 	ch := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// recivie signal to exit main goroutine
-	//window signal
+	// window signal
 	// signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, os.Interrupt, syscall.SIGHUP)
 
-	//测试发送100w消息
+	// 测试发送100w消息
 	nums := 100
 	for i := 0; i < nums; i++ {
-		//监听是否有退出信号
+		// 监听是否有退出信号
 		select {
-		case sig := <-ch: //接收到停止信号，就优雅的退出发送
-			signal.Stop(ch) //停止接收信号
+		case sig := <-ch: // 接收到停止信号，就优雅的退出发送
+			signal.Stop(ch) // 停止接收信号
 
 			log.Println("exit signal: ", sig.String())
-			//优雅的停止发送
-			//Stop initiates a graceful stop of the Producer (permanent)
+			// 优雅的停止发送
+			// Stop initiates a graceful stop of the Producer (permanent)
 			tPro.Stop()
-			goto exit //如果是退出函数可以写return
+			goto exit // 如果是退出函数可以写return
 		default:
 			log.Println("msg sending...")
 		}
 
-		//主题
+		// 主题
 		topic := "test"
-		//主题内容
+		// 主题内容
 		tCommand := "hello:" + strconv.Itoa(i)
-		//发布消息
+		// 发布消息
 
-		//这里可以调用tPro上面的方法Publish进行发送消息
+		// 这里可以调用tPro上面的方法Publish进行发送消息
 		// err = tPro.Publish(topic, []byte(tCommand))
 
-		//可以调用这个Publish进行发送
+		// 可以调用这个Publish进行发送
 		err = Publish(tPro, topic, []byte(tCommand))
 		if err != nil {
 			fmt.Println("publis msg error: ", err)
@@ -94,24 +94,26 @@ exit:
 
 }
 
-//声明一个结构体，实现HandleMessage接口方法（根据文档的要求）
-//实现nsq 底层的Handler
+// 声明一个结构体，实现HandleMessage接口方法（根据文档的要求）
+// 实现nsq 底层的Handler
 type nsqHandler struct {
-	//消息数
+	// 消息数
 	msqCount int64
-	//标识ID
+	// 标识ID
 	nsqHandlerID string
 }
 
-//实现 Handler接口上的HandleMessage方法
-//message是接收到的消息
+// 实现 Handler接口上的HandleMessage方法
+// message是接收到的消息
 func (s *nsqHandler) HandleMessage(message *nsq.Message) error {
-	//每收到一条消息+1
+	// 每收到一条消息+1
 	s.msqCount++
-	//打印输出信息和ID
+	// 打印输出信息和ID
 	fmt.Println(s.msqCount, s.nsqHandlerID)
-	//打印消息的一些基本信息
-	fmt.Printf("msg.Timestamp=%v, msg.nsqaddress=%s,msg.body=%s \n", time.Unix(0, message.Timestamp).Format("2006-01-02 03:04:05"), message.NSQDAddress, string(message.Body))
+	// 打印消息的一些基本信息
+	fmt.Printf("msg.Timestamp=%v, msg.nsqaddress=%s,msg.body=%s \n",
+		time.Unix(0, message.Timestamp).Format("2006-01-02 03:04:05"),
+		message.NSQDAddress, string(message.Body))
 	return nil
 }
 
@@ -133,38 +135,38 @@ ok      github.com/daheige/thinkgo/gNsq 259.807s
 func TestCust(t *testing.T) {
 	t.Log("test cust nsq")
 
-	//初始化配置
+	// 初始化配置
 	conf := NewConfig()
 	conf.ReadTimeout = 10 * time.Second
 	conf.WriteTimeout = 10 * time.Second
-	conf.HeartbeatInterval = 5 * time.Second //心跳检查
+	conf.HeartbeatInterval = 5 * time.Second // 心跳检查
 
-	//创造消费者，参数一时订阅的主题，参数二是使用的通道
+	// 创造消费者，参数一时订阅的主题，参数二是使用的通道
 	com, err := InitConsumer("test", "channel1", conf)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//添加处理回调
-	//com.AddHandler(&NsqHandler{nsqHandlerID: "One"}) //默认是单个goroutine处理消息
+	// 添加处理回调
+	// com.AddHandler(&NsqHandler{nsqHandlerID: "One"}) //默认是单个goroutine处理消息
 
-	//通过并发的方式消费
-	//指定10个goroutine内部消费
+	// 通过并发的方式消费
+	// 指定10个goroutine内部消费
 	com.AddConcurrentHandlers(&nsqHandler{nsqHandlerID: "One"}, 10)
-	//连接对应的nsqd
-	//err = com.ConnectToNSQD(tcpNsqdAddrr)
+	// 连接对应的nsqd
+	// err = com.ConnectToNSQD(tcpNsqdAddrr)
 
-	//通过lookupd查询到nsqd节点后，连接到对应的nsqd
+	// 通过lookupd查询到nsqd节点后，连接到对应的nsqd
 	err = com.ConnectToNSQLookupd(lookupdAddrr)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//平滑退出
+	// 平滑退出
 	ch := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// recivie signal to exit main goroutine
-	//window signal
+	// window signal
 	// signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, os.Interrupt, syscall.SIGHUP)
 
@@ -173,14 +175,14 @@ func TestCust(t *testing.T) {
 
 	log.Println("exit signal: ", sig.String())
 
-	//优雅的停止消费者
+	// 优雅的停止消费者
 	com.Stop()
 
 	log.Println("shutting down")
 }
 
-//测试100条消息消费
-//通过lookupd查找nsqd节点后，进行连接消费
+// 测试100条消息消费
+// 通过lookupd查找nsqd节点后，进行连接消费
 // go test -v -test.run TestCust2
 /**
 ^C2019/07/20 16:35:13 exit signal:  interrupt
@@ -193,29 +195,29 @@ ok      github.com/daheige/thinkgo/gNsq 1.207s
 func TestCust2(t *testing.T) {
 	t.Log("test cust nsq")
 
-	//初始化配置
+	// 初始化配置
 	conf := NewConfig()
 	conf.ReadTimeout = 10 * time.Second
 	conf.WriteTimeout = 10 * time.Second
-	conf.HeartbeatInterval = 5 * time.Second //心跳检查
+	conf.HeartbeatInterval = 5 * time.Second // 心跳检查
 
-	//创造消费者，参数一时订阅的主题，参数二是使用的通道
+	// 创造消费者，参数一时订阅的主题，参数二是使用的通道
 	com, err := InitConsumer("test", "channel1", conf)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//指定10个goroutine内部消费
+	// 指定10个goroutine内部消费
 	err = ConsumerConnectToNSQLookupd(com, lookupdAddrr, &nsqHandler{nsqHandlerID: "One"}, 10)
 	if err != nil {
 		log.Println("exec cust: ", err)
 	}
 
-	//平滑退出
+	// 平滑退出
 	ch := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// recivie signal to exit main goroutine
-	//window signal
+	// window signal
 	// signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, os.Interrupt, syscall.SIGHUP)
 
@@ -224,14 +226,14 @@ func TestCust2(t *testing.T) {
 
 	log.Println("exit signal: ", sig.String())
 
-	//优雅的停止消费者
+	// 优雅的停止消费者
 	com.Stop()
 
 	log.Println("shutting down")
 }
 
-//直接连接到nsqd上进行消费
-//测试100条消息消费
+// 直接连接到nsqd上进行消费
+// 测试100条消息消费
 // go test -v -test.run TestCust3
 /**
 ^C2019/07/20 16:35:38 exit signal:  interrupt
@@ -244,29 +246,29 @@ ok      github.com/daheige/thinkgo/gNsq 0.588s
 func TestCust3(t *testing.T) {
 	t.Log("test cust nsq")
 
-	//初始化配置
+	// 初始化配置
 	conf := NewConfig()
 	conf.ReadTimeout = 10 * time.Second
 	conf.WriteTimeout = 10 * time.Second
-	conf.HeartbeatInterval = 5 * time.Second //心跳检查
+	conf.HeartbeatInterval = 5 * time.Second // 心跳检查
 
-	//创造消费者，参数一时订阅的主题，参数二是使用的通道
+	// 创造消费者，参数一时订阅的主题，参数二是使用的通道
 	com, err := InitConsumer("test", "channel1", conf)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	//指定10个goroutine内部消费
+	// 指定10个goroutine内部消费
 	err = ConsumerConnectToNSQD(com, tcpNsqdAddrr, &nsqHandler{nsqHandlerID: "One"}, 10)
 	if err != nil {
 		log.Println("exec cust: ", err)
 	}
 
-	//平滑退出
+	// 平滑退出
 	ch := make(chan os.Signal, 1)
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
 	// recivie signal to exit main goroutine
-	//window signal
+	// window signal
 	// signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGHUP)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, os.Interrupt, syscall.SIGHUP)
 
@@ -275,7 +277,7 @@ func TestCust3(t *testing.T) {
 
 	log.Println("exit signal: ", sig.String())
 
-	//优雅的停止消费者
+	// 优雅的停止消费者
 	com.Stop()
 
 	log.Println("shutting down")

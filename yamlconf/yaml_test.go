@@ -21,7 +21,7 @@ func TestYaml(t *testing.T) {
 
 	log.Println("RedisCommon: ", conf.data["RedisCommon"])
 
-	//读取数据到结构体中
+	// 读取数据到结构体中
 	var redisConf = &Data{}
 	conf.GetStruct("RedisCommon", redisConf)
 	log.Println(redisConf)

@@ -99,7 +99,7 @@ func DoTaskWithTimeout(fn func() interface{}, timeout time.Duration) *TaskRes {
 	case <-done:
 		log.Println("task has done")
 	case <-time.After(timeout):
-		if res.Err == nil { //当执行过程中没有发生了panic的话，这里设置为任务超时错误
+		if res.Err == nil { // 当执行过程中没有发生了panic的话，这里设置为任务超时错误
 			res.Err = errors.New("task timeout")
 		}
 	}
@@ -135,7 +135,7 @@ func DoTaskWithContext(ctx context.Context, fn func() interface{}, timeout time.
 	select {
 	case <-done:
 		log.Println("task has done")
-	case <-ctx2.Done(): //超时了
+	case <-ctx2.Done(): // 超时了
 		if res.Err == nil {
 			res.Err = errors.New("task timeout")
 		}
@@ -206,7 +206,7 @@ func DoTaskWithContextArgs(ctx context.Context, fn func(args ...interface{}) int
 	select {
 	case <-done:
 		log.Println("task has done")
-	case <-ctx2.Done(): //超时了
+	case <-ctx2.Done(): // 超时了
 		if res.Err == nil {
 			res.Err = ctx2.Err()
 		}

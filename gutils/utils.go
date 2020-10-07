@@ -23,9 +23,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/daheige/thinkgo/crypto"
 	"github.com/daheige/thinkgo/gnum"
-	uuid "github.com/satori/go.uuid"
 )
 
 // Addslashes addslashes()

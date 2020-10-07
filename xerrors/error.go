@@ -7,19 +7,26 @@ package xerrors
 import "runtime/debug"
 
 type ErrorString struct {
-	s     string
-	Code  int
-	frame []byte //错误堆栈信息
+	msg   string
+	code  int
+	frame []byte // 错误堆栈信息
 }
 
-func New(text string, code int, isStack bool) error {
-	return MakeError(text, code, isStack)
+// New 创建一个error
+func New(text string, code int, isStack ...bool) error {
+	var b bool
+	if len(isStack) > 0 && isStack[0] {
+		b = true
+	}
+
+	return MakeError(text, code, b)
 }
 
+// MakeError 创建一个error
 func MakeError(text string, code int, isStack bool) *ErrorString {
 	err := &ErrorString{
-		s:    text,
-		Code: code,
+		msg:  text,
+		code: code,
 	}
 
 	if isStack {
@@ -29,12 +36,17 @@ func MakeError(text string, code int, isStack bool) *ErrorString {
 	return err
 }
 
-//实现了error interface{} Error方法
+// Error 实现了error interface{} Error方法
 func (e *ErrorString) Error() string {
-	return e.s
+	return e.msg
 }
 
-//打印完整的错误堆栈信息
+// Code 返回code
+func (e *ErrorString) Code() int {
+	return e.code
+}
+
+// Stack 打印完整的错误堆栈信息
 func (e *ErrorString) Stack() []byte {
 	return e.frame
 }

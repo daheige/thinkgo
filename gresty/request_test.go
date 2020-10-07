@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// TestRequest test request.
 func TestRequest(t *testing.T) {
 	s := New(WithTimeout(3 * time.Second))
 

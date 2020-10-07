@@ -19,7 +19,7 @@ func TestSort(t *testing.T) {
 	sort.Sort(arr)
 	log.Println(arr)
 
-	//对int64类型的切片,实现快速排序
+	// 对int64类型的切片,实现快速排序
 	s := []int64{1, 2, 3, 2, 12, 12, 10, 9, 1}
 	Int64QuickSort(s)
 
