@@ -32,12 +32,12 @@ func lock() {
 	}
 }
 
-//测试枷锁操作
+// TestRedisLock 测试枷锁操作
 func TestRedisLock(t *testing.T) {
 	lock()
 }
 
-//并发操作的尝试枷锁
+// TestLock 并发操作的尝试枷锁
 func TestLock(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(100)
@@ -76,6 +76,6 @@ func TestLock(t *testing.T) {
 2019/08/10 23:36:13 ok
 --- PASS: TestLock (0.02s)
 PASS
-ok      github.com/daheige/thinkgo/redisLock    0.073s
+ok      github.com/daheige/thinkgo/redislock    0.073s
 
 */

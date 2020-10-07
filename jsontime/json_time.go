@@ -10,7 +10,7 @@ import (
 // 自定义数据结构Time
 type Time time.Time
 
-var NullToEmptyStr bool //null是否转换为空字符串形式
+var NullToEmptyStr bool // null是否转换为空字符串形式
 
 const (
 	TmFormat = "2006-01-02 15:04:05"

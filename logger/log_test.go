@@ -6,10 +6,10 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	SetLogDir("./logs/") //设置日志文件目录
+	SetLogDir("./logs/") // 设置日志文件目录
 	SetLogFile("mytest.log")
 	MaxSize(20)
-	TraceFileLine(true) //关闭文件名和行数追踪
+	TraceFileLine(true) // 关闭文件名和行数追踪
 
 	InitLogger(1)
 
@@ -23,7 +23,7 @@ func TestLog(t *testing.T) {
 		"age": 28,
 	})
 
-	//测试60w日志输出到文件
+	// 测试60w日志输出到文件
 	nums := 30
 	var wg sync.WaitGroup
 	wg.Add(nums)
@@ -36,7 +36,7 @@ func TestLog(t *testing.T) {
 				"b": "free",
 			})
 
-			//Warn("haha", nil)
+			// Warn("haha", nil)
 		}()
 	}
 

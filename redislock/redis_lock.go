@@ -4,13 +4,14 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-var DefaultExpire = 20 //默认key过期时间20s
+var DefaultExpire = 10 // 加锁的key默认过期时间，单位s
 
+// Lock lock data.
 type Lock struct {
-	conn   redis.Conn  //redis连接句柄，支持redis pool连接句柄
-	expire int         //设置加锁key的过期时间
-	key    string      //加锁的key
-	val    interface{} //加锁的val
+	conn   redis.Conn  // redis连接句柄，支持redis pool连接句柄
+	expire int         // 设置加锁key的过期时间
+	key    string      // 加锁的key
+	val    interface{} // 加锁的val
 }
 
 // New 实例化redis分布式锁实例对象
@@ -28,7 +29,7 @@ func New(conn redis.Conn, key string, val interface{}, expire int) *Lock {
 }
 
 // delScript lua脚本删除一个key保证原子性，采用lua脚本执行
-//保证原子性（redis是单线程），避免del删除了，其他client获得的lock
+// 保证原子性（redis是单线程），避免del删除了，其他client获得的lock
 var delScript = redis.NewScript(1, `
 if redis.call("get", KEYS[1]) == ARGV[1] then
 	return redis.call("del", KEYS[1])

@@ -26,10 +26,10 @@ type SemInterface interface {
 // sem define
 type semaphore struct {
 	sem     chan struct{}
-	timeout time.Duration //acquire/release timeout
+	timeout time.Duration // acquire/release timeout
 }
 
-//New create semaphonre mutex lock with timeout,tickets: a limited number of resources
+// New create semaphonre mutex lock with timeout,tickets: a limited number of resources
 func New(tickets int, timeout time.Duration) SemInterface {
 	return &semaphore{
 		sem:     make(chan struct{}, tickets),
@@ -53,7 +53,7 @@ func (s *semaphore) Release() error {
 	select {
 	case <-s.sem:
 		return nil
-	case <-t: //release error
+	case <-t: // release error
 		return ErrIllegalRelease
 	}
 }

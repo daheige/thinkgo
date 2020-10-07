@@ -17,7 +17,7 @@ import (
 	"github.com/nsqio/go-nsq"
 )
 
-var defaultGroutines = 1 //消费者连接到Nsqd内部groutine个数
+var defaultGroutines = 1 // 消费者连接到Nsqd内部groutine个数
 
 // NewConfig 初始化nsq config
 func NewConfig() *nsq.Config {
@@ -39,7 +39,7 @@ func InitProducer(address string, conf *nsq.Config) (*nsq.Producer, error) {
 // Publish 发布消息
 // 当消息发送完毕后，需要producer.Stop() 让生产者优雅退出
 func Publish(producer *nsq.Producer, topic string, msgBytes []byte) error {
-	if len(msgBytes) == 0 { //不能发布空串，否则会导致error
+	if len(msgBytes) == 0 { // 不能发布空串，否则会导致error
 		return errors.New("msg is empty")
 	}
 
@@ -63,10 +63,10 @@ func ConsumerConnectToNSQLookupd(c *nsq.Consumer, address string, h nsq.Handler,
 		nums = defaultGroutines
 	}
 
-	c.SetLogger(nil, 0)              //屏蔽系统日志
-	c.AddConcurrentHandlers(h, nums) //添加消费者接口
+	c.SetLogger(nil, 0)              // 屏蔽系统日志
+	c.AddConcurrentHandlers(h, nums) // 添加消费者接口
 
-	//建立NSQLookupd连接
+	// 建立NSQLookupd连接
 	if err := c.ConnectToNSQLookupd(address); err != nil {
 		log.Println("nsq connection error: ", err)
 		return err
@@ -84,10 +84,10 @@ func ConsumerConnectToNSQLookupds(c *nsq.Consumer, addressList []string, h nsq.H
 		nums = defaultGroutines
 	}
 
-	c.SetLogger(nil, 0)              //屏蔽系统日志
-	c.AddConcurrentHandlers(h, nums) //添加消费者接口
+	c.SetLogger(nil, 0)              // 屏蔽系统日志
+	c.AddConcurrentHandlers(h, nums) // 添加消费者接口
 
-	//建立NSQLookupd连接
+	// 建立NSQLookupd连接
 	if err := c.ConnectToNSQLookupds(addressList); err != nil {
 		log.Println("nsq connection error: ", err)
 		return err
@@ -103,10 +103,10 @@ func ConsumerConnectToNSQD(c *nsq.Consumer, address string, h nsq.Handler, nums 
 		nums = defaultGroutines
 	}
 
-	c.SetLogger(nil, 0)              //屏蔽系统日志
-	c.AddConcurrentHandlers(h, nums) //添加消费者接口
+	c.SetLogger(nil, 0)              // 屏蔽系统日志
+	c.AddConcurrentHandlers(h, nums) // 添加消费者接口
 
-	//建立NSQd连接
+	// 建立NSQd连接
 	if err := c.ConnectToNSQD(address); err != nil {
 		log.Println("nsq connection error: ", err)
 		return err
@@ -122,10 +122,10 @@ func ConsumerConnectToNSQDs(c *nsq.Consumer, addressList []string, h nsq.Handler
 		nums = defaultGroutines
 	}
 
-	c.SetLogger(nil, 0)              //屏蔽系统日志
-	c.AddConcurrentHandlers(h, nums) //添加消费者接口
+	c.SetLogger(nil, 0)              // 屏蔽系统日志
+	c.AddConcurrentHandlers(h, nums) // 添加消费者接口
 
-	//建立NSQd连接
+	// 建立NSQd连接
 	if err := c.ConnectToNSQDs(addressList); err != nil {
 		log.Println("nsq connection error: ", err)
 		return err
