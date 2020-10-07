@@ -42,15 +42,15 @@ func TestGorm(t *testing.T) {
 		ShowSql:      true,
 	}
 
-	//设置db engine name
-	err := dbconf.SetDbPool() //建立db连接池
+	// 设置db engine name
+	err := dbconf.SetDbPool() // 建立db连接池
 	log.Println("err: ", err)
 
-	err = dbconf.SetEngineName("default") //为每个db设置一个engine name
+	err = dbconf.SetEngineName("default") // 为每个db设置一个engine name
 	log.Println("err: ", err)
 
-	//defer dbconf.Close() //关闭当前连接
-	defer CloseAllDb() //关闭所有的连接句柄
+	// defer dbconf.Close() //关闭当前连接
+	defer CloseAllDb() // 关闭所有的连接句柄
 
 	db, err := GetDbObj("default")
 	if err != nil {
@@ -97,7 +97,7 @@ func TestShortConnect(t *testing.T) {
 			ShowSql:   true,
 		}
 
-		//连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
+		// 连接gorm.DB实例对象，并非立即连接db,用的时候才会真正的建立连接
 		err := conf.ShortConnect()
 		if err != nil {
 			return nil, errors.New("set gorm.DB failed")
@@ -106,7 +106,7 @@ func TestShortConnect(t *testing.T) {
 		return conf.Db(), nil
 	}
 
-	//这里我设置了db max_connections最大连接为1000
+	// 这里我设置了db max_connections最大连接为1000
 	var wg sync.WaitGroup
 	// var maxConnections = 30
 	var maxConnections = 1000

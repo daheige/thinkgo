@@ -9,13 +9,13 @@ func TestError(t *testing.T) {
 	e := New("this is a error", 0, true)
 	log.Println("error: ", e.Error())
 
-	//类型断言
+	// 类型断言
 	err := e.(*ErrorString)
-	err.Code = 123
+	err.code = 123
 	log.Println(err.Error())
-	log.Println("error code: ", err.Code)
+	log.Println("error code: ", err.code)
 	log.Println("full stack: ", string(err.Stack()))
-	log.Printf("str: %+v", e) //会调用Error()
+	log.Printf("str: %+v", e) // 会调用Error()
 }
 
 /**

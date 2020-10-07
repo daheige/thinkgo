@@ -52,7 +52,7 @@ type Option func(r *Runner)
 func New(opts ...Option) *Runner {
 	r := &Runner{
 		complete:  make(chan error, 1),
-		interrupt: make(chan os.Signal, 1), //声明一个中断信号
+		interrupt: make(chan os.Signal, 1), // 声明一个中断信号
 	}
 
 	// 初始化option
@@ -147,7 +147,7 @@ func (r *Runner) Start() error {
 	// 执行完毕的信号量
 	done := make(chan struct{}, 1)
 
-	//开启独立goroutine执行任务
+	// 开启独立goroutine执行任务
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
@@ -176,7 +176,7 @@ func (r *Runner) Start() error {
 // 这里如果没有default的话，select是会阻塞的，直到r.interrupt可以接收值为止
 func (r *Runner) isInterrupt() bool {
 	select {
-	case sg := <-r.interrupt: //是否接受到操作系统的中断信号
+	case sg := <-r.interrupt: // 是否接受到操作系统的中断信号
 		signal.Stop(r.interrupt)
 		r.logger.Println("received signal: ", sg.String())
 

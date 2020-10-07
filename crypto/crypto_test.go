@@ -35,7 +35,7 @@ func TestDecodeCbc256(t *testing.T) {
 	t.Log(string(bytes))
 }
 
-//test ecb
+// test ecb
 func TestAesEbc(t *testing.T) {
 	k := GetIteratorStr(8)
 	b, _ := EncryptEcb("123456", k)

@@ -24,6 +24,7 @@ func TestUuid(t *testing.T) {
 		if checkExist(uuid, strList) {
 			continue
 		}
+
 		strList = append(strList, uuid)
 	}
 

@@ -7,16 +7,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// 初始化 web_reqeust_total， counter类型指标， 表示接收http请求总次数
+// WebRequestTotal 初始化 web_request_total， counter类型指标， 表示接收http请求总次数
+// 设置两个标签 请求方法和 路径 对请求总次数在两个
 var WebRequestTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Name: "web_reqeust_total",
+		Name: "web_request_total",
 		Help: "Number of hello requests in total",
 	},
-	[]string{"method", "endpoint"}, // 设置两个标签 请求方法和 路径 对请求总次数在两个
+	[]string{"method", "endpoint"},
 )
 
-// web_request_duration_seconds，Histogram类型指标，bucket代表duration的分布区间
+// WebRequestDuration web_request_duration_seconds，
+// Histogram类型指标，bucket代表duration的分布区间
 var WebRequestDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Name:    "web_request_duration_seconds",
@@ -26,6 +28,7 @@ var WebRequestDuration = prometheus.NewHistogramVec(
 	[]string{"method", "endpoint"},
 )
 
+// CpuTemp cpu情况
 var CpuTemp = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "cpu_temperature_celsius",
 	Help: "Current temperature of the CPU",
@@ -47,11 +50,12 @@ func MonitorHandlerFunc(h http.HandlerFunc) http.HandlerFunc {
 
 		h(w, r)
 
-		duration := time.Since(start)
-		// counter类型 metric的记录方式
+		// counter类型 metric 的记录方式
 		WebRequestTotal.With(prometheus.Labels{"method": r.Method, "endpoint": r.URL.Path}).Inc()
-		// Histogram类型 meric的记录方式
-		WebRequestDuration.With(prometheus.Labels{"method": r.Method, "endpoint": r.URL.Path}).Observe(duration.Seconds())
+		// Histogram类型 metric的记录方式
+		WebRequestDuration.With(prometheus.Labels{
+			"method": r.Method, "endpoint": r.URL.Path,
+		}).Observe(time.Since(start).Seconds())
 	}
 }
 
@@ -63,10 +67,11 @@ func MonitorHandler(h http.Handler) http.Handler {
 
 		h.ServeHTTP(w, r)
 
-		duration := time.Since(start)
-		// counter类型 metric的记录方式
+		// counter类型 metric 的记录方式
 		WebRequestTotal.With(prometheus.Labels{"method": r.Method, "endpoint": r.URL.Path}).Inc()
-		// Histogram类型 meric的记录方式
-		WebRequestDuration.With(prometheus.Labels{"method": r.Method, "endpoint": r.URL.Path}).Observe(duration.Seconds())
+		// Histogram类型 metric 的记录方式
+		WebRequestDuration.With(prometheus.Labels{
+			"method": r.Method, "endpoint": r.URL.Path,
+		}).Observe(time.Since(start).Seconds())
 	})
 }

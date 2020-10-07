@@ -13,14 +13,13 @@
 package glog
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
-
-	"encoding/json"
 
 	"github.com/daheige/thinkgo/gfile"
 	"github.com/daheige/thinkgo/grecover"
@@ -51,33 +50,33 @@ var LogLevelMap = map[string]int{
 }
 
 var (
-	logFileName            = "glog"                   //日志文件名称，不包含绝对路径,不需要设置后缀，默认为.log
-	logDir                 = ""                       //日志文件存放目录
-	logFile                = ""                       //日志文件
-	logLock                = mutexlock.NewMutexLock() //采用sync实现加锁，效率比chan实现的加锁效率高一点
-	logDay                 = 0                        //当前日期
-	logTimeZone            = "Asia/Shanghai"          //time zone default Local "Asia/Shanghai"
+	logFileName            = "glog"                   // 日志文件名称，不包含绝对路径,不需要设置后缀，默认为.log
+	logDir                 = ""                       // 日志文件存放目录
+	logFile                = ""                       // 日志文件
+	logLock                = mutexlock.NewMutexLock() // 采用sync实现加锁，效率比chan实现的加锁效率高一点
+	logDay                 = 0                        // 当前日期
+	logTimeZone            = "Asia/Shanghai"          // time zone default Local "Asia/Shanghai"
 	logTmWithMS            = "2006-01-02 15:04:05.999"
 	logTmMissMs            = "2006-01-02 15:04:05"
 	logTmTime              = "2006-01-02"
-	defaultLogLevel        = INFO //默认为INFO级别
+	defaultLogLevel        = INFO // 默认为INFO级别
 	logTmLoc               = &time.Location{}
-	megabyte         int64 = 1024 * 1024               //1MB = 1024 * 1024byte
-	defaultMaxSize   int64 = 512                       //默认单个日志文件大小,单位为mb
-	currentTime            = time.Now                  //当前时间函数
-	logSplit               = false                     //默认日志不分割,当设置为true可以加快写入的速度
-	logTmSplit             = "2006-01-02-15-04-05.999" //日志备份文件名时间格式
-	logTraceFileLine       = true                      //默认记录文件名和行数到日志文件中,调用CallerLine可以关闭
+	megabyte         int64 = 1024 * 1024               // 1MB = 1024 * 1024byte
+	defaultMaxSize   int64 = 512                       // 默认单个日志文件大小,单位为mb
+	currentTime            = time.Now                  // 当前时间函数
+	logSplit               = false                     // 默认日志不分割,当设置为true可以加快写入的速度
+	logTmSplit             = "2006-01-02-15-04-05.999" // 日志备份文件名时间格式
+	logTraceFileLine       = true                      // 默认记录文件名和行数到日志文件中,调用CallerLine可以关闭
 )
 
-//日志内容结构体
+// 日志内容结构体
 type logContent struct {
 	Level     int                    `json:"level"`
 	LevelName string                 `json:"level_name"`
-	TimeLocal string                 `json:"time_local"` //当前时间
+	TimeLocal string                 `json:"time_local"` // 当前时间
 	Msg       interface{}            `json:"msg"`
-	LineNo    int                    `json:"line_no,omitempty"`   //当前行号
-	FilePath  string                 `json:"file_path,omitempty"` //当前文件
+	LineNo    int                    `json:"line_no,omitempty"`   // 当前行号
+	FilePath  string                 `json:"file_path,omitempty"` // 当前文件
 	Context   map[string]interface{} `json:"context,omitempty"`
 }
 
@@ -124,7 +123,7 @@ func SetLogDir(dir string) {
 
 	logTmLoc, _ = time.LoadLocation(logTimeZone)
 	now := currentTime().In(logTmLoc)
-	newFile(now) //建立日志文件
+	newFile(now) // 建立日志文件
 }
 
 // LogSize 日志大小，单位mb
@@ -141,7 +140,7 @@ func newFile(now time.Time) {
 	logDay = now.Day()
 	filename := filepath.Join(logDir, fmt.Sprintf("%s-%s.log", logFileName, now.Format(logTmTime)))
 
-	//创建文件
+	// 创建文件
 	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println("open log file", filename, err, "use stdout")
@@ -179,7 +178,7 @@ func splitLog() {
 		return
 	}
 
-	//检测文件大小是否超过指定大小
+	// 检测文件大小是否超过指定大小
 	fileInfo, err := os.Stat(logFile)
 	if err != nil {
 		log.Println("get file stat error: ", err)
@@ -208,7 +207,7 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 		levelName = defaultLogLevel
 	}
 
-	//对日志内容转换为bytes
+	// 对日志内容转换为bytes
 	var strBytes []byte
 
 	c := &logContent{
@@ -218,7 +217,7 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 		Msg:       msg,
 	}
 
-	if logTraceFileLine { //记录文件名和行号
+	if logTraceFileLine { // 记录文件名和行号
 		_, file, line, _ := runtime.Caller(2)
 		c.LineNo = line
 		c.FilePath = file
@@ -228,7 +227,7 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 		c.Context = options
 	}
 
-	//序列化为json格式
+	// 序列化为json格式
 	strBytes, err := json.Marshal(c)
 	if err != nil {
 		log.Println("write log file,use stdout")
@@ -236,14 +235,14 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 		return
 	}
 
-	//追加换行符
+	// 追加换行符
 	strBytes = append(strBytes, []byte("\n")...)
 
-	//开始写日志，这里需要对文件句柄进行加锁
+	// 开始写日志，这里需要对文件句柄进行加锁
 	logLock.Lock()
 	defer logLock.Unlock()
 
-	//检测日志文件是否存在
+	// 检测日志文件是否存在
 	checkLogExist()
 	if logFile == "" {
 		log.Println("write log file,use stdout")
@@ -251,7 +250,7 @@ func writeLog(levelName string, msg interface{}, options map[string]interface{})
 		return
 	}
 
-	//检测日志是否需要分割
+	// 检测日志是否需要分割
 	if logSplit {
 		splitLog()
 	}

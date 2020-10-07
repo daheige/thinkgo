@@ -34,7 +34,7 @@ func TestRunner(t *testing.T) {
 // createTask 创建任务
 func createTask(id int) func() error {
 	return func() error {
-		//panic(1)
+		// panic(1)
 
 		log.Printf("正在执行任务%d", id)
 		// time.Sleep(time.Duration(id) * time.Millisecond)

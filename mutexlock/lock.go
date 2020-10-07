@@ -17,11 +17,12 @@ func NewMutexLock() *Mutex {
 	return &Mutex{}
 }
 
+// Mutex mutex
 type Mutex struct {
 	in sync.Mutex
 }
 
-// Lock 枷锁
+// Lock 加锁
 func (m *Mutex) Lock() {
 	m.in.Lock()
 }

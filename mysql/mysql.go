@@ -100,7 +100,8 @@ func (conf *DbConf) SetDbPool() error {
 	return conf.SetDbObj()
 }
 
-// ShortConnect 建立短连接，用完需要调用Close()进行关闭连接，释放资源，否则就会出现too many connection
+// ShortConnect 建立短连接，用完需要调用Close()进行关闭连接，释放资源
+// 否则就会出现too many connection
 func (conf *DbConf) ShortConnect() error {
 	conf.UsePool = false
 	err := conf.initDb()
@@ -244,7 +245,8 @@ func GetDbObj(name string) (*gorm.DB, error) {
 	return nil, errors.New("get db obj failed")
 }
 
-// CloseAllDb 由于gorm db.Close()是关闭当前连接，一般建议如下函数放在main/init关闭连接就可以
+// CloseAllDb 由于gorm db.Close()是关闭当前连接
+// 一般建议如下函数放在main/init关闭连接就可以
 func CloseAllDb() {
 	for name, db := range engineMap {
 		if err := db.Close(); err != nil {

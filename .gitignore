@@ -6,3 +6,5 @@ vendor/*
 logs
 settings.json
 golangci.log
+.DS_Store
+

@@ -15,7 +15,7 @@ import (
 	"syscall"
 )
 
-//========================= Directory/Filesystem Functions=======
+// ========================= Directory/Filesystem Functions=======
 
 // CopyFile 复制文件到另一个文件
 func CopyFile(distName, srcName string) (w int64, err error) {
@@ -26,28 +26,29 @@ func CopyFile(distName, srcName string) (w int64, err error) {
 
 	defer src.Close()
 
-	dist, err := os.OpenFile(distName, os.O_CREATE|os.O_WRONLY, 0644) //打开文件，如果不存在就创建一个
+	// 打开文件，如果不存在就创建一个
+	dist, err := os.OpenFile(distName, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return
 	}
 
-	defer dist.Close() //关闭文件句柄
+	defer dist.Close() // 关闭文件句柄
 
 	return io.Copy(dist, src)
 }
 
 // StoreGobData store gob data
 func StoreGobData(data interface{}, fileName string) error {
-	buf := new(bytes.Buffer) //创建写入缓冲区
-	//创建gob编码器
+	buf := new(bytes.Buffer) // 创建写入缓冲区
+	// 创建gob编码器
 	encoder := gob.NewEncoder(buf)
-	err := encoder.Encode(data) //将data数据编码到缓冲区
+	err := encoder.Encode(data) // 将data数据编码到缓冲区
 	if err != nil {
 		log.Println("encode gob data error: ", err.Error())
 		return err
 	}
 
-	//将缓冲区中已编码的数据写入文件中
+	// 将缓冲区中已编码的数据写入文件中
 	err = ioutil.WriteFile(fileName, buf.Bytes(), 0644)
 	if err != nil {
 		log.Println("write gob data error: ", err.Error())
@@ -65,11 +66,11 @@ func LoadGobData(data interface{}, fileName string) {
 		return
 	}
 
-	//根据这些原始数据，创建缓冲区
+	// 根据这些原始数据，创建缓冲区
 	buf := bytes.NewBuffer(raw)
-	//将数据解码到缓冲区 (为缓冲区创建解码器)
+	// 将数据解码到缓冲区 (为缓冲区创建解码器)
 	dec := gob.NewDecoder(buf)
-	//解码数据到data中
+	// 解码数据到data中
 	err = dec.Decode(data)
 	if err != nil {
 		log.Println("get gob data error: ", err.Error())
@@ -92,7 +93,7 @@ func CheckPathExist(path string) bool {
 }
 
 // Filebase 获取文件的名称不带后缀
-// Get the name of the file without a suffix
+// get the name of the file without a suffix
 func Filebase(file string) string {
 	beg, end := len(file)-1, len(file)
 	for ; beg >= 0; beg-- {
@@ -103,6 +104,7 @@ func Filebase(file string) string {
 			end = beg
 		}
 	}
+
 	return file[beg:end]
 }
 
@@ -330,15 +332,50 @@ func Filemtime(filename string) (int64, error) {
 }
 
 // Fgetcsv fgetcsv()
-func Fgetcsv(handle *os.File, length int, delimiter rune) ([][]string, error) {
+// 默认当文件大小大于10MB逐行读取内容，否则一次性读取内容
+// 第三个参数可以指定逐行读取的最大文件大小，单位字节 1MB = 1 << 20
+func Fgetcsv(handle *os.File, delimiter rune, size ...int64) ([][]string, error) {
+	fileInfo, err := handle.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	var bigFileSize int64 = 10 << 20
+	if len(size) > 0 && size[0] > 0 {
+		bigFileSize = size[0]
+	}
+
+	records := make([][]string, 0, 200)
 	reader := csv.NewReader(handle)
 	reader.Comma = delimiter
+	if fileInfo.Size() > bigFileSize {
+		for {
+			row, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
 
-	// TODO length limit
+			if err != nil && err != io.EOF {
+				return records, fmt.Errorf("can not read, err is %v", err.Error())
+			}
+
+			records = append(records, row)
+		}
+
+		return records, nil
+	}
+
 	return reader.ReadAll()
 }
 
-// Glob glob()
+// Glob returns the names of all files matching pattern or nil
+// if there is no matching file. The syntax of patterns is the same
+// as in Match. The pattern may describe hierarchical names such as
+// /usr/*/bin/ed (assuming the Separator is '/').
+//
+// Glob ignores file system errors such as I/O errors reading directories.
+// The only possible returned error is ErrBadPattern, when pattern
+// is malformed.
 func Glob(pattern string) ([]string, error) {
 	return filepath.Glob(pattern)
 }

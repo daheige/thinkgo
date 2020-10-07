@@ -1,6 +1,6 @@
 package strlist
 
-//StringList helper
+// StringList helper
 
 import (
 	"reflect"

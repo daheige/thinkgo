@@ -13,15 +13,15 @@ func TestLog(t *testing.T) {
 	t.Log("测试log库")
 
 	LogSplit(true)
-	LogSize(30) //单个日志文件大小
+	LogSize(30) // 单个日志文件大小
 	// TraceFileLine(false) //关闭文件名和行数追踪
 
 	SetLogDir("/web/wwwlogs/ilog")
 
-	var nums int = 6 * 10000 //6w个独立协程处理,处理60w条日志写入
+	var nums int = 6 * 10000 // 6w个独立协程处理,处理60w条日志写入
 
 	var wg sync.WaitGroup
-	wg.Add(nums) //一次性计数器设置，保证独立携程都成处理完毕
+	wg.Add(nums) // 一次性计数器设置，保证独立携程都成处理完毕
 
 	for i := 0; i < nums; i++ {
 		go func() {
@@ -59,9 +59,9 @@ func TestLog(t *testing.T) {
 
 	loc, _ := time.LoadLocation(logTimeZone)
 	now := time.Now().In(loc)
-	fmt.Println(now.Format(logTmMissMs)) //转换为Y-m-d H:i:s
+	fmt.Println(now.Format(logTmMissMs)) // 转换为Y-m-d H:i:s
 
-	//获取文件名
+	// 获取文件名
 	fmt.Println(filepath.Base("/mygo/src/thinkgo/common/Log.go"))
 }
 

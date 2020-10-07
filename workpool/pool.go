@@ -307,9 +307,7 @@ func (p *Pool) Shutdown() {
 
 // recovery catch a recover.
 func (p *Pool) recovery() {
-	defer func() {
-		if e := recover(); e != nil {
-			p.logEntry.Println("exec panic: ", e)
-		}
-	}()
+	if e := recover(); e != nil {
+		p.logEntry.Println("exec panic: ", e)
+	}
 }

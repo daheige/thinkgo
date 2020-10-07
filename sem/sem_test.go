@@ -27,7 +27,7 @@ func TestSemWithTimeout(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		go func(i int, wg *sync.WaitGroup) {
 			defer func() {
-				//释放锁
+				// 释放锁
 				if err := s.Release(); err != nil {
 					log.Println("release a sem err: ", err)
 				}
@@ -35,7 +35,7 @@ func TestSemWithTimeout(t *testing.T) {
 				wg.Done()
 			}()
 
-			//枷锁
+			// 枷锁
 			if err := s.Acquire(); err != nil {
 				log.Println("get a sem err: ", err)
 				return
@@ -52,7 +52,7 @@ func TestSemWithTimeout(t *testing.T) {
 
 	log.Println("ok")
 
-	//mutex lock without timeout
+	// mutex lock without timeout
 	// it will throw err
 	t2, timeout2 := 0, 0
 	s2 := New(t2, time.Duration(timeout2)*time.Second)

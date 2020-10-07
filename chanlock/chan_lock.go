@@ -1,4 +1,4 @@
-//chan实现trylock乐观锁
+// chan实现trylock乐观锁
 package chanlock
 
 import (
@@ -7,19 +7,19 @@ import (
 
 // ChanLock chan lock
 type ChanLock struct {
-	ch chan struct{} //空结构体
+	ch chan struct{} // 空结构体
 }
 
 // NewChanLock 实例化一个通道空结构体锁对象
 func NewChanLock() *ChanLock {
 	return &ChanLock{
-		ch: make(chan struct{}, 1), //有缓冲通道
+		ch: make(chan struct{}, 1), // 有缓冲通道
 	}
 }
 
 // Lock 通道枷锁
 func (l *ChanLock) Lock() {
-	l.ch <- struct{}{} //这里是一个空结构体
+	l.ch <- struct{}{} // 这里是一个空结构体
 }
 
 // Unlock实现通道解锁
@@ -45,6 +45,6 @@ func (l *ChanLock) TryLockTimeout(timeout time.Duration) bool {
 	case l.ch <- struct{}{}:
 		return true
 	case <-t:
-		return false //timeout
+		return false // timeout
 	}
 }
