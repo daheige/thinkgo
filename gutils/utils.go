@@ -481,17 +481,24 @@ func Ucwords(str string) string {
 
 // ======================url encode/decode=======================
 
-// URLEncode urlencode(str) url encode
+// URLEncode returns a string in which all non-alphanumeric characters except -_.
+// have been replaced with a percent (%) sign followed by two hex digits and
+// spaces encoded as plus (+) signs.
+// It is encoded the same way that the posted data from a WWW form is encoded,
+// that is the same way as in application/x-www-form-urlencoded media type.
 func URLEncode(str string) string {
 	return url.QueryEscape(str)
 }
 
-// URLDecode urldecode(str) url decode
+// URLDecode decodes any %## encoding in the given string.
+// Plus symbols ('+') are decoded to a space character.
 func URLDecode(str string) (string, error) {
 	return url.QueryUnescape(str)
 }
 
 // Rawurlencode rawurlencode(str)
+// Rawurlencode is URL-encode according to RFC 3986.
+// Rawurlencode is identical to URLEncode except that it does not escape space to +.
 func Rawurlencode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
@@ -504,6 +511,11 @@ func Rawurldecode(str string) (string, error) {
 // HTTPBuildQuery http_build_query() url a=1&b=2
 func HTTPBuildQuery(queryData url.Values) string {
 	return queryData.Encode()
+}
+
+// ParseURL parses a URL and return its components
+func ParseURL(str string) (*url.URL, error) {
+	return url.Parse(str)
 }
 
 // =================base64 encode/decode=========================
@@ -563,6 +575,14 @@ func IP2long(ipAddress string) uint32 {
 	if ip == nil {
 		return 0
 	}
+
+	// fix IP2Long nil pointer panic bug
+	// IP2long("::1")
+	ipByte := ip.To4()
+	if ipByte == nil {
+		return 0
+	}
+
 	return binary.BigEndian.Uint32(ip.To4())
 }
 
