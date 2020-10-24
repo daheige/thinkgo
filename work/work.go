@@ -13,19 +13,28 @@ package work
 
 import (
 	"log"
+	"os"
 	"sync"
 )
 
-// Worker worker必须满足Tash方法
+// Worker worker必须满足Task方法
 type Worker interface {
 	Task()
 }
 
-// Pool提供一个goroutine池,可以完成任何已提交的Woker任务
+// Pool提供一个goroutine池,可以完成任何已提交的worker任务
 type Pool struct {
-	work chan Worker
-	wg   sync.WaitGroup
+	work   chan Worker
+	wg     sync.WaitGroup
+	logger Logger
 }
+
+// Logger log interface
+type Logger interface {
+	Println(msg ...interface{})
+}
+
+var LogEntry Logger = log.New(os.Stderr, "", log.LstdFlags)
 
 // New 创建一个工作池
 func New(gNum int) *Pool {
@@ -35,15 +44,14 @@ func New(gNum int) *Pool {
 
 	p.wg.Add(gNum) // 最大goroutine个数
 	for i := 0; i < gNum; i++ {
-		// runtime.Gosched() //让出控制权给其他的goroutine,在逻辑上形成并发,只有出让cpu时，另外一个协程才会运行
-
 		// 开启独立的goroutine来执行任务
 		go func(p *Pool) {
 			defer catchRecover()
 
 			defer p.wg.Done() // 执行完毕后计数信号量减去1
 
-			for w := range p.work { // for...range会一直阻塞,直到从work通道中收到一个Worker接口值
+			// for...range会一直阻塞,直到从work通道中收到一个Worker接口值
+			for w := range p.work {
 				w.Task() // 执行任务
 			}
 		}(p)
@@ -65,12 +73,12 @@ func (p *Pool) Add(w Worker) {
 func (p *Pool) Shutdown() {
 	close(p.work) // 关闭通道会让所有池里的goroutine全部停止
 	p.wg.Wait()   // 等待所有的goroutine执行完毕
-	log.Println("all goroutine task finish")
+	LogEntry.Println("all goroutine task finish")
 }
 
 // catchRecover 捕获异常或者panic处理
 func catchRecover() {
 	if err := recover(); err != nil {
-		log.Println("exec worker error: ", err)
+		LogEntry.Println("exec worker error: ", err)
 	}
 }

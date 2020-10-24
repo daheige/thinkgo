@@ -7,18 +7,21 @@ import (
 	"time"
 )
 
-// 自定义数据结构Time
+// Time 自定义数据结构Time
 type Time time.Time
 
-var NullToEmptyStr bool // null是否转换为空字符串形式
+// NullToEmptyStr null是否转换为空字符串形式
+var NullToEmptyStr bool
 
 const (
+	// TmFormat time format layout.
 	TmFormat = "2006-01-02 15:04:05"
 )
 
+// UnmarshalJSON json decode Time.
 func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	str := string(data)
-	if str == `""` || str == `"null"` {
+	if str == `null` || str == "" || str == `""` {
 		return nil
 	}
 
@@ -27,6 +30,7 @@ func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// MarshalJSON json encode Time.
 func (t Time) MarshalJSON() ([]byte, error) {
 	// log.Println(t.String())
 	if t.String() == "0001-01-01 00:00:00" {
@@ -75,7 +79,7 @@ func (t Time) Value() (driver.Value, error) {
 	return t, nil
 }
 
-// Scan valueof time.Time
+// Scan valueOf time.Time
 func (t *Time) Scan(v interface{}) error {
 	value, ok := v.(time.Time)
 	if ok {

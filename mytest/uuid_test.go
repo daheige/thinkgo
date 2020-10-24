@@ -48,9 +48,11 @@ func checkExist(str string, s []string) bool {
 
 /**
 $ go test -v -test.run TestUuid
-999: 2e750a8b5ae042f35cce573bb32eec96
---- PASS: TestUuid (0.01s)
-    uuid_test.go:12: 测试uuid
+995: 07d5b6529ba84ac36304b034c3a5042a
+996: 5c70a7511bf64b487f7bd697994af694
+997: 1c6965d01aba48dd4aee7acb840650b1
+998: d8ae9c92560f42144b80b6dfbfdc3693
+999: 2fe7648ef2b748f55c2b67fa96dac2f6
+--- PASS: TestUuid (0.02s)
 PASS
-ok      mytest  0.020s
 */
