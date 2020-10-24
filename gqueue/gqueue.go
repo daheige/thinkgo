@@ -10,7 +10,7 @@ import (
 )
 
 type Queue struct {
-	goroutineNumber  int                     // 并发执行任务所需要的goroutine个数
+	gNum             int                     // 并发执行任务所需要的goroutine个数
 	taskTotal        int                     // 执行任务的总数
 	tasks            chan func() interface{} // 任务放置在缓冲通道中
 	taskCallback     func(res interface{})   // 每个任务执行后的回调函数
@@ -29,9 +29,9 @@ func New(number, total int) *Queue {
 	}
 
 	return &Queue{
-		goroutineNumber: number,
-		taskTotal:       total,
-		tasks:           make(chan func() interface{}, total), // 缓冲通道个数是total,类型是func() interface{}
+		gNum:      number,
+		taskTotal: total,
+		tasks:     make(chan func() interface{}, total), // 缓冲通道个数是total,类型是func() interface{}
 	}
 }
 
@@ -43,7 +43,7 @@ func (q *Queue) Start() {
 	q.wg.Add(q.taskTotal)
 
 	// 通过goroutineNumber个goroutine来执行task
-	for i := 0; i < q.goroutineNumber; i++ {
+	for i := 0; i < q.gNum; i++ {
 		runtime.Gosched() // 让出cpu给其他goroutine
 		go q.work()       // 对每个任务开启独立goroutine执行
 	}

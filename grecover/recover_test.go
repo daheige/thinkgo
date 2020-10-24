@@ -9,6 +9,9 @@ func TestCatchStack(t *testing.T) {
 	t.Log("test grecover")
 
 	TracePanic = true
+
+	// bridge logger
+	LogEntry = LoggerFunc(log.Println)
 	testSay()
 
 	log.Println("ok")
