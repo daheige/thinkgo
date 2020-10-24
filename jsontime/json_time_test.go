@@ -18,7 +18,7 @@ func TestTime(t *testing.T) {
 
 	now := Time(time.Now())
 	t.Log(now)
-	src := `{"id":5,"name":"xiaoming","birthday":"null"}`
+	src := `{"id":5,"name":"xiaoming","birthday":null}`
 	p := new(Person)
 	err := json.Unmarshal([]byte(src), p)
 	if err != nil {
@@ -43,12 +43,11 @@ func TestTime(t *testing.T) {
 /**
 $ go test -v
 === RUN   TestTime
-2019/11/04 23:20:57 str:  {"id":1,"name":"fefe","birthday":null}
---- PASS: TestTime (0.00s)
-    json_time_test.go:20: 2019-11-04 23:20:57
+    json_time_test.go:20: 2020-10-24 19:15:48
     json_time_test.go:28: &{5 xiaoming 0001-01-01 00:00:00}
     json_time_test.go:29: 0001-01-01 00:00:00 +0000 UTC
     json_time_test.go:31: {"id":5,"name":"xiaoming","birthday":null}
+2020/10/24 19:15:48 str:  {"id":1,"name":"fefe","birthday":null}
+--- PASS: TestTime (0.00s)
 PASS
-ok  	github.com/daheige/thinkgo/jsontime	0.002s
 */

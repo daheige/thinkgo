@@ -54,6 +54,12 @@ func (r *RedisConf) SetRedisPool(name string) {
 // NewRedisPool 创建redis pool连接池
 // If Wait is true and the pool is at the MaxActive limit, then Get() waits
 // for a connection to be returned to the pool before returning.
+//
+// TestOnBorrow is an optional application supplied function for checking
+// the health of an idle connection before the connection is used again by
+// the application. Argument t is the time that the connection was returned
+// to the pool. If the function returns an error, then the connection is
+// closed.
 func NewRedisPool(conf *RedisConf) *redis.Pool {
 	if conf.MaxConnLifetime == 0 {
 		conf.MaxConnLifetime = 1800

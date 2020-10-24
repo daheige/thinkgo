@@ -10,7 +10,7 @@ func NewInt64Slice(s []int64) Int64Slice {
 	return Int64Slice(s)
 }
 
-//Less less
+// Less less
 func (s Int64Slice) Less(i, j int) bool {
 	return s[i] < s[j]
 }

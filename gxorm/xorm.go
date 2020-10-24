@@ -218,6 +218,7 @@ func CloseDbByName(name string) error {
 }
 
 // ======================读写分离设置==================
+
 // EngineGroupConf 读写分离引擎配置
 type EngineGroupConf struct {
 	Master DbBaseConf

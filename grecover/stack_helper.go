@@ -2,19 +2,26 @@
 package grecover
 
 import (
-	"log"
-	"os"
 	"runtime/debug"
 )
 
 // Logger log interface
 type Logger interface {
-	Println(msg ...interface{})
+	Println(args ...interface{})
 }
+
+// LoggerFunc is a bridge between Logger and any third party logger.
+type LoggerFunc func(msg ...interface{})
+
+// Printf implements Logger interface.
+func (f LoggerFunc) Println(args ...interface{}) { f(args...) }
+
+// dummy logger writes nothing.
+var dummyLogger = LoggerFunc(func(...interface{}) {})
 
 // LogEntry log entry.
 var (
-	LogEntry   Logger = log.New(os.Stderr, "", log.LstdFlags)
+	LogEntry   Logger = dummyLogger
 	TracePanic        = false // trace panic stack
 )
 

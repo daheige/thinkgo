@@ -11,7 +11,7 @@ type Lock struct {
 	conn   redis.Conn  // redis连接句柄，支持redis pool连接句柄
 	expire int         // 设置加锁key的过期时间
 	key    string      // 加锁的key
-	val    interface{} // 加锁的val
+	val    interface{} // 加锁的value
 }
 
 // New 实例化redis分布式锁实例对象

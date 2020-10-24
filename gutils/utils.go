@@ -237,6 +237,16 @@ func HTMLSpecialcharsDecode(str string) string {
 	return html.UnescapeString(str)
 }
 
+// HTMLEntities htmlentities()
+func HTMLEntities(str string) string {
+	return html.EscapeString(str)
+}
+
+// HTMLEntityDecode html_entity_decode()
+func HTMLEntityDecode(str string) string {
+	return html.UnescapeString(str)
+}
+
 // =====================str xss,XssUnescape func=============
 // Xss 防止xss攻击
 func Xss(str string) string {
@@ -247,6 +257,7 @@ func Xss(str string) string {
 	return html.EscapeString(str)
 }
 
+// XssUnescape 还原xss字符串
 func XssUnescape(str string) string {
 	return html.UnescapeString(str)
 }
@@ -256,15 +267,15 @@ func XssUnescape(str string) string {
 // 纯数字kind=0,小写字母kind=1
 // 大写字母kind=2,数字+大小写字母kind=3
 func Krand(size int, kind int) string {
-	ikind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
+	oldKind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
 	is_all := kind > 2 || kind < 0
 	rand.Seed(time.Now().UnixNano()) // 随机种子
 	for i := 0; i < size; i++ {
-		if is_all { // random ikind
-			ikind = rand.Intn(3)
+		if is_all { // random oldKind
+			oldKind = rand.Intn(3)
 		}
 
-		scope, base := kinds[ikind][0], kinds[ikind][1]
+		scope, base := kinds[oldKind][0], kinds[oldKind][1]
 		result[i] = uint8(base + rand.Intn(scope))
 	}
 
@@ -273,12 +284,14 @@ func Krand(size int, kind int) string {
 
 // ================str chr,ord func======================
 // Chr returns a one-character string containing the character specified by ascii
+// go1.15 return string(rune(ascii))
 func Chr(ascii int) string {
 	for ascii < 0 {
 		ascii += 256
 	}
+
 	ascii %= 256
-	return string(ascii)
+	return string(rune(ascii))
 }
 
 // Ord return ASCII value of character
@@ -303,6 +316,11 @@ func Implode(glue string, pieces []string) string {
 // A multi-byte character is counted as 1
 func Strlen(str string) int {
 	return len([]rune(str))
+}
+
+// MbStrlen mb_strlen()
+func MbStrlen(str string) int {
+	return utf8.RuneCountInString(str)
 }
 
 // =================str strpos,Strrpos,stripos,Strripos func====================
@@ -386,24 +404,19 @@ func Substr(str string, start uint, length int) string {
 	return str[start:end]
 }
 
-// MbStrlen mb_strlen()
-func MbStrlen(str string) int {
-	return utf8.RuneCountInString(str)
-}
-
 // ==================str upper/lower==============================
 
-// Strtoupper strtoupper()
+// Strtoupper strtoupper(str) makes a string uppercase
 func Strtoupper(str string) string {
 	return strings.ToUpper(str)
 }
 
-// Strtolower strtolower()
+// Strtolower strtolower(str) makes a string lowercase
 func Strtolower(str string) string {
 	return strings.ToLower(str)
 }
 
-// StrShuffle str_shuffle()
+// StrShuffle str_shuffle(str)
 func StrShuffle(str string) string {
 	runes := []rune(str)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -427,6 +440,7 @@ func Ltrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimLeftFunc(str, unicode.IsSpace)
 	}
+
 	return strings.TrimLeft(str, characterMask[0])
 }
 
@@ -435,12 +449,13 @@ func Rtrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimRightFunc(str, unicode.IsSpace)
 	}
+
 	return strings.TrimRight(str, characterMask[0])
 }
 
 // =======================str Ucfirst/Lcfirst/Ucwords==================
 
-// UcFirst ucfirst()
+// UcFirst ucfirst(str) make a string's first character uppercase
 func UcFirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToUpper(v))
@@ -449,7 +464,7 @@ func UcFirst(str string) string {
 	return ""
 }
 
-// LcFirst lcfirst()
+// LcFirst lcfirst(str) make a string's first character lowercase
 func LcFirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToLower(v))
@@ -458,46 +473,59 @@ func LcFirst(str string) string {
 	return ""
 }
 
-// Ucwords ucwords()
+// Ucwords ucwords(str)
+// uppercases the first character of each word in a string
 func Ucwords(str string) string {
 	return strings.Title(str)
 }
 
 // ======================url encode/decode=======================
 
-// URLEncode urlencode()
+// URLEncode returns a string in which all non-alphanumeric characters except -_.
+// have been replaced with a percent (%) sign followed by two hex digits and
+// spaces encoded as plus (+) signs.
+// It is encoded the same way that the posted data from a WWW form is encoded,
+// that is the same way as in application/x-www-form-urlencoded media type.
 func URLEncode(str string) string {
 	return url.QueryEscape(str)
 }
 
-// URLDecode urldecode()
+// URLDecode decodes any %## encoding in the given string.
+// Plus symbols ('+') are decoded to a space character.
 func URLDecode(str string) (string, error) {
 	return url.QueryUnescape(str)
 }
 
-// Rawurlencode rawurlencode()
+// Rawurlencode rawurlencode(str)
+// Rawurlencode is URL-encode according to RFC 3986.
+// Rawurlencode is identical to URLEncode except that it does not escape space to +.
 func Rawurlencode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
 
-// Rawurldecode rawurldecode()
+// Rawurldecode rawurldecode(str)
 func Rawurldecode(str string) (string, error) {
 	return url.QueryUnescape(strings.Replace(str, "%20", "+", -1))
 }
 
-// HTTPBuildQuery http_build_query()
+// HTTPBuildQuery http_build_query() url a=1&b=2
 func HTTPBuildQuery(queryData url.Values) string {
 	return queryData.Encode()
 }
 
+// ParseURL parses a URL and return its components
+func ParseURL(str string) (*url.URL, error) {
+	return url.Parse(str)
+}
+
 // =================base64 encode/decode=========================
 
-// Base64Encode base64_encode()
+// Base64Encode base64_encode(str)
 func Base64Encode(str string) string {
 	return base64.StdEncoding.EncodeToString([]byte(str))
 }
 
-// Base64Decode base64_decode()
+// Base64Decode base64_decode(str)
 func Base64Decode(str string) (string, error) {
 	switch len(str) % 4 {
 	case 2:
@@ -547,6 +575,14 @@ func IP2long(ipAddress string) uint32 {
 	if ip == nil {
 		return 0
 	}
+
+	// fix IP2Long nil pointer panic bug
+	// IP2long("::1")
+	ipByte := ip.To4()
+	if ipByte == nil {
+		return 0
+	}
+
 	return binary.BigEndian.Uint32(ip.To4())
 }
 
