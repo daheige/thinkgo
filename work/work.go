@@ -24,9 +24,8 @@ type Worker interface {
 
 // Pool提供一个goroutine池,可以完成任何已提交的worker任务
 type Pool struct {
-	work   chan Worker
-	wg     sync.WaitGroup
-	logger Logger
+	work chan Worker
+	wg   sync.WaitGroup
 }
 
 // Logger log interface
