@@ -13,7 +13,7 @@ type Logger interface {
 // LoggerFunc is a bridge between Logger and any third party logger.
 type LoggerFunc func(msg ...interface{})
 
-// Printf implements Logger interface.
+// Println implements Logger interface.
 func (f LoggerFunc) Println(args ...interface{}) { f(args...) }
 
 // dummy logger writes nothing.
