@@ -48,12 +48,12 @@
 
 # Upgrade log
 
-        2020.11.07
+    2020.11.07
 	1) update gorm.io/gorm v1.20.1 to v1.20.5
 	2) update github.com/prometheus/client_golang v1.7.1 to v1.8.0
-	
-	2020.10.04
-        1) update go resty client.
+
+    2020.10.04
+	1) update go resty client.
         
     2020.09.29
         1) 重写gresty实现方式，支持指定resty.Client以及重试条件函数设置
