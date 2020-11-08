@@ -27,7 +27,7 @@ var (
 	respEmpty = errors.New("resp is empty")
 )
 
-//  Service 请求句柄设置
+// Service 请求句柄设置
 type Service struct {
 	BaseUri         string        // 请求地址url的前缀
 	Timeout         time.Duration // 请求超时限制
