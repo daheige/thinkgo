@@ -1,4 +1,4 @@
-# Thinkgo package
+# thinkgo
 
     Public libraries and components for glang development.
 
@@ -49,28 +49,28 @@
 # Upgrade log
 
     2020.11.07
-	1) update gorm.io/gorm v1.20.1 to v1.20.5
-	2) update github.com/prometheus/client_golang v1.7.1 to v1.8.0
-
+        1) update gorm.io/gorm v1.20.1 to v1.20.5
+        2) update github.com/prometheus/client_golang v1.7.1 to v1.8.0
+    
     2020.10.04
-	1) update go resty client.
-        
+        1) update go resty client.
+    
     2020.09.29
         1) 重写gresty实现方式，支持指定resty.Client以及重试条件函数设置
-           备注：gresty低版本升级后无缝兼容，新增了Request方法
-	1) Rewrite the Gresty implementation method, support specifying 
-	   resty.Client and retry condition function settings
-           Remarks: After the low version of Gresty is upgraded, 
-	   it is seamlessly compatible, and the Request method is added.
-        
+            备注：gresty低版本升级后无缝兼容，新增了Request方法
+        1) Rewrite the Gresty implementation method, support specifying 
+        resty.Client and retry condition function settings
+        Remarks: After the low version of Gresty is upgraded, 
+        it is seamlessly compatible, and the Request method is added.
+    
     2020.09.14
         1) fix gorm v2 mysql sql logger println
         2) add viper config read
-        
+    
     2020.09.12
         1) 升级gorm v1.9.x版本到v1.20.1 gorm2.0
         对于gorm v1版本，请使用thinkgo v1.11.x版本的包
-	For gorm v1 version, please use thinkgo v1.11.x package.
+        For gorm v1 version, please use thinkgo v1.11.x package.
         
     2020.09.11
         1) xorm升级到v1.0.5
