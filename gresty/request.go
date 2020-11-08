@@ -313,24 +313,27 @@ func (s *Service) GetResult(resp *resty.Response, err error) *Reply {
 		Err: err,
 	}
 
-	if err != nil {
-		res.StatusCode = http.StatusInternalServerError
-		return res
-	}
-
 	if resp == nil {
 		res.StatusCode = http.StatusServiceUnavailable
-		res.Err = respEmpty
+		if err != nil {
+			res.Err = err
+		} else {
+			res.Err = respEmpty
+		}
+
+		return res
 	}
 
 	res.Body = resp.Body()
 	res.StatusCode = resp.StatusCode()
+	if err != nil {
+		res.Err = fmt.Errorf("request error: %v,resp error: %v", err.Error(), resp.Error())
+		return res
+	}
+
 	if !resp.IsSuccess() || resp.StatusCode() != 200 {
-		if err != nil {
-			res.Err = fmt.Errorf("request error: %v,resp error: %v", err.Error(), resp.Error())
-		} else {
-			res.Err = fmt.Errorf("resp error: %v", resp.Error())
-		}
+		res.Err = fmt.Errorf("resp error: %v", resp.Error())
+		return res
 	}
 
 	return res
