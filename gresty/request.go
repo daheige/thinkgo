@@ -308,30 +308,28 @@ func (s *Service) ParseData(d map[string]interface{}) map[string]string {
 }
 
 // GetResult 处理请求的结果statusCode,body,error.
+// 首先判断是否出错，然后判断http resp是否请求成功或有错误产生
 func (s *Service) GetResult(resp *resty.Response, err error) *Reply {
-	res := &Reply{
-		Err: err,
+	res := &Reply{}
+	if err != nil {
+		if resp != nil {
+			res.StatusCode = resp.StatusCode()
+			res.Body = resp.Body()
+		}
+
+		res.Err = err
+		return res
 	}
 
 	if resp == nil {
 		res.StatusCode = http.StatusServiceUnavailable
-		if err != nil {
-			res.Err = err
-		} else {
-			res.Err = respEmpty
-		}
-
+		res.Err = respEmpty
 		return res
 	}
 
 	res.Body = resp.Body()
 	res.StatusCode = resp.StatusCode()
-	if err != nil {
-		res.Err = fmt.Errorf("request error: %v,resp error: %v", err.Error(), resp.Error())
-		return res
-	}
-
-	if !resp.IsSuccess() || resp.StatusCode() != 200 {
+	if !resp.IsSuccess() || resp.IsError() {
 		res.Err = fmt.Errorf("resp error: %v", resp.Error())
 		return res
 	}
