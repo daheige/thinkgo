@@ -3,16 +3,11 @@
     Public libraries and components for glang development.
 
     I like the language of php. I have been using php development experience for 6 years.
-    It has inspired me a lot. I quickly converted to golang development in 2 years.
+    It has inspired me a lot. I quickly converted to golang development in 3 years.
     I am very glad to be exposed to this language.
     These functions and packages are used extensively in development,
     so they are packaged as components or libraries for development.
-
-# Package management
-
-    golang1.11+版本，可采用go mod机制管理包,需设置goproxy
-    golang1.11以下版本，采用govendor机制引入第三包或直接使用vendor
-
+    
 # About package
     
     .
@@ -53,12 +48,20 @@
 
 # Upgrade log
 
+        2020.11.07
+	1) update gorm.io/gorm v1.20.1 to v1.20.5
+	2) update github.com/prometheus/client_golang v1.7.1 to v1.8.0
+	
 	2020.10.04
         1) update go resty client.
         
     2020.09.29
         1) 重写gresty实现方式，支持指定resty.Client以及重试条件函数设置
            备注：gresty低版本升级后无缝兼容，新增了Request方法
+	1) Rewrite the Gresty implementation method, support specifying 
+	   resty.Client and retry condition function settings
+           Remarks: After the low version of Gresty is upgraded, 
+	   it is seamlessly compatible, and the Request method is added.
         
     2020.09.14
         1) fix gorm v2 mysql sql logger println
@@ -67,6 +70,7 @@
     2020.09.12
         1) 升级gorm v1.9.x版本到v1.20.1 gorm2.0
         对于gorm v1版本，请使用thinkgo v1.11.x版本的包
+	For gorm v1 version, please use thinkgo v1.11.x package.
         
     2020.09.11
         1) xorm升级到v1.0.5
@@ -81,6 +85,7 @@
 
 # usage
 
+    golang1.11+版本，可采用go mod机制管理包,需设置goproxy
     go version >= 1.13
     设置goproxy代理
     vim ~/.bashrc添加如下内容:
