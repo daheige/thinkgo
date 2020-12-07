@@ -66,6 +66,7 @@ type DbConf struct {
 	Loc        string   // 时区字符串 Local,PRC
 	engineName string   // 当前数据库连接句柄标识
 	dbObj      *gorm.DB // 当前数据库连接句柄
+	hasInit    bool     // 是否调用了 InitInstance()进行初始化db
 
 	ShowSql bool // sql语句是否输出
 
@@ -84,11 +85,11 @@ type DbConf struct {
 // SetEngineName 给当前数据库指定engineName
 func (conf *DbConf) SetEngineName(name string) error {
 	if name == "" {
-		return errors.New("current engine name is empty!")
+		return errors.New("current engine name is empty")
 	}
 
-	if conf.dbObj == nil {
-		return errors.New("current " + name + " db engine not be initDb")
+	if !conf.hasInit {
+		return errors.New("current " + name + " db engine must be InitInstance")
 	}
 
 	conf.engineName = name
@@ -97,35 +98,17 @@ func (conf *DbConf) SetEngineName(name string) error {
 	return nil
 }
 
-// SetDbObj 创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
-// 为兼容之前的版本，这里新增SetDb创建db对象
-func (conf *DbConf) SetDbObj() error {
-	err := conf.initDb()
-	if err != nil {
-		log.Println("set db engine error: ", err)
-		return err
-	}
-
-	return nil
-}
-
 // SetDbPool 设置db pool连接池
 func (conf *DbConf) SetDbPool() error {
 	conf.UsePool = true
-	return conf.SetDbObj()
+	return conf.InitInstance()
 }
 
 // ShortConnect 建立短连接，用完需要调用Close()进行关闭连接，释放资源
 // 否则就会出现too many connection
 func (conf *DbConf) ShortConnect() error {
 	conf.UsePool = false
-	err := conf.initDb()
-	if err != nil {
-		log.Println("set db engine error: ", err)
-		return err
-	}
-
-	return nil
+	return conf.InitInstance()
 }
 
 // Close 关闭当前数据库连接
@@ -135,7 +118,7 @@ func (conf *DbConf) Close() error {
 		return nil
 	}
 
-	db, err := conf.Db().DB()
+	db, err := conf.SqlDB()
 	if err != nil {
 		log.Println("get db instance error: ", err.Error())
 		return err
@@ -147,8 +130,10 @@ func (conf *DbConf) Close() error {
 		return err
 	}
 
-	// 把连接句柄对象从map中删除
-	delete(engineMap, conf.engineName)
+	if conf.engineName != "" {
+		// 把连接句柄对象从map中删除
+		delete(engineMap, conf.engineName)
+	}
 
 	return nil
 }
@@ -158,39 +143,13 @@ func (conf *DbConf) Db() *gorm.DB {
 	return conf.dbObj
 }
 
-// DSN 设置mysql dsn
-func (conf *DbConf) DSN() (string, error) {
-	// mysql connection time loc.
-	loc, err := time.LoadLocation(conf.Loc)
-	if err != nil {
-		return "", err
-	}
-
-	// mysql config
-	mysqlConf := mysql.Config{
-		User:   conf.User,
-		Passwd: conf.Password,
-		Net:    "tcp",
-		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
-		DBName: conf.Database,
-		// Connection parameters
-		Params: map[string]string{
-			"charset": conf.Charset,
-		},
-		Collation:            conf.Collation,
-		Loc:                  loc,               // Location for time.Time values
-		Timeout:              conf.Timeout,      // Dial timeout
-		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
-		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
-		AllowNativePasswords: true,              // Allows the native password authentication method
-		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
-	}
-
-	return mysqlConf.FormatDSN(), nil
+// SqlDB 返回sql DB
+func (conf *DbConf) SqlDB() (*sql.DB, error) {
+	return conf.dbObj.DB()
 }
 
-// initDb 建立db连接句柄
-func (conf *DbConf) initDb() error {
+// DSN 设置mysql dsn
+func (conf *DbConf) DSN() (string, error) {
 	if conf.Ip == "" {
 		conf.Ip = "127.0.0.1"
 	}
@@ -223,13 +182,51 @@ func (conf *DbConf) initDb() error {
 		conf.ReadTimeout = 5 * time.Second
 	}
 
+	// mysql connection time loc.
+	loc, err := time.LoadLocation(conf.Loc)
+	if err != nil {
+		return "", err
+	}
+
+	// mysql config
+	mysqlConf := mysql.Config{
+		User:   conf.User,
+		Passwd: conf.Password,
+		Net:    "tcp",
+		Addr:   fmt.Sprintf("%s:%d", conf.Ip, conf.Port),
+		DBName: conf.Database,
+		// Connection parameters
+		Params: map[string]string{
+			"charset": conf.Charset,
+		},
+		Collation:            conf.Collation,
+		Loc:                  loc,               // Location for time.Time values
+		Timeout:              conf.Timeout,      // Dial timeout
+		ReadTimeout:          conf.ReadTimeout,  // I/O read timeout
+		WriteTimeout:         conf.WriteTimeout, // I/O write timeout
+		AllowNativePasswords: true,              // Allows the native password authentication method
+		ParseTime:            conf.ParseTime,    // Parse time values to time.Time
+	}
+
+	return mysqlConf.FormatDSN(), nil
+}
+
+// InitInstance 建立db连接句柄
+// 创建当前数据库db对象，并非连接，在使用的时候才会真正建立db连接
+// 为兼容之前的版本，这里新增SetDb创建db对象
+func (conf *DbConf) InitInstance() error {
+	if conf.hasInit {
+		return nil
+	}
+
+	// sql日志级别
+	if conf.LoggerConfig.LogLevel == 0 {
+		conf.LoggerConfig.LogLevel = logger.Info
+	}
+
 	// 是否输出sql日志
 	// 这里重写了之前的gorm v1版本的日志输出模式
 	if conf.ShowSql {
-		if conf.LoggerConfig.LogLevel == 0 {
-			conf.LoggerConfig.LogLevel = logger.Info
-		}
-
 		// 日志对象接口
 		var dbLogger logger.Interface
 		if conf.Logger == nil {
@@ -239,11 +236,11 @@ func (conf *DbConf) initDb() error {
 		}
 
 		// 设置gorm logger句柄对象
-		dbLogger = dbLogger.LogMode(conf.LoggerConfig.LogLevel)
 		conf.gormConfig.Logger = dbLogger
+	} else {
+		conf.gormConfig.Logger = logger.Discard // 默认是不输出sql
 	}
 
-	var db *gorm.DB
 	var err error
 	if conf.gMysqlConfig.DSN == "" {
 		dsn, err := conf.DSN()
@@ -256,39 +253,40 @@ func (conf *DbConf) initDb() error {
 	}
 
 	// 下面这种方式实例的gorm.DB 很多参数都没法正确设置，不推荐这么实例化
-	// db, err = gorm.Open(gMysql.Open(conf.gMysqlConfig.DSN), &gorm.Config{
-	// 	Logger: conf.Logger,
+	// conf.dbObj, err = gorm.Open(gMysql.Open(conf.gMysqlConfig.DSN), &gorm.Config{
+	// 	Logger: conf.gormConfig.Logger,
 	// })
 
 	// 对于golang的官方sql引擎，sql.open并非立即连接db,用的时候才会真正的建立连接
 	// 但是gorm.Open在设置完db对象后，还发送了一个Ping操作，判断连接是否连接上去
 	// 具体可以看gorm/main.go源码Open方法
-	db, err = gorm.Open(gMysql.New(conf.gMysqlConfig), &conf.gormConfig)
+	conf.dbObj, err = gorm.Open(gMysql.New(conf.gMysqlConfig), &conf.gormConfig)
 	if err != nil {
 		log.Println("open mysql connection error: ", err)
-
 		return err
 	}
 
 	// 设置连接池
 	var sqlDB *sql.DB
-	if conf.UsePool {
-		sqlDB, err = db.DB()
+	if !conf.hasInit {
+		sqlDB, err = conf.SqlDB()
 		if err != nil {
+			log.Println("get sql db error: ", err)
 			return err
 		}
+	}
 
+	if conf.UsePool {
 		sqlDB.SetMaxIdleConns(conf.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(conf.MaxOpenConns)
 	}
 
-	// 设置连接可以重用的最大时间
-	// 给db设置一个超时时间，时间小于数据库的超时时间
+	// 设置连接可以重用的最大存活时间，时间小于数据库的超时时间
 	if conf.MaxLifetime > 0 {
 		sqlDB.SetConnMaxLifetime(time.Duration(conf.MaxLifetime) * time.Second)
 	}
 
-	conf.dbObj = db
+	conf.hasInit = true
 
 	return nil
 }
@@ -314,7 +312,12 @@ func CloseAllDb() {
 			continue
 		}
 
-		sqlDB.Close()
+		err = sqlDB.Close()
+		if err != nil {
+			log.Println("close current db error: ", err)
+			continue
+		}
+
 		delete(engineMap, name) // 销毁连接句柄标识
 	}
 }
@@ -324,11 +327,14 @@ func CloseDbByName(name string) error {
 	if db, ok := engineMap[name]; ok {
 		sqlDB, err := db.DB()
 		if err != nil {
-			log.Println("get db instance error: ", err.Error())
 			return err
 		}
 
-		sqlDB.Close()
+		err = sqlDB.Close()
+		if err != nil {
+			return err
+		}
+
 		delete(engineMap, name) // 销毁连接句柄标识
 	}
 

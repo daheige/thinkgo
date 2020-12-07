@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// Option DbConf 功能函数模式
 type Option func(conf *DbConf)
 
 // WithDriverName 设置db driver name.
@@ -22,15 +23,15 @@ func WithDsn(dsn string) Option {
 	}
 }
 
-// withGormConnPool 设置gorm conn pool.
-func withGormConnPool(conn gorm.ConnPool) Option {
+// WithGormConnPool 设置gorm conn pool.
+func WithGormConnPool(conn gorm.ConnPool) Option {
 	return func(conf *DbConf) {
 		conf.gMysqlConfig.Conn = conn
 	}
 }
 
-// withSkipInitializeWithVersion 根据当前 MySQL 版本自动配置
-func withSkipInitializeWithVersion(b bool) Option {
+// WithSkipInitializeWithVersion 根据当前 MySQL 版本自动配置
+func WithSkipInitializeWithVersion(b bool) Option {
 	return func(conf *DbConf) {
 		conf.gMysqlConfig.SkipInitializeWithVersion = b
 	}
