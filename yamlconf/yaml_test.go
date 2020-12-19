@@ -3,12 +3,13 @@ package yamlconf
 import (
 	"log"
 	"testing"
-
-	"github.com/daheige/thinkgo/mysql"
+	"time"
 
 	"github.com/daheige/thinkgo/gredigo"
+	"github.com/daheige/thinkgo/mysql"
 )
 
+// Data test data.
 type Data struct {
 	gredigo.RedisConf
 	Ip []string
@@ -17,9 +18,15 @@ type Data struct {
 func TestYaml(t *testing.T) {
 	conf := NewConf()
 	err := conf.LoadConf("test.yaml")
-	log.Println(conf.data, err)
+	log.Println(conf.GetData(), err)
 
-	log.Println("RedisCommon: ", conf.data["RedisCommon"])
+	data := conf.GetData()
+
+	var graceful time.Duration
+	conf.Get("GracefulWait", &graceful)
+	log.Println("graceful: ", graceful)
+
+	log.Println("RedisCommon: ", data["RedisCommon"])
 
 	// 读取数据到结构体中
 	var redisConf = &Data{}
@@ -45,5 +52,5 @@ $ go test -v
 2019/11/05 23:19:31 &{127.0.0.1 3306 root root test   10 100 true   <nil> true true}
 --- PASS: TestYaml (0.00s)
 PASS
-ok  	github.com/daheige/thinkgo/yamlconf	0.005s
+ok  	github.com/daheige/tigago/yamlconf	0.005s
 */
