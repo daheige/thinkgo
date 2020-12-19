@@ -1,6 +1,7 @@
 #配置文件
 AppEnv: "local"
 AppName: hg-app
+GracefulWait: 5s
 
 #redis配置
 RedisCommon:

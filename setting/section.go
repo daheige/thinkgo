@@ -1,11 +1,8 @@
 package setting
 
-// sections 存放app.yaml配置
-var sections = make(map[string]interface{})
-
 // GetSections return sections.
-func GetSections() map[string]interface{} {
-	return sections
+func (s *Setting) GetSections() map[string]interface{} {
+	return s.sections
 }
 
 // ReadSection read section config.
@@ -15,8 +12,8 @@ func (s *Setting) ReadSection(k string, v interface{}) error {
 		return err
 	}
 
-	if _, ok := sections[k]; !ok {
-		sections[k] = v
+	if _, ok := s.sections[k]; !ok {
+		s.sections[k] = v
 	}
 
 	return nil
@@ -24,7 +21,7 @@ func (s *Setting) ReadSection(k string, v interface{}) error {
 
 // ReloadAllSection if config has changed reload all config.
 func (s *Setting) ReloadAllSection() error {
-	for k, v := range sections {
+	for k, v := range s.sections {
 		err := s.ReadSection(k, v)
 		if err != nil {
 			return err

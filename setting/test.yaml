@@ -1,0 +1,10 @@
+AppServer:
+  AppEnv: dev
+  AppDebug: true
+  GRPCPort: 50051
+  GRPCHttpGatewayPort: 1336
+  HttpPort: 1338
+  ReadTimeout: 6
+  WriteTimeout: 6
+  LogDir: ./logs
+  JobPProfPort: 30031

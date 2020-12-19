@@ -3,6 +3,8 @@ package setting
 import (
 	"encoding/json"
 	"log"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -27,6 +29,11 @@ type appServerSettingS struct {
 
 // readConfig 读取配置文件
 func readConfig(configDir string) error {
+	// 测试拓展名获取
+	filename := "abc.yaml"
+	log.Println(strings.TrimPrefix(filepath.Ext(filename), ".")) // yaml
+
+	log.Println(filepath.Dir("/abc/app.yaml"))
 	s, err := NewSetting(configDir, "test")
 	if err != nil {
 		return err
