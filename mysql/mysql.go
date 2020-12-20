@@ -151,7 +151,7 @@ func (conf *DbConf) initDb() error {
 	}
 
 	if conf.Collation == "" {
-		conf.Collation = "utf8mb4_unicode_ci"
+		conf.Collation = "utf8mb4_general_ci"
 	}
 
 	if conf.Loc == "" {
