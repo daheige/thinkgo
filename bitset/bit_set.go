@@ -118,13 +118,13 @@ func (s *IntSet) Clear() {
 
 // Copy copy value
 func (s *IntSet) Copy() *IntSet {
-	IntSet := &IntSet{
+	i := &IntSet{
 		words: []uint{},
 	}
 
-	IntSet.words = append(IntSet.words, s.words...)
+	i.words = append(i.words, s.words...)
 
-	return IntSet
+	return i
 }
 
 // AddAll 一次性添加多个int
@@ -146,7 +146,7 @@ func (s *IntSet) IntersectWith(t *IntSet) {
 
 // DifferenceWith A与B的差集，元素出现在A未出现在B
 func (s *IntSet) DifferenceWith(t *IntSet) {
-	t1 := t.Copy() //为了不改变传参t，拷贝一份
+	t1 := t.Copy() // 为了不改变传参t，拷贝一份
 	t1.IntersectWith(s)
 	for i, tword := range t1.words {
 		if i < len(s.words) {
