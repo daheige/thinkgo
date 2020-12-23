@@ -22,7 +22,7 @@ package bitset
 
 import (
 	"bytes"
-	"fmt"
+	"strconv"
 )
 
 // IntSet An IntSet is a set of small non-negative integers.
@@ -35,9 +35,13 @@ const (
 	bitNum = (32 << (^uint(0) >> 63))
 )
 
+var sepBytes = []byte(" ")
+
 // New new an entry
 func New() *IntSet {
-	return &IntSet{}
+	return &IntSet{
+		words: make([]uint, 0, 100),
+	}
 }
 
 // Has reports whether the set contains the non-negative value x.
@@ -58,11 +62,11 @@ func (s *IntSet) Add(x int) {
 // UnionWith A与B的交集，合并A与B
 // UnionWith sets s to the union of s and t.
 func (s *IntSet) UnionWith(t *IntSet) {
-	for i, tword := range t.words {
+	for i, w := range t.words {
 		if i < len(s.words) {
-			s.words[i] |= tword
+			s.words[i] |= w
 		} else {
-			s.words = append(s.words, tword)
+			s.words = append(s.words, w)
 		}
 	}
 }
@@ -70,37 +74,39 @@ func (s *IntSet) UnionWith(t *IntSet) {
 // String returns the set as a string of the form "{1 2 3}".
 func (s *IntSet) String() string {
 	var buf bytes.Buffer
-	buf.WriteByte('{')
+	buf.WriteString("{")
 	for i, word := range s.words {
 		if word == 0 {
 			continue
 		}
+
 		for j := 0; j < bitNum; j++ {
 			if word&(1<<uint(j)) != 0 {
 				if buf.Len() > len("{") {
-					buf.WriteByte(' ')
+					buf.Write(sepBytes)
 				}
 
-				fmt.Fprintf(&buf, "%d", bitNum*i+j)
+				buf.Write([]byte(strconv.Itoa(bitNum*i + j)))
 			}
 		}
 	}
 
-	buf.WriteByte('}')
+	buf.WriteString("}")
 	return buf.String()
 }
 
 // Len len
 func (s *IntSet) Len() int {
-	var len int
+	var l int
 	for _, word := range s.words {
 		for j := 0; j < bitNum; j++ {
 			if word&(1<<uint(j)) != 0 {
-				len++
+				l++
 			}
 		}
 	}
-	return len
+
+	return l
 }
 
 // Remove 移除元素
@@ -113,13 +119,13 @@ func (s *IntSet) Remove(x int) {
 
 // Clear清空
 func (s *IntSet) Clear() {
-	s.words = []uint{}
+	s.words = make([]uint, 0, 10)
 }
 
 // Copy copy value
 func (s *IntSet) Copy() *IntSet {
 	i := &IntSet{
-		words: []uint{},
+		words: make([]uint, 0, len(s.words)),
 	}
 
 	i.words = append(i.words, s.words...)
@@ -136,11 +142,12 @@ func (s *IntSet) AddAll(args ...int) {
 
 // IntersectWith A与B的并集，A与B中均出现
 func (s *IntSet) IntersectWith(t *IntSet) {
-	for i, tword := range t.words {
+	for i, w := range t.words {
 		if i >= len(s.words) {
 			continue
 		}
-		s.words[i] &= tword
+
+		s.words[i] &= w
 	}
 }
 
@@ -157,25 +164,25 @@ func (s *IntSet) DifferenceWith(t *IntSet) {
 
 // SymmetricDifference A与B的并差集，元素出现在A没有出现在B，或出现在B没有出现在A
 func (s *IntSet) SymmetricDifference(t *IntSet) {
-	for i, tword := range t.words {
+	for i, w := range t.words {
 		if i < len(s.words) {
-			s.words[i] ^= tword
+			s.words[i] ^= w
 		} else {
-			s.words = append(s.words, tword)
+			s.words = append(s.words, w)
 		}
 	}
 }
 
 // Elems 获取比特数组中的所有元素的slice集合
 func (s *IntSet) Elems() []int {
-	var elems []int
+	var e []int
 	for i, word := range s.words {
 		for j := 0; j < bitNum; j++ {
 			if word&(1<<uint(j)) != 0 {
-				elems = append(elems, bitNum*i+j)
+				e = append(e, bitNum*i+j)
 			}
 		}
 	}
 
-	return elems
+	return e
 }
