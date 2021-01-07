@@ -23,11 +23,15 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/daheige/thinkgo/crypto"
 	"github.com/daheige/thinkgo/gnum"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano()) // 随机种子
+}
 
 // Addslashes addslashes()
 func Addslashes(str string) string {
@@ -167,6 +171,7 @@ func EnAES(in, key, iv []byte) ([]byte, error) {
 	return out, nil
 }
 
+// DeAES aes decode
 func DeAES(in, key, iv []byte) ([]byte, error) {
 	cip, err := aes.NewCipher(key)
 	if err != nil {
@@ -185,13 +190,9 @@ func DeAES(in, key, iv []byte) ([]byte, error) {
 // 返回格式:7999b726-ca3c-42b6-bda2-259f4ac0879a
 func NewUUID() string {
 	u := [16]byte{}
-	ns := time.Now().UnixNano()
-	rand.Seed(ns)
 	_, err := rand.Read(u[0:])
 	if err != nil {
-		rndStr := strconv.FormatInt(ns, 10) + strconv.FormatInt(gnum.RandInt64(1000, 9999), 10)
-		s := crypto.Md5(rndStr)
-		return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
+		return RndUuid()
 	}
 
 	u[8] = (u[8] | 0x40) & 0x7F
@@ -205,19 +206,26 @@ func NewUUID() string {
 // 只需要在rndStr的前面加一些自定义的字符串
 // 返回格式:eba1e8cd-0460-4910-49c6-44bdf3cf024d
 func RndUuid() string {
-	s := RndUuidMd5()
+	ns := time.Now().UnixNano()
+	rndStr := strings.Join([]string{
+		strconv.FormatInt(ns, 10),
+		strconv.FormatInt(gnum.RandInt64(1000, 9999), 10),
+	}, "")
+	// str md5
+	s := crypto.Md5(rndStr)
+
 	return fmt.Sprintf("%s-%s-%s-%s-%s", s[:8], s[8:12], s[12:16], s[16:20], s[20:])
 }
 
-// RndUuidMd5 uuid
-func RndUuidMd5() string {
-	ns := time.Now().UnixNano()
-	rndStr := StrJoin("", strconv.FormatInt(ns, 10), strconv.FormatInt(gnum.RandInt64(1000, 9999), 10))
-	return crypto.Md5(rndStr)
-}
-
+// Uuid uuid of version4
+// 返回格式:eba1e8cd0460491049c644bdf3cf024d
 func Uuid() string {
-	return strings.Replace(uuid.NewV4().String(), "-", "", -1)
+	u, err := uuid.NewRandom()
+	if err != nil {
+		return strings.Replace(RndUuid(), "-", "", -1)
+	}
+
+	return strings.Replace(u.String(), "-", "", -1)
 }
 
 // Uniqid uniqid()
@@ -269,7 +277,6 @@ func XssUnescape(str string) string {
 func Krand(size int, kind int) string {
 	oldKind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
 	is_all := kind > 2 || kind < 0
-	rand.Seed(time.Now().UnixNano()) // 随机种子
 	for i := 0; i < size; i++ {
 		if is_all { // random oldKind
 			oldKind = rand.Intn(3)
