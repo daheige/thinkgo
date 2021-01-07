@@ -13,7 +13,8 @@ ok      github.com/daheige/thinkgo/common  24.517s
 */
 func TestUuid(t *testing.T) {
 	for i := 0; i < 1000000; i++ {
-		log.Println("current newuuid", NewUUID())
+		// log.Println("current newuuid", NewUUID())
+		log.Println("current uuid of version4: ", Uuid())
 	}
 }
 
