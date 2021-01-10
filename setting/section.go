@@ -5,6 +5,11 @@ func (s *Setting) GetSections() map[string]interface{} {
 	return s.sections
 }
 
+// IsSet check key is set.
+func (s *Setting) IsSet(key string) bool {
+	return s.vp.IsSet(key)
+}
+
 // ReadSection read section config.
 func (s *Setting) ReadSection(k string, v interface{}) error {
 	err := s.vp.UnmarshalKey(k, v)

@@ -9,18 +9,22 @@ import (
 	"github.com/daheige/thinkgo/mysql"
 )
 
-// Data test data.
+// Data test data
 type Data struct {
 	gredigo.RedisConf
 	Ip []string
 }
 
+// TestYaml test read yaml
 func TestYaml(t *testing.T) {
 	conf := NewConf()
 	err := conf.LoadConf("test.yaml")
 	log.Println(conf.GetData(), err)
 
 	data := conf.GetData()
+
+	abc := conf.GetBool("ABC", true)
+	log.Println("ABC: ", abc)
 
 	var graceful time.Duration
 	conf.Get("GracefulWait", &graceful)
