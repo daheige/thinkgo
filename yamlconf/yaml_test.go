@@ -23,6 +23,9 @@ func TestYaml(t *testing.T) {
 
 	data := conf.GetData()
 
+	abc := conf.GetBool("ABC", true)
+	log.Println("ABC: ", abc)
+
 	var graceful time.Duration
 	conf.Get("GracefulWait", &graceful)
 	log.Println("graceful: ", graceful)
